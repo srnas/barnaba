@@ -1,12 +1,21 @@
 import sys
 import os
 import numpy as N
+import time
 
 rnas = ['U','rU','RU','RU5','RU3','C','rC','RC','RC5','RC3',\
             'G','rG','RG','RG5','RG3','A','rA','RA','RA5','RA3']       
 pyr = ['U','rU','RU','RU5','RU3','C','rC','RC','RC5','RC3']
 pur = ['G','rG','RG','RG5','RG3','A','rA','RA','RA5','RA3']
 types = ['C4','C2','C6']
+
+
+def write_args(args,fh):
+    fh.write("# This is a baRNAba run. Timestamp: " + time.strftime("%c\n"))
+    for k in args.__dict__:
+        if(str(k) != 'files'):
+            s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
+            fh.write(s)
 
 
 def get_coord(file):
@@ -193,7 +202,7 @@ def xtc2pdb(xtc,args):
     # print concatenated pdb
     output = (args.name).split(".rna")[0] + "_samples.pdb"
     cmd = "trjconv" + args.gmx + \
-        " -f " +  args.xtc + \
+        " -f " +  xtc + \
         " -o " + output + \
         " -n " + ndx_file + \
         " -s " + args.pdb + \

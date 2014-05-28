@@ -1,11 +1,14 @@
 import numpy as N
 from scipy.spatial import distance
 
+
 a = 5.0
 b = 5.0
 c = 3.0
 scale = [1.0/a,1.0/b,1.0/c]
 interactions = ['..','>>','<<','<>','><','WC','WW','WS','WH','HH','HS','HW','SS','SH','SW','XX']
+
+
 
 def coord2lcs(atoms):
     
@@ -188,7 +191,7 @@ def lcs2mat_1d(lcs,origo,cutoff):
         if(D2 < cutoff):
             mat_sb[jj,ii] = cutoff - D2
 
-    return mat_sb
+    return mat_sb.reshape(-1)
 
 
 
@@ -235,7 +238,7 @@ def lcs2mat_4d(lcs,origo,cutoff):
                 mat_gb[jj,ii,nn] = s*R2_scaled[nn]
             mat_gb[jj,ii,3] = 1.0+N.cos(D2_S)
 
-    return mat_gb
+    return mat_gb.reshape(-1,4)
 
 
 
