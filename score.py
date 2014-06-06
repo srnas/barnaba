@@ -12,7 +12,7 @@ def score(args,files):
 
     ref_atoms,ref_sequence = pb.get_coord(args.ff)
     ref_lcs,ref_origo = t.coord2lcs(ref_atoms[0])
-    ref_mat = t.lcs2mat_score(ref_lcs,ref_origo,args.cutoff)
+    ref_mat,ids = t.lcs2mat_score(ref_lcs,ref_origo,args.cutoff)
     
     kernel = kde.gaussian_kde(ref_mat)
     kernel.set_bandwidth(0.25)
@@ -26,8 +26,15 @@ def score(args,files):
             lcs,origo = t.coord2lcs(model)
 
             # Cutoff is slightly augmented 
-            mat = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
+            mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
             val = kernel(mat)
+            #for kk in range(len(sequence[ii])):
+            #    ss = 0.0
+            #    for el in range(len(val)):
+            #        if(kk in ids[el]):
+            #            ss += val[el]
+            #    print sequence[ii][kk],ss
+
             string = '%8.5f %s.%i \n' % (sum(val),f,ii)
             fh.write(string)
 

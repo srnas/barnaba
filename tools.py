@@ -75,6 +75,7 @@ def lcs2mat_score(lcs,origo,cutoff):
 
     ll = len(origo)
     mat = []
+    ids = []
 
     # prune search first
     max_r  = N.sqrt(a*a*cutoff*cutoff)
@@ -105,14 +106,15 @@ def lcs2mat_score(lcs,origo,cutoff):
             for nn in range(3):
                 v.append(R1[0,nn])
             mat.append(v)
+            ids.append([ii,jj])
 
         if(D2 < cutoff):
             v = []
             for nn in range(3):
                 v.append(R2[0,nn])
             mat.append(v)
-
-    return N.array(mat).T
+            ids.append([jj,ii])
+    return N.array(mat).T,ids
 
 
 def lcs2mat_3d_scaled(lcs,origo,cutoff):
@@ -191,7 +193,7 @@ def lcs2mat_1d(lcs,origo,cutoff):
         if(D2 < cutoff):
             mat_sb[jj,ii] = cutoff - D2
 
-    return mat_sb.reshape(-1)
+    return mat_sb
 
 
 
@@ -238,7 +240,7 @@ def lcs2mat_4d(lcs,origo,cutoff):
                 mat_gb[jj,ii,nn] = s*R2_scaled[nn]
             mat_gb[jj,ii,3] = 1.0+N.cos(D2_S)
 
-    return mat_gb.reshape(-1,4)
+    return mat_gb
 
 
 

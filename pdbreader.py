@@ -85,6 +85,8 @@ def get_coord(file):
     fh = open(file)
     for line in fh:           
         s = line.split()
+        if(len(s)==0):
+            continue
         # check line
         if (s[0]=="ENDMDL"):
             c,s,n = rearrange(raw_coords,raw_sequence)
