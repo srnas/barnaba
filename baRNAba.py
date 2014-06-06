@@ -18,7 +18,7 @@ def parse():
     parser_a.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
     parser_a.add_argument("-type", dest="type",default='modulus',choices=['modulus','vector'],
                               help='Type of ERMSD calculation (default=modulus)')    
-    #parser_a.add_argument("-ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true')
+    parser_a.add_argument("-ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true')
 
 
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')

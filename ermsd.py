@@ -33,11 +33,11 @@ def ermsd(args,files):
                 if(args.ermsf==False):
                     string = '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
                 else:
-                    string = '%8.5f ' % (ermsd,files[ii],jj)
+                    string = '%8.5f - ' % (ermsd)
                     for k in xrange(len(lcs)):
                         ermsf = 0.5*(N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs)) + N.sqrt( sum((ref_mat[:,k]-mat[:,k])**2)/len(lcs)))
                         string += " %8.5f " % (ermsf)
-                    string += '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
+                    string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
                 
 
@@ -61,11 +61,13 @@ def ermsd(args,files):
                 if(args.ermsf==False):
                     string = '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
                 else:
-                    string = '%8.5f ' % (ermsd,files[ii],jj)
+                    string = '%8.5f - ' % (ermsd)
                     for k in xrange(len(lcs)):
-                        ermsf = 0.5*(N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs)) + N.sqrt( sum((ref_mat[:,k]-mat[:,k])**2)/len(lcs)))
+                        diff1 = (mat[k,:]-ref_mat[k,:])**2
+                        diff2 = (mat[:,k]-ref_mat[:,k])**2
+                        ermsf = 0.5*(N.sqrt( sum(sum(diff1))/len(lcs)) + N.sqrt( sum(sum(diff2))/len(lcs)))
                         string += " %8.5f " % (ermsf)
-                    string += '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
+                    string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
         
 
