@@ -1,6 +1,11 @@
 import sys
-import argparse
 import time
+
+if sys.version_info[0] != 2 or sys.version_info[1] != 7:
+    print "# Python 2.7 is required. Aborting"
+    sys.exit(1)
+else:
+    import argparse
 
 def parse():
 
@@ -135,6 +140,19 @@ def main():
                     print "# Fatal error. Extension ",extension,"not recognized. Please check your -f file(s)"
                     sys.exit(1)
         return files
+
+    # check at startup!
+    try:
+        import numpy
+    except ImportError:
+        print "# Numpy is not installed"
+        sys.exit(1)
+
+    try:
+        import scipy
+    except ImportError:
+        print "# Scipy is not installed"
+        sys.exit(1)
 
     # Parse options
     args = parse()
