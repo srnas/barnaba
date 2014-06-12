@@ -72,6 +72,9 @@ def ds_motif(args,files):
                         red_mat1 = mat[tmp_idx,:][:,tmp_idx]
                         ermsd1 = t.calc_dist_1d(ref_mat1,red_mat1)
                         if(ermsd1 < args.treshold):
+                            #for uu in tmp_idx:
+                            #    print sequence[jj][uu],
+                            #print ermsd1
                             idx1.append(tmp_idx)
                             com1.append(N.sum(origo[tmp_idx],axis=0)/l1)
 
@@ -94,19 +97,25 @@ def ds_motif(args,files):
                     continue
 
                 dmat = distance.cdist(com1,com2)
-                c_idx = (dmat<5.0*dd).nonzero()
-                print len(c_idx[0])
+                c_idx = (dmat<4.0*dd).nonzero()
+                #print len(c_idx[0])
                 for idx in range(len(c_idx[0])):
                     # skip overlapping
                     if(len(N.union1d(idx1[c_idx[0][idx]],idx2[c_idx[1][idx]]))!=l1+l2):
                         continue
                     all_idx = idx1[c_idx[0][idx]]+idx2[c_idx[1][idx]]
+                    all_idx1 = idx1[c_idx[0][idx]]
+                    all_idx2 = idx2[c_idx[1][idx]]
                     red_mat = mat[all_idx,:][:,all_idx]
                     ermsd = t.calc_dist_1d(ref_mat,red_mat)
                     if(ermsd < args.treshold):
-                        seq = ' - '
-                        for el in all_idx:
+                        seq = '; '
+                        for el in all_idx1:
                             seq += (sequence[jj][el] + ' ')
+                        seq += "* "
+                        for el in all_idx2:
+                            seq += (sequence[jj][el] + ' ')
+
                         string = '%8.5f %s %i %s \n' % (ermsd,files[ii],jj,seq)
                         fh.write(string)
 
@@ -161,18 +170,24 @@ def ds_motif(args,files):
                     continue
 
                 dmat = distance.cdist(com1,com2)
-                c_idx = (dmat<5.0*dd).nonzero()
+                c_idx = (dmat<4.0*dd).nonzero()
                 print len(c_idx[0])
                 for idx in range(len(c_idx[0])):
                     # skip overlapping
                     if(len(N.union1d(idx1[c_idx[0][idx]],idx2[c_idx[1][idx]]))!=l1+l2):
                         continue
                     all_idx = idx1[c_idx[0][idx]]+idx2[c_idx[1][idx]]
+                    all_idx1 = idx1[c_idx[0][idx]]
+                    all_idx2 = idx2[c_idx[1][idx]]
+
                     red_mat = mat[all_idx,:][:,all_idx]
                     ermsd = t.calc_dist_nd(ref_mat,red_mat)
                     if(ermsd < args.treshold):
-                        seq = ' - '
-                        for el in all_idx:
+                        seq = '; '
+                        for el in all_idx1:
+                            seq += (sequence[jj][el] + ' ')
+                        seq += "* "
+                        for el in all_idx2:
                             seq += (sequence[jj][el] + ' ')
                         string = '%8.5f %s %i %s \n' % (ermsd,files[ii],jj,seq)
                         fh.write(string)

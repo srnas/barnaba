@@ -10,7 +10,7 @@ fh = open(sys.argv[1])
 for line in fh:
     if("#" not in line):
          lista = []
-         for ll in line.split("-")[1:]:
+         for ll in line.split(";")[1:]:
              lista.extend(ll.split())
          d = [line.split()[1],line.split()[0],lista]
          barnaba.append(d)
