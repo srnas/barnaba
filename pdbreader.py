@@ -203,13 +203,14 @@ def xtc2pdb(xtc,args):
     
     # print concatenated pdb
     output = (args.name).split(".rna")[0] + "_samples.pdb"
-    cmd = "trjconv" + args.gmx + \
+    cmd =  args.gmx + \
         " -f " +  xtc + \
         " -o " + output + \
         " -n " + ndx_file + \
         " -s " + args.pdb + \
         " -skip " + str(args.skip) + " &> gmx.tmp"
 
+    print "#####################################################################"
     print "# You provided an XTC trajectory."
     print "# Make ABSOLUTELY sure that: "
     print "# 1) PBC were removed "
@@ -217,5 +218,6 @@ def xtc2pdb(xtc,args):
     print "# Converting trajectory: ", cmd
     os.system(cmd)
     print "# Coordinates of relevant atoms written to ", output
-    return [output]
+    print "######################################################################"
+    return output
 

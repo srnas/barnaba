@@ -97,7 +97,7 @@ def ds_motif(args,files):
                     continue
 
                 dmat = distance.cdist(com1,com2)
-                c_idx = (dmat<4.0*dd).nonzero()
+                c_idx = (dmat<2.5*dd).nonzero()
                 #print len(c_idx[0])
                 for idx in range(len(c_idx[0])):
                     # skip overlapping
@@ -170,7 +170,7 @@ def ds_motif(args,files):
                     continue
 
                 dmat = distance.cdist(com1,com2)
-                c_idx = (dmat<4.0*dd).nonzero()
+                c_idx = (dmat<2.5*dd).nonzero()
                 print len(c_idx[0])
                 for idx in range(len(c_idx[0])):
                     # skip overlapping

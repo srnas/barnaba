@@ -1,0 +1,21 @@
+
+# Calculate ERMSD distance between sample1.pdb and sample2.pdb. -f option accepts multiple files
+python2.7 baRNAba.py -name ERMSD_EXAMPLE_1 ERMSD -pdb DATA/sample1.pdb -f DATA/sample2.pdb
+
+# Calculate ERMSD distance between sample1.pdb and models in samples.pdb
+python2.7 baRNAba.py -name ERMSD_EXAMPLE_2 ERMSD -pdb DATA/sample1.pdb -f DATA/samples.pdb
+
+
+# Calculate ERMSD distance between sample1.pdb and samples in gromacs trajectory.
+# XTC and GRO formats are supported. Trajconv executable must be specified!
+python2.7 baRNAba.py -trjconv trjconv -name ERMSD_EXAMPLE_3 ERMSD -pdb DATA/sample1.pdb -f DATA/traj.xtc
+
+
+# Calculate ERMSD distance between sample1.pdb and sample2.pdb. 
+# Additionally calculate per-residue ERMSD flucutations
+python2.7 baRNAba.py -name ERMSD_EXAMPLE_4 ERMSD -pdb DATA/sample1.pdb -f DATA/sample2.pdb -ermsf
+
+# Calculate ERMSD distance between sample1.pdb and sample2.pdb. 
+# Use contact-map-like ERMSD 
+python2.7 baRNAba.py -name ERMSD_EXAMPLE_5 ERMSD -pdb DATA/sample1.pdb -f DATA/sample2.pdb -type modulus -cutoff 2.0
+

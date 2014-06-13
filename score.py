@@ -11,9 +11,12 @@ def score(args,files):
     pb.write_args(args,fh)
 
     ref_atoms,ref_sequence = pb.get_coord(args.ff)
-    ref_lcs,ref_origo = t.coord2lcs(ref_atoms[0])
-    ref_mat,ids = t.lcs2mat_score(ref_lcs,ref_origo,args.cutoff)
-    
+    ref_mat = []
+    for ii,model in enumerate(ref_atoms):
+        ref_lcs,ref_origo = t.coord2lcs(ref_atoms[ii])
+        ref_mat_ii,ids = t.lcs2mat_score(ref_lcs,ref_origo,args.cutoff)
+        ref_mat.extend(ref_mat_ii)
+
     kernel = kde.gaussian_kde(ref_mat)
     kernel.set_bandwidth(0.25)
 

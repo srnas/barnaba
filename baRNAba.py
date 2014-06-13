@@ -21,8 +21,8 @@ def parse():
     parser_a.add_argument("-pdb", dest="pdb",help="Reference PDB file",required=True)
     parser_a.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
     parser_a.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_a.add_argument("-type", dest="type",default='modulus',choices=['modulus','vector'],
-                              help='Type of ERMSD calculation (default=modulus)')    
+    parser_a.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
+                              help='Type of ERMSD calculation')    
     parser_a.add_argument("-ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true')
 
 
@@ -37,9 +37,9 @@ def parse():
     parser_c.add_argument("-query", dest="pdb",help="Reference PDB file",required=True)
     parser_c.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
     parser_c.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_c.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.5,type=float)    
+    parser_c.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
     parser_c.add_argument("-bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)   
-    parser_c.add_argument("-type", dest="type",default='modulus',choices=['modulus','vector'],
+    parser_c.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
                               help='Type of ERMSD calculation (default=modulus)')    
 
     parser_d = subparsers.add_parser('DS_MOTIF', help='Search RNA Double stranded (internal loop) motifs')
@@ -48,9 +48,9 @@ def parse():
     parser_d.add_argument("-l1", dest="l1",help="Length of first strand",required=True,type=int)    
     parser_d.add_argument("-l2", dest="l2",help="Lenght of second strand",required=True,type=int)    
     parser_d.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_d.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.5,type=float)    
+    parser_d.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
     parser_d.add_argument("-bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)    
-    parser_d.add_argument("-type", dest="type",default='modulus',choices=['modulus','vector'],
+    parser_d.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
                               help='Type of ERMSD calculation (default=modulus)')    
 
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
@@ -135,7 +135,9 @@ def main():
                         print "# Fatal error. You cannot provide multiple XTC trajectories"
                         sys.exit(1)
                     else:
-                        files = pb.xtc2pdb(f,args)        
+                        import pdbreader as pb
+                        trj = pb.xtc2pdb(f,args)        
+                        files.append(trj)
                 else:
                     print "# Fatal error. Extension ",extension,"not recognized. Please check your -f file(s)"
                     sys.exit(1)

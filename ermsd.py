@@ -49,7 +49,6 @@ def ermsd(args,files):
         # all the rest - and calculate ERMSD on-the-fly
         for ii in xrange(1,len(files)):
             atoms,sequence = pb.get_coord(files[ii])
-
             for jj,model in enumerate(atoms):
                 lcs,origo = t.coord2lcs(model)
 
