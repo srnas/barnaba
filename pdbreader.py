@@ -31,9 +31,10 @@ def get_coord(file):
                 else:
                     counts.append(1)
                     ss.append(raw_sequence[i][0])
+            print counts
             for i in range(len(counts)):
                 if(counts[i] != 3):
-                    print "# Only",counts[i],"atoms in residue",ss[i-1]
+                    print "# Only",counts[i],"atoms in residue",ss[i]
             print "# FATAL ERROR. Check your PDB file"
             sys.exit(1)
 
@@ -52,8 +53,13 @@ def get_coord(file):
             sequence.append(raw_sequence[3*i][0])
             for j in range(3):
                 j1 = get_idx(raw_sequence[3*i+j])
+                
                 for k in range(3):
-                    coords[i,j,k] = raw_coords[3*i+j1][k]
+                    #coords[i,j,k] = raw_coords[3*i+j1][k]
+                    coords[i,j1,k] = raw_coords[3*i+j][k]
+                    
+#        print sequence
+        #print coords
         return coords,sequence,len(sequence)
 
 
