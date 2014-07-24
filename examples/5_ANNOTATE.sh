@@ -1,4 +1,8 @@
+#!/bin/bash
+
+set -e
+
 # Annotate structures using the Leontis-Westhof classification. 
 # results are similar (but not identical) to MC annotate. 
 
-python2.7 baRNAba.py -name 5_EXAMPLE ANNOTATE -f DATA/1S72.pdb
+baRNAba --name 5_EXAMPLE ANNOTATE -f DATA/1S72.pdb
