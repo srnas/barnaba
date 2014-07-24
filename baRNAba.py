@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.7
+
 import sys
 import time
 
@@ -10,53 +12,54 @@ else:
 def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
-    parser.add_argument("-name", dest="name",help="Job ID",default='',required=False)
-    parser.add_argument("-trjconv", dest="gmx",help="Gromacs trjconv name. Necessary only when analyzing gro/xtc trajectories",default='',required=False)
-    parser.add_argument("-skip", dest="skip",help="Skip frames in gro/xtc file",default='1',required=False)
+    parser.add_argument("--name", dest="name",help="Job ID",default='',required=False)
+    parser.add_argument("--trjconv", dest="gmx",help="Gromacs trjconv name. Necessary only when analyzing gro/xtc trajectories",default='',required=False)
+    parser.add_argument("--skip", dest="skip",help="Skip frames in gro/xtc file",default='1',required=False)
 
  
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
 
     parser_a = subparsers.add_parser('ERMSD', help='calculate ERMSD')
-    parser_a.add_argument("-pdb", dest="pdb",help="Reference PDB file",required=True)
+    parser_a.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=True)
     parser_a.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
-    parser_a.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_a.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
+    parser_a.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
+    parser_a.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
                               help='Type of ERMSD calculation')    
-    parser_a.add_argument("-ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true')
+    parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true',default=False)
 
 
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')
     parser_b.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
-    parser_b.add_argument("-force-field", dest="ff",help="PDB force field file",default='',required=True)
-    parser_b.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
-    parser_b.add_argument("-type", dest="type",default='standard',choices=['standard','beta'],
+    parser_b.add_argument("--force-field", dest="ff",help="PDB force field file",default='',required=True)
+    parser_b.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
+    parser_b.add_argument("--type", dest="type",default='standard',choices=['standard','beta'],
                               help='Type of ESCORE calculation (default=standard), beta not implemented')    
 
     parser_c = subparsers.add_parser('SS_MOTIF', help='Search single stranded (hairpin loop) RNA motif ')
-    parser_c.add_argument("-query", dest="pdb",help="Reference PDB file",required=True)
+    parser_c.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
     parser_c.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
-    parser_c.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_c.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
-    parser_c.add_argument("-bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)   
-    parser_c.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
+    parser_c.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
+    parser_c.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
+    parser_c.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)   
+    parser_c.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
                               help='Type of ERMSD calculation (default=modulus)')    
 
     parser_d = subparsers.add_parser('DS_MOTIF', help='Search RNA Double stranded (internal loop) motifs')
-    parser_d.add_argument("-query", dest="pdb",help="Reference PDB file",required=True)
+    parser_d.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
     parser_d.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
-    parser_d.add_argument("-l1", dest="l1",help="Length of first strand",required=True,type=int)    
-    parser_d.add_argument("-l2", dest="l2",help="Lenght of second strand",required=True,type=int)    
-    parser_d.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_d.add_argument("-treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
-    parser_d.add_argument("-bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)    
-    parser_d.add_argument("-type", dest="type",default='vector',choices=['modulus','vector'],
+    parser_d.add_argument("--l1", dest="l1",help="Length of first strand",required=True,type=int)    
+    parser_d.add_argument("--l2", dest="l2",help="Lenght of second strand",required=True,type=int)    
+    parser_d.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
+    parser_d.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
+    parser_d.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)    
+    parser_d.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
                               help='Type of ERMSD calculation (default=modulus)')    
 
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
+    parser_e.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=False)
     parser_e.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
-    parser_e.add_argument("-cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
-    parser_e.add_argument("-compact", dest="compact",help="use compact format",action='store_true')    
+    parser_e.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
+    parser_e.add_argument("--compact", dest="compact",help="use compact format",action='store_true')    
 
     args = parser.parse_args()
 
