@@ -1,0 +1,31 @@
+
+INTRODUCTION
+BaRNAba is a tool for analyzing RNA three-dimensional structures.
+BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi.
+For bugs, questions or comments contact Sandro at sbottaro@sissa.it. 
+If you use baRNAba in your work,  please cite the follwing paper:
+
+S.Bottaro, F. di Palma, G.Bussi. The role of nucleobases 
+in RNA structure and dynamics. 
+
+
+INSTALLATION
+BaRNAba is distributed as a Python script. It requires
+Python version 2.7 with Numpy and Scipy libraries.
+
+You can obtain barnaba using git:
+
+    git clone git://github.com/srnas/barnaba.git
+
+or download a zip file from the web:
+
+   https://github.com/srnas/barnaba
+
+
+
+
+
+
+
+
+

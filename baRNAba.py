@@ -1,5 +1,19 @@
 #!/usr/bin/env python2.7
 
+#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
+#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License V3 as published by
+#   the Free Software Foundation, 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import sys
 import time
 
@@ -23,7 +37,7 @@ def parse():
     parser_a.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=True)
     parser_a.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
     parser_a.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_a.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
+    parser_a.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
                               help='Type of ERMSD calculation')    
     parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD (to be implemented)",action='store_true',default=False)
 
@@ -41,8 +55,8 @@ def parse():
     parser_c.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
     parser_c.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
     parser_c.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)   
-    parser_c.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
-                              help='Type of ERMSD calculation (default=modulus)')    
+    parser_c.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
+                              help='Type of ERMSD calculation (default=vector)')    
 
     parser_d = subparsers.add_parser('DS_MOTIF', help='Search RNA Double stranded (internal loop) motifs')
     parser_d.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
@@ -52,8 +66,8 @@ def parse():
     parser_d.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
     parser_d.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
     parser_d.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)    
-    parser_d.add_argument("--type", dest="type",default='vector',choices=['modulus','vector'],
-                              help='Type of ERMSD calculation (default=modulus)')    
+    parser_d.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
+                              help='Type of ERMSD calculation (default=scalar)')    
 
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
     parser_e.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=False)

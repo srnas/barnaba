@@ -1,3 +1,16 @@
+#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
+#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License V3 as published by
+#   the Free Software Foundation, 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import pdbreader as pb
 import kde as kde
 import tools as t
@@ -26,9 +39,11 @@ def score(args,files):
     for f in files:
         atoms,sequence = pb.get_coord(f)
         for ii,model in enumerate(atoms):
-            lcs,origo = t.coord2lcs(model)
+            #print model[0]
 
+            lcs,origo = t.coord2lcs(model)
             # Cutoff is slightly augmented 
+            #mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
             mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
             val = kernel(mat)
             #for kk in range(len(sequence[ii])):

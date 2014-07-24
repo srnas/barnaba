@@ -1,3 +1,16 @@
+#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
+#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License V3 as published by
+#   the Free Software Foundation, 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from scipy.spatial import distance
 import numpy as N
 import pdbreader as pb
@@ -44,7 +57,7 @@ def ds_motif(args,files):
     delta_com = (N.sum(origo[0:l1],axis=0)/l1) - (N.sum(origo[l1:],axis=0)/l2)
     dd= N.sqrt(sum(delta_com**2))
 
-    if(args.type=='modulus'):
+    if(args.type=='scalar'):
 
         ref_mat = t.lcs2mat_1d(lcs,origo,args.cutoff)
         assert(ref_mat.shape[0] == args.l1+args.l2)

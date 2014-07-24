@@ -1,3 +1,17 @@
+#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
+#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
+
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License V3 as published by
+#   the Free Software Foundation, 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import numpy as N
 from scipy.spatial import distance
 
@@ -114,6 +128,7 @@ def lcs2mat_score(lcs,origo,cutoff):
                 v.append(R2[0,nn])
             mat.append(v)
             ids.append([jj,ii])
+
     return N.array(mat).T,ids
 
 
@@ -231,13 +246,17 @@ def lcs2mat_4d(lcs,origo,cutoff):
             s = N.sin(D1_S)/D1_S
             for nn in range(3):
                 mat_gb[ii,jj,nn] = s*R1_scaled[nn]
+                    
             mat_gb[ii,jj,3] = 1.0+N.cos(D1_S)
 
         if(D2 < cutoff):
             D2_S = (D2*N.pi)/cutoff
             s = N.sin(D2_S)/D2_S
             for nn in range(3):
-                mat_gb[jj,ii,nn] = s*R2_scaled[nn]
+                mat_gb[ii,jj,nn] = s*R1_scaled[nn]
+                    
+            
+            #    mat_gb[jj,ii,nn] = s*R2_scaled[nn]
             mat_gb[jj,ii,3] = 1.0+N.cos(D2_S)
 
     return mat_gb
