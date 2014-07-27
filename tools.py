@@ -253,7 +253,7 @@ def lcs2mat_4d(lcs,origo,cutoff):
             D2_S = (D2*N.pi)/cutoff
             s = N.sin(D2_S)/D2_S
             for nn in range(3):
-                mat_gb[ii,jj,nn] = s*R1_scaled[nn]
+                mat_gb[jj,ii,nn] = s*R2_scaled[nn]
                     
             
             #    mat_gb[jj,ii,nn] = s*R2_scaled[nn]
