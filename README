@@ -25,23 +25,23 @@ or download a zip file from the web:
 USAGE
 
 * minimal help
-  ./barnaba.py --help 
+  ./baRNAba --help 
 
 Currently, baRNAba can perform 5 different tasks:
 1. Calculate the ERMSD between structures
-   ./baRNAba.py ERMSD --pdb sample1.pdb -f sample2.pdb
+   ./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb
 
 2. Calculate the ESCORE
-   ./baRNAba.py ESCORE --force-field 1S72.pdb -f sample1.pdb
+   ./baRNAba ESCORE --force-field 1S72.pdb -f sample1.pdb
 
 3. Find hairpin loop motif
-   ./baRNAba.py SS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... 
+   ./baRNAba SS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... 
 
 4. Find double stranded motif. l1 and l2 are the lengths of the two strands
-   ./baRNAba.py DS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... --l1 l1 --l2 l2
+   ./baRNAba DS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... --l1 l1 --l2 l2
 
 5. Annotate structures/trajectories according to the Leontis/Westhof classification.  
-   ./baRNAba.py ANNOTATE -f file1.pdb file2.pdb ...
+   ./baRNAba ANNOTATE -f file1.pdb file2.pdb ...
 
 practical examples can be found in the examples folder. 
 
