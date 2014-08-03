@@ -247,7 +247,7 @@ def lcs2mat_4d(lcs,origo,cutoff):
             for nn in range(3):
                 mat_gb[ii,jj,nn] = s*R1_scaled[nn]
                     
-            mat_gb[ii,jj,3] = 1.0+N.cos(D1_S)
+            mat_gb[ii,jj,3] = (1.0+N.cos(D1_S))*cutoff/N.pi
 
         if(D2 < cutoff):
             D2_S = (D2*N.pi)/cutoff
@@ -257,7 +257,7 @@ def lcs2mat_4d(lcs,origo,cutoff):
                     
             
             #    mat_gb[jj,ii,nn] = s*R2_scaled[nn]
-            mat_gb[jj,ii,3] = 1.0+N.cos(D2_S)
+            mat_gb[jj,ii,3] = (1.0+N.cos(D2_S))*cutoff/N.pi
 
     return mat_gb
 
