@@ -70,7 +70,7 @@ def parse():
                               help='Type of ERMSD calculation (default=scalar)')    
 
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
-    parser_e.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=False)
+    #parser_e.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=False)
     parser_e.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
     parser_e.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
     parser_e.add_argument("--compact", dest="compact",help="use compact format",action='store_true')    

@@ -29,36 +29,27 @@ def annotate(args,files):
         count = 0
         for model,seq in zip(atoms,sequence):
             count += 1
-            string = '# ' + f + "-" + str(count) + " "
+            string = '# ' + f + "-" + str(count) + "\n"
+            
             lcs,origo = t.coord2lcs(model)
             mat = t.lcs2mat_3d(lcs,origo,args.cutoff)
             int_mat = t.analyze_mat(mat,seq)
-            seq_string = ''
-            num_string = ''
-            ss_string = ['.']*len(seq)
-            if(args.compact==True):
-                for j in range(int_mat.shape[0]):
-                    for k in range(j+1,int_mat.shape[0]):
-                        string += "%4s " % (t.interactions[int(int_mat[j,k])])
-                fh.write(string + "\n")
-            else:
-                string += "\n"
-                fh.write(string)
-                for j in range(int_mat.shape[0]):
-                    seq_string += "%s" % seq[j].split("_")[1]
-                    num_string += "%s" % seq[j].split("_")[0]
-                    for k in range(j+1,int_mat.shape[0]):
-                        if(t.interactions[int(int_mat[j,k])]=='WC'):
-                            ss_string[j] = "("
-                            ss_string[k] = ")"
 
+            anno_string = ''
+            seq_string = '# '
+            for j in range(int_mat.shape[0]):
+                seq_string += seq[j] + " "
+                for k in range(j+1,int_mat.shape[0]):
+                    if(args.compact==True):
+                        anno_string += "%4s " % (t.interactions[int(int_mat[j,k])])
+                    else:
                         if(int_mat[j,k] != 0):
-                            string  = "%10s %10s %4s \n" % (seq[j],seq[k],t.interactions[int(int_mat[j,k])])
-                            fh.write(string)
-                fh.write("# DOT-BRACKET ANNOTATION \n")
-                #fh.write("# " + num_string + "\n")
-                fh.write("# " + seq_string + "\n")
-                fh.write("# " + ''.join(ss_string) + "\n")
+                            anno_string += "%10s %10s %4s \n" % (seq[j],seq[k],t.interactions[int(int_mat[j,k])])
+                           
+            fh.write(string)
+            fh.write(seq_string + "\n")
+            fh.write(anno_string)
+
     fh.close()
     return 0
             
