@@ -7,7 +7,7 @@ If you use baRNAba in your work,  please cite the follwing paper:
 
 S.Bottaro, F. di Palma, G.Bussi. The role of nucleobases 
 in RNA structure and dynamics. 
-
+Nucleic Acids Research (2014)
 
 INSTALLATION
 BaRNAba is distributed as a Python script. It requires
