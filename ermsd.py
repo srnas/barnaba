@@ -15,6 +15,13 @@ import pdbreader as pb
 import tools as t
 import numpy as N
 
+def printmat(mat):
+    for j in range(mat.shape[0]):
+        for k in mat[j]:
+            s = '%8.4f ' % mat[j,k]
+            print s,
+    print ''
+
 def ermsd(args,files):
     
 
@@ -49,7 +56,7 @@ def ermsd(args,files):
                 else:
                     string = '%8.5f - ' % (ermsd)
                     for k in xrange(len(lcs)):
-                        ermsf = N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs)) 
+                        ermsf = N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs))
                         string += " %8.5f " % (ermsf)
                     string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
@@ -69,6 +76,8 @@ def ermsd(args,files):
                 assert(origo_ref.shape==origo.shape)               
                 mat = t.lcs2mat_4d(lcs,origo,args.cutoff)
                 mat_f = mat.reshape(-1,4)
+                if(args.dump==True):
+                    printmat(mat_f)
                 diff = (mat_f-ref_mat_f)**2
                 ermsd = N.sqrt(sum(sum(diff))/len(lcs))
                 if(args.ermsf==False):
@@ -78,7 +87,7 @@ def ermsd(args,files):
                     for k in xrange(len(lcs)):
                         diff1 = (mat[k,:]-ref_mat[k,:])**2
                         #diff2 = (mat[:,k]-ref_mat[:,k])**2
-                        ermsf = (N.sqrt( sum(sum(diff1))/len(lcs)) 
+                        ermsf = N.sqrt( sum(sum(diff1))/len(lcs)) 
                         string += " %8.5f " % (ermsf)
                     string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
