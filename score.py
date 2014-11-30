@@ -46,14 +46,17 @@ def score(args,files):
             #mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
             mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
             val = kernel(mat)
-            #for kk in range(len(sequence[ii])):
-            #    ss = 0.0
-            #    for el in range(len(val)):
-            #        if(kk in ids[el]):
-            #            ss += val[el]
-            #    print sequence[ii][kk],ss
+            string = '%8.5f ' % (sum(val))
+            if(args.perres):
+                #print val.shape, len(origo)
+                for kk in range(len(sequence[ii])):
+                    ss = 0.0
+                    for el in range(len(val)):
+                        if(kk in ids[el]):
+                            ss += val[el]
+                    string += '%8.5f ' % (ss) 
 
-            string = '%8.5f %s.%i \n' % (sum(val),f,ii)
+            string += '%s.%i \n' % (f,ii)
             fh.write(string)
 
 ####################### SCORING ########################
