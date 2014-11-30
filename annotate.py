@@ -15,6 +15,9 @@ import pdbreader as pb
 import tools as t
 import numpy as N
 
+op = ['(','[','{','<']
+cl = [')',']','}','>']          
+
 ##################### ANNOTATE #######################
 
 def annotate(args,files):
@@ -36,7 +39,14 @@ def annotate(args,files):
             int_mat = t.analyze_mat(mat,seq)
 
             anno_string = ''
-            seq_string = '# '
+            seq_string = '# SEQ '
+
+            ll = len(seq)
+            anno = ['.']*ll
+            levels = [-1]*ll
+            openings = []
+            closings = []
+
             for j in range(int_mat.shape[0]):
                 seq_string += seq[j] + " "
                 for k in range(j+1,int_mat.shape[0]):
@@ -44,10 +54,43 @@ def annotate(args,files):
                         anno_string += "%4s " % (t.interactions[int(int_mat[j,k])])
                     else:
                         if(int_mat[j,k] != 0):
+                            tt = t.interactions[int(int_mat[j,k])]
                             anno_string += "%10s %10s %4s \n" % (seq[j],seq[k],t.interactions[int(int_mat[j,k])])
-                           
+                            r1 = seq[j].split("_")[1]
+                            r2 = seq[k].split("_")[1]
+                            gu = False
+                            if((r1 == "G" and r2 =="U") or (r2 == "G" and r1 =="U")):
+                                gu = True
+                            if(tt == 'WC' or ( tt == "WW" and gu ==True)):
+                                openings.append(j)
+                                closings.append(k)
+
+            # pseudoknots check
+            for i in range(ll):
+
+                if(i in openings):
+                    idx = openings.index(i)
+                    levels[i] += 1
+                    anno[i] = op[levels[i]]
+                    levels[closings[idx]] += 1
+                    anno[closings[idx]] = cl[levels[i]]
+                    for j in range(i+1,closings[idx]):
+                        if(j in closings):
+                            jdx = closings.index(j)
+                            if(openings[jdx] < i and anno[j] == cl[levels[i]]):
+                                levels[i] += 1
+                                anno[i] = op[levels[i]]
+                                levels[closings[idx]] += 1
+                                anno[closings[idx]] = cl[levels[i]]
+                                
+            dotb_string = '# '
+            for el in anno:
+                dotb_string += el
+
+
             fh.write(string)
             fh.write(seq_string + "\n")
+            fh.write(dotb_string + "\n")
             fh.write(anno_string)
 
     fh.close()
