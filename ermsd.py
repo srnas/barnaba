@@ -49,7 +49,7 @@ def ermsd(args,files):
                 else:
                     string = '%8.5f - ' % (ermsd)
                     for k in xrange(len(lcs)):
-                        ermsf = 0.5*(N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs)) + N.sqrt( sum((ref_mat[:,k]-mat[:,k])**2)/len(lcs)))
+                        ermsf = N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs)) 
                         string += " %8.5f " % (ermsf)
                     string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
@@ -77,8 +77,8 @@ def ermsd(args,files):
                     string = '%8.5f - ' % (ermsd)
                     for k in xrange(len(lcs)):
                         diff1 = (mat[k,:]-ref_mat[k,:])**2
-                        diff2 = (mat[:,k]-ref_mat[:,k])**2
-                        ermsf = 0.5*(N.sqrt( sum(sum(diff1))/len(lcs)) + N.sqrt( sum(sum(diff2))/len(lcs)))
+                        #diff2 = (mat[:,k]-ref_mat[:,k])**2
+                        ermsf = (N.sqrt( sum(sum(diff1))/len(lcs)) 
                         string += " %8.5f " % (ermsf)
                     string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
