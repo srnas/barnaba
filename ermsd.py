@@ -17,8 +17,8 @@ import numpy as N
 
 def printmat(mat):
     for j in range(mat.shape[0]):
-        for k in mat[j]:
-            s = '%8.4f ' % mat[j,k]
+        for el in mat[j]:
+            s = '%8.4f ' % el
             print s,
     print ''
 
