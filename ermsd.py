@@ -15,12 +15,6 @@ import pdbreader as pb
 import tools as t
 import numpy as N
 
-def printmat(mat):
-    for j in range(mat.shape[0]):
-        for el in mat[j]:
-            s = '%8.4f ' % el
-            print s,
-    print ''
 
 def ermsd(args,files):
     
@@ -34,7 +28,9 @@ def ermsd(args,files):
     atoms,sequence = pb.get_coord(files[0])
 
     lcs_ref,origo_ref = t.coord2lcs(atoms[0])
-
+    if(args.dump==True):
+        fh_dump = open(args.name+ ".gvec",'w')
+        
     if(args.type=='scalar'):
 
         # calculate interaction matrix of the reference structure
@@ -76,10 +72,18 @@ def ermsd(args,files):
                 assert(origo_ref.shape==origo.shape)               
                 mat = t.lcs2mat_4d(lcs,origo,args.cutoff)
                 mat_f = mat.reshape(-1,4)
+
                 if(args.dump==True):
-                    printmat(mat_f)
+                    s = ''
+                    for j in range(mat_f.shape[0]):
+                        for el in mat_f[j]:
+                            s += '%8.4f ' % el
+                    fh_dump.write(s + "\n")
+
+
                 diff = (mat_f-ref_mat_f)**2
                 ermsd = N.sqrt(sum(sum(diff))/len(lcs))
+
                 if(args.ermsf==False):
                     string = '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
                 else:
@@ -92,6 +96,9 @@ def ermsd(args,files):
                     string += '- %s.%i \n' % (files[ii],jj)
                 fh.write(string)
         
+    if(args.dump==True):
+        
+        fh_dump.close()
 
     fh.close()
     return 0

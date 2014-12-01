@@ -40,7 +40,7 @@ def parse():
     parser_a.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
                               help='Type of ERMSD calculation')    
     parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD ",action='store_true',default=False)
-    parser_a.add_argument("--dump", dest="dump",help="Write to stdout G vectors",action='store_true',default=False)
+    parser_a.add_argument("--dump", dest="dump",help="Write G vectors on .gvec file",action='store_true',default=False)
 
 
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')
@@ -49,6 +49,7 @@ def parse():
     parser_b.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
     parser_b.add_argument("--type", dest="type",default='standard',choices=['standard','beta'],
                               help='Type of ESCORE calculation (default=standard), beta not implemented')    
+    parser_b.add_argument("--per-residue", dest="perres",help="Calculate per-residue score",action='store_true',default=False)
 
     parser_c = subparsers.add_parser('SS_MOTIF', help='Search single stranded (hairpin loop) RNA motif ')
     parser_c.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
