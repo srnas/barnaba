@@ -58,13 +58,14 @@ def annotate(args,files):
                             anno_string += "%10s %10s %4s \n" % (seq[j],seq[k],t.interactions[int(int_mat[j,k])])
                             r1 = seq[j].split("_")[1]
                             r2 = seq[k].split("_")[1]
-                            gu = False
-                            if((r1 == "G" and r2 =="U") or (r2 == "G" and r1 =="U")):
-                                gu = True
-                            if(tt == 'WC' or ( tt == "WW" and gu ==True)):
+                            if(tt == 'WC'):
+                                if(j in openings or j in closings):
+                                    print "# Warning - Residue", seq[j],"has double WC contact. This should not happen!"
+                                if(k in openings or k in closings):
+                                    print "# Warning - Residue", seq[k],"has double WC contact. This should not happen!"
                                 openings.append(j)
                                 closings.append(k)
-
+                                
             # pseudoknots check
             for i in range(ll):
 

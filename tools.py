@@ -328,12 +328,22 @@ def analyze_mat(M,seq):
         return 0
 
     def is_wc(v1,v2,r1,r2):
+        # Watson Crick (AU/CG)
         if((r1 == 'A' and r2 == 'U') or  (r1 == 'U' and r2 == 'A') or \
            (r1 == 'C' and r2 == 'G') or  (r1 == 'G' and r2 == 'C')):
             rv1 = multivariate_pdf(v1,mean,sigma) 
             rv2 = multivariate_pdf(v2,mean,sigma) 
             if(rv1*rv2>1.0e-08):
                 return interactions.index('WC')
+
+        # Watson Crick (GU)
+        if((r1 == 'U' and r2 == 'G') or  (r1 == 'U' and r2 == 'G')):
+            if(N.abs(v1[2]) < 1.0 and N.abs(v2[2])<1.0):
+                angle1 = N.arctan2(v1[1],v1[0])
+                angle2 = N.arctan2(v2[1],v2[0])
+                if((angle1> theta1 and angle1 <= theta2) and \
+                       (angle2> theta1 and angle2 <= theta2)):
+                    return interactions.index('WC')
         return 0
 
     def is_noncanonical(v1,v2):
