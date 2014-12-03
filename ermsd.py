@@ -77,8 +77,9 @@ def ermsd(args,files):
                     s = ''
                     for j in range(mat_f.shape[0]):
                         for el in mat_f[j]:
-                            s += '%8.4f ' % el
-                    fh_dump.write(s + "\n")
+                            s += '%10.6f ' % el
+                    s += '%s.%i \n' % (files[ii],jj)
+                    fh_dump.write(s)
 
 
                 diff = (mat_f-ref_mat_f)**2
