@@ -43,7 +43,9 @@ def ermsd(args,files):
 
             for jj,model in enumerate(atoms):
                 lcs,origo = t.coord2lcs(model)
-                assert(origo_ref.shape==origo.shape)               
+                if(origo_ref.shape!=origo.shape):
+                    print "# WARNING: ", files[ii] , " with lenght ", len(lcs), " differs from ", len(lcs_ref), " - SKIPPING"
+                    continue
                 mat = t.lcs2mat_1d(lcs,origo,args.cutoff)
                 mat_f = mat.reshape(-1)
                 ermsd = N.sqrt( sum((ref_mat_f-mat_f)**2)/len(lcs))
@@ -69,7 +71,10 @@ def ermsd(args,files):
             for jj,model in enumerate(atoms):
                 lcs,origo = t.coord2lcs(model)
 
-                assert(origo_ref.shape==origo.shape)               
+                if(origo_ref.shape!=origo.shape):
+                    print "# WARNING: ", files[ii] , " with lenght ", len(lcs), " differs from ", len(lcs_ref), " - SKIPPING"
+                    continue
+
                 mat = t.lcs2mat_4d(lcs,origo,args.cutoff)
                 mat_f = mat.reshape(-1,4)
 
