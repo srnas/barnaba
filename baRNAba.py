@@ -40,7 +40,6 @@ def parse():
     parser_a.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
                               help='Type of ERMSD calculation')    
     parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD ",action='store_true',default=False)
-    parser_a.add_argument("--dump", dest="dump",help="Write G vectors on .gvec file",action='store_true',default=False)
 
 
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')
@@ -76,6 +75,16 @@ def parse():
     parser_e.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
     parser_e.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
     parser_e.add_argument("--compact", dest="compact",help="use compact format",action='store_true')    
+
+    parser_f = subparsers.add_parser('DUMP', help='DUMP structural parameters')
+    parser_f.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
+    parser_f.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
+    parser_f.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
+                              help='Type of calculation')    
+    parser_f.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
+    parser_f.add_argument("--dumpR", dest="dumpR",help="Write R vectors on .rvec file",action='store_true',default=False)
+    parser_f.add_argument("--dumpLCS", dest="dumpL",help="Write LCS on .lcs file",action='store_true',default=False)
+    parser_f.add_argument("--hread", dest="read",help="make output human-readable",action='store_true',default=False)
 
     args = parser.parse_args()
 
@@ -118,6 +127,13 @@ def annotate(args,files):
     import annotate
     annotate.annotate(args,files)
 
+##################### ANNOTATE #######################
+
+def dump(args,files):
+
+    import dump
+    dump.dump(args,files)
+
 
 
 ####################### MAIN #########################
@@ -140,7 +156,8 @@ def main():
     # check arguments and process file list
     def check(args):
         
-        if(args.subparser_name == "ANNOTATE" or args.subparser_name == "ESCORE"):
+        noref = ["ANNOTATE","ESCORE","DUMP"]
+        if(args.subparser_name in noref):
             files = []
         else:
             files = [args.pdb]
@@ -189,7 +206,8 @@ def main():
                    'ESCORE' : score,\
                    'SS_MOTIF' : ss_motif,\
                    'DS_MOTIF' : ds_motif,\
-                   'ANNOTATE' : annotate}
+                   'ANNOTATE' : annotate,\
+                   'DUMP' : dump }
     options[args.subparser_name](args,files)
     
 ####################### MAIN ########################    
