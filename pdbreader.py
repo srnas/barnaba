@@ -139,7 +139,7 @@ def get_coord(file):
         CHAIN = line[21:22].strip()
         RES_ID = RESN + "_" + REST + "_" + CHAIN
         raw_sequence.append([RES_ID,ATMT])
-        raw_coords.append([float(line[30:38]),float(line[38:46]),float(line[46:53])])
+        raw_coords.append([float(line[30:38]),float(line[38:46]),float(line[46:54])])
 
     if(len(coords)==0):
         c,s,n = rearrange(raw_coords,raw_sequence)
