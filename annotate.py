@@ -11,88 +11,121 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pdbreader as pb
-import tools as t
-import numpy as N
+import reader as reader
 
 op = ['(','[','{','<']
 cl = [')',']','}','>']          
 
 ##################### ANNOTATE #######################
 
-def annotate(args,files):
+def pymol_script(pdbname,seq,interactions):
+    
+    def color(itype):
+
+        join = "".join(itype)
+        if("WC" in itype):
+            return "firebrick"
+        if("W" in join or "H" in join or "S" in join):
+            return "yelloworange"
+        if(">" in join or "<" in join):
+            return "forest"
+        return "blue"
+
+    root = pdbname.split("/")[-1].split(".pdb")[0]
+
+    fh = open(root + ".pml",'w')
+    fh.write("load " + pdbname + ", tutto \n")
+    fh.write("bg_color white\n")
+    fh.write("hide everything \n")
+    fh.write("show cartoon \n")
+    fh.write("set orthoscopic, on \n")
+    fh.write("set cartoon_color, gray60 \n")
+    fh.write("set cartoon_nucleic_acid_color, gray60 \n")
+    fh.write("cartoon oval \n")
+    fh.write("set cartoon_ring_mode, 1 \n")
+    fh.write("set cartoon_ring_finder, 2 \n")
+    fh.write("set cartoon_ring_width, 0.3 \n")
+    fh.write("set cartoon_ring_transparency, 0.2 \n")
+    fh.write("set cartoon_oval_length, 0.4 \n")
+    fh.write("set cartoon_oval_width, 0.2 \n")
+    fh.write("set cartoon_nucleic_acid_mode \n")
+    
+    colors = []
+    for res_idx in range(len(seq)):
+        ints = []
+        for ii in interactions:
+            if(res_idx in ii):
+                ints.append(ii[2])
+        #print seq[res_idx],ints,
+        colors.append(color(ints))
+        #print colors[-1]
+    for i in range(len(colors)):
+        fh.write("set cartoon_ring_color, " + colors[i] + ", resi " + seq[i].split("_")[0] + " and chain \"" + seq[i].split("_")[2] + "\"\n")  
+        fh.write("set cartoon_ladder_color, " + colors[i] + ", resi " + seq[i].split("_")[0] + " and chain \"" + seq[i].split("_")[2] + "\"\n")  
+
+
+        #print "set cartoon_ring_color, "  + cc[p] + ", resi " + str(j+1+offset) + " and  struct_" + str(h)
+    #print "set cartoon_ladder_color, " + cc[p] + ", resi " + str(j+1+offset) + " and  struct_" + str(h)
+    fh.close()
+
+def annotate(args):
 
     print "# Annotating RNA structures..."
-
+    files = args.files
     fh = open(args.name,'w')
-    pb.write_args(args,fh)
+    fh.write("# This is a baRNAba run.\n")
+    for k in args.__dict__:
+        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
+        fh.write(s)
 
-    for f in files:
-        atoms,sequence = pb.get_coord(f)
-        count = 0
-        for model,seq in zip(atoms,sequence):
-            count += 1
-            string = '# ' + f + "-" + str(count) + "\n"
+    for i in xrange(0,len(files)):
+        cur_pdb = reader.Pdb(files[i],base_only=True)
+
+        for j in xrange(len(cur_pdb.models)):
+
+            string = '# ' + files[i] + "-" + str(j) + "\n"
             
-            lcs,origo = t.coord2lcs(model)
-            mat = t.lcs2mat_3d(lcs,origo,args.cutoff)
-            int_mat = t.analyze_mat(mat,seq)
+            # calculate interactions
+            interactions,openings,closings = cur_pdb.models[j].get_annotation()
 
-            anno_string = ''
-            seq_string = '# SEQ '
+            # print sequence
+            string += "# " + "".join(cur_pdb.models[j].sequence) + "\n"
 
-            ll = len(seq)
+            # check pseudoknots
+            ll = len(cur_pdb.models[j].sequence)
             anno = ['.']*ll
             levels = [-1]*ll
-            openings = []
-            closings = []
+            for idx1 in xrange(len(openings)):
+                start1 = openings[idx1]
+                end1 = closings[idx1]
+                # up one level
+                levels[start1] += 1
+                levels[end1] += 1
 
-            for j in range(int_mat.shape[0]):
-                seq_string += seq[j] + " "
-                for k in range(j+1,int_mat.shape[0]):
-                    if(args.compact==True):
-                        anno_string += "%4s " % (t.interactions[int(int_mat[j,k])])
-                    else:
-                        if(int_mat[j,k] != 0):
-                            tt = t.interactions[int(int_mat[j,k])]
-                            anno_string += "%10s %10s %4s \n" % (seq[j],seq[k],t.interactions[int(int_mat[j,k])])
-                            r1 = seq[j].split("_")[1]
-                            r2 = seq[k].split("_")[1]
-                            if(tt == 'WC'):
-                                if(j in openings or j in closings):
-                                    print "# Warning - Residue", seq[j],"has double WC contact. This should not happen!"
-                                if(k in openings or k in closings):
-                                    print "# Warning - Residue", seq[k],"has double WC contact. This should not happen!"
-                                openings.append(j)
-                                closings.append(k)
-                                
-            # pseudoknots check
-            for i in range(ll):
+                for idx2 in xrange(len(closings)):
+                    end2 = closings[idx2]
+                    if(levels[end2] == levels[start1]):
+                        if(end2 > start1 and end2 < end1):
+                            levels[start1] += 1
+                            levels[end1] += 1
 
-                if(i in openings):
-                    idx = openings.index(i)
-                    levels[i] += 1
-                    anno[i] = op[levels[i]]
-                    levels[closings[idx]] += 1
-                    anno[closings[idx]] = cl[levels[i]]
-                    for j in range(i+1,closings[idx]):
-                        if(j in closings):
-                            jdx = closings.index(j)
-                            if(openings[jdx] < i and anno[j] == cl[levels[i]]):
-                                levels[i] += 1
-                                anno[i] = op[levels[i]]
-                                levels[closings[idx]] += 1
-                                anno[closings[idx]] = cl[levels[i]]
-                                
-            dotb_string = '# '
-            for el in anno:
-                dotb_string += el
+            for idx1 in xrange(len(openings)):
+                start1 = openings[idx1]
+                end1 = closings[idx1]
 
+                anno[start1] = op[levels[start1]]
+                anno[end1] = cl[levels[end1]]
 
+            # print dotbracket
+            string += '# ' + "".join(anno) + "\n"
+
+            # print interactions 
+            for el in interactions:
+                string += "%10s %10s %2s \n" % (cur_pdb.models[j].sequence_id[el[0]],cur_pdb.models[j].sequence_id[el[1]],el[2])
             fh.write(string)
-            fh.write(seq_string + "\n")
-            fh.write(dotb_string + "\n")
-            fh.write(anno_string)
+
+            if(args.pymol == True):
+                pymol_script(files[i],cur_pdb.models[j].sequence_id, interactions)
 
     fh.close()
     return 0

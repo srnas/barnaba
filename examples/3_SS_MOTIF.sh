@@ -7,9 +7,4 @@ set -e
 #    values between 0.5-1.0 should work in most cases.  
 # 2. The maximum number of allowed bulged bases (max 2) can be specified using the --bulge option 
 
-baRNAba --name 3_EXAMPLE_1 SS_MOTIF --query DATA/GNRA.pdb -f DATA/1S72.pdb --bulge 1 --treshold 0.6
-
-# The scalar search is a bit faster and less strict.
-# NB. not to be used for small molecules (<4 nucleotides)
-
-baRNAba --name 3_EXAMPLE_2 SS_MOTIF --query DATA/GNRA.pdb -f DATA/1S72.pdb --bulge 1 --type scalar --treshold 0.4
+../baRNAba --name 3_EXAMPLE_1 SS_MOTIF --query DATA/GNRA.pdb -f DATA/1S72.pdb --bulge 1 --treshold 0.6

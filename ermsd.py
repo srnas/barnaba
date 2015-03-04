@@ -11,88 +11,54 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pdbreader as pb
-import tools as t
-import numpy as N
+import reader as reader
+import numpy as np
 
 
-def ermsd(args,files):
+def ermsd(args):
     
+    files = args.files
+    print "# Calculating ERMSD..."
 
     fh = open(args.name,'w')
+    fh.write("# This is a baRNAba run.\n")
+    for k in args.__dict__:
+        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
+        fh.write(s)
 
-    print "# Calculating ERMSD..."
-    pb.write_args(args,fh)
 
     # calculate interaction matrix of the reference structure
-    atoms,sequence = pb.get_coord(files[0])
+    ref_pdb = reader.Pdb(args.reference,base_only=True)
+    assert len(ref_pdb.models)==1, "# FATAL: Reference PDB file cannot have multiple models" 
+    ref_len = len(ref_pdb.models[0].sequence)
+    ref_mat = ref_pdb.models[0].get_4dmat(args.cutoff)
+    ref_mat_f = ref_mat.reshape(-1,4)
 
-    lcs_ref,origo_ref = t.coord2lcs(atoms[0])
-        
-    if(args.type=='scalar'):
+    #all the rest and calculate ERMSD on-the-fly
+    for i in xrange(0,len(files)):
+        cur_pdb = reader.Pdb(files[i],base_only=True)
+        for j in xrange(len(cur_pdb.models)):
+            assert ref_len == len(cur_pdb.models[j].sequence) , "# FATAL: sequence lenghts mismatch"
 
-        # calculate interaction matrix of the reference structure
-        ref_mat = t.lcs2mat_1d(lcs_ref,origo_ref,args.cutoff)
-        ref_mat_f = ref_mat.reshape(-1)
+            # get 4d matrix
+            cur_mat = cur_pdb.models[j].get_4dmat(args.cutoff)
+            cur_mat_f = cur_mat.reshape(-1,4)
+            
+            # calculate difference
+            diff = (cur_mat_f-ref_mat_f)**2
+            ermsd = np.sqrt(np.sum(np.sum(diff))/ref_len)
 
-        # all the rest - and calculate ERMSD on-the-fly
-        for ii in xrange(0,len(files)):
-            atoms,sequence = pb.get_coord(files[ii])
-
-            for jj,model in enumerate(atoms):
-                lcs,origo = t.coord2lcs(model)
-                if(origo_ref.shape!=origo.shape):
-                    print "# WARNING: ", files[ii] , " with lenght ", len(lcs), " differs from ", len(lcs_ref), " - SKIPPING"
-                    continue
-                mat = t.lcs2mat_1d(lcs,origo,args.cutoff)
-                mat_f = mat.reshape(-1)
-                ermsd = N.sqrt( sum((ref_mat_f-mat_f)**2)/len(lcs))
-                if(args.ermsf==False):
-                    string = '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
-                else:
-                    string = '%8.5f - ' % (ermsd)
-                    for k in xrange(len(lcs)):
-                        ermsf = N.sqrt( sum((ref_mat[k,:]-mat[k,:])**2)/len(lcs))
-                        string += " %8.5f " % (ermsf)
-                    string += '- %s.%i \n' % (files[ii],jj)
-                fh.write(string)
-                
-
-    if(args.type=='vector'):
-        
-        ref_mat = t.lcs2mat_4d(lcs_ref,origo_ref,args.cutoff)
-        ref_mat_f = ref_mat.reshape(-1,4)
-        
-        # all the rest - and calculate ERMSD on-the-fly
-        for ii in xrange(0,len(files)):
-            atoms,sequence = pb.get_coord(files[ii])
-            for jj,model in enumerate(atoms):
-                lcs,origo = t.coord2lcs(model)
-
-                if(origo_ref.shape!=origo.shape):
-                    print "# WARNING: ", files[ii] , " with lenght ", len(lcs), " differs from ", len(lcs_ref), " - SKIPPING"
-                    continue
-
-                mat = t.lcs2mat_4d(lcs,origo,args.cutoff)
-                mat_f = mat.reshape(-1,4)
-
-
-
-                diff = (mat_f-ref_mat_f)**2
-                ermsd = N.sqrt(sum(sum(diff))/len(lcs))
-
-                if(args.ermsf==False):
-                    string = '%8.5f %s.%i \n' % (ermsd,files[ii],jj)
-                else:
-                    string = '%8.5f - ' % (ermsd)
-                    for k in xrange(len(lcs)):
-                        diff1 = (mat[k,:]-ref_mat[k,:])**2
-                        #diff2 = (mat[:,k]-ref_mat[:,k])**2
-                        ermsf = N.sqrt( sum(sum(diff1))/len(lcs)) 
-                        string += " %8.5f " % (ermsf)
-                    string += '- %s.%i \n' % (files[ii],jj)
-                fh.write(string)
-        
+            if(args.ermsf==False):
+                string = '%10.6f %s - %i \n' % (ermsd,files[i],j)
+            else:
+                string = '%10.6f - ' % (ermsd)
+                for k in xrange(ref_len):
+                    diff1 = (cur_mat[k,:]-ref_mat[k,:])**2
+                    ermsf = np.sqrt(np.sum(np.sum(diff1))/ref_len) 
+                    string += " %10.6f " % (ermsf)
+                string += '- %s - %i \n' % (files[i],j)
+            fh.write(string)
+        print "# Calculated", len(cur_pdb.models),"ERMSD",files[i]
 
     fh.close()
     return 0

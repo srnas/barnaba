@@ -11,9 +11,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pdbreader as pb
-import tools as t
-import  numpy as N
+import reader as reader
 
 def stringify(fname,jj,data,seq,hread=True):
 
@@ -36,9 +34,10 @@ def stringify(fname,jj,data,seq,hread=True):
                     s+= "\n"
         return s
     
-def dump(args,files):
+def dump(args):
     
 
+    files = args.files
     print "# Calculating DUMP ... (ahah)"
 
     if(args.dumpG==True):
@@ -49,34 +48,34 @@ def dump(args,files):
 
     if(args.dumpL==True):
         fh_dumpL = open(args.name+ ".lcs",'w')
-        
-    for ii in xrange(0,len(files)):
-        atoms,sequence = pb.get_coord(files[ii])
-        
-        for jj,model in enumerate(atoms):
-            lcs,origo = t.coord2lcs(model)
-            if(args.dumpL==True):
 
-                s = '# %s %i \n' % (files[ii],jj)
-                for j in range(lcs.shape[0]):
-                    s += '%10s ' % sequence[jj][j]
-                    for k in range(0,3):
-                        for l in range(3):
-                            s += '%10.6f ' % lcs[j,k,l]
-                    for k in range(0,3):
-                        s += '%10.4f ' % origo[j,k]
+    for i in xrange(0,len(files)):
+        pdb = reader.Pdb(files[i],base_only=True)
+
+        for j in xrange(len(pdb.models)):
+
+            if(args.dumpL==True):
+                lcs,origo = pdb.models[j].get_lcs()
+                s = '# %s %i \n' % (files[i],j)
+                for k in range(lcs.shape[0]):
+                    s += '%10s ' % pdb.models[j].sequence_id[k]
+                    for l in range(0,3):
+                        for m in range(3):
+                            s += '%10.6f ' % lcs[k,l,m]
+                    for l in range(0,3):
+                        s += '%10.4f ' % origo[k,l]
                     s += "\n"
 
                 fh_dumpL.write(s)
 
             if(args.dumpG==True):
-                mat = t.lcs2mat_4d(lcs,origo,args.cutoff)
-                s = stringify(files[ii],jj,mat,sequence[jj],hread=args.read)
+                mat = pdb.models[j].get_4dmat(args.cutoff)
+                s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
                 fh_dumpG.write(s)
 
             if(args.dumpR==True):
-                mat = t.lcs2mat_3d(lcs,origo,args.cutoff)
-                s = stringify(files[ii],jj,mat,sequence[jj],hread=args.read)
+                mat = pdb.models[j].get_3dmat(args.cutoff)
+                s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
                 fh_dumpR.write(s)
  
 

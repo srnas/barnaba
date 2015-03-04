@@ -11,52 +11,44 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pdbreader as pb
+import reader as reader
 import kde as kde
-import tools as t
+#import tools as tools
 
 ####################### SCORING ########################
         
-def score(args,files):
+def score(args):
+
+    files = args.files
+    print "# Calculating ESCORE..."
+    print "# This is a baRNAba run."
 
     fh = open(args.name,'w')
+    fh.write("# This is a baRNAba run.\n")
+    for k in args.__dict__:
+        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
+        fh.write(s)
 
-    pb.write_args(args,fh)
 
-    ref_atoms,ref_sequence = pb.get_coord(args.ff)
+    # calculate interaction matrix of the reference structure
+    ref_pdb = reader.Pdb(args.ff,base_only=True)
     ref_mat = []
-    for ii,model in enumerate(ref_atoms):
-        ref_lcs,ref_origo = t.coord2lcs(ref_atoms[ii])
-        ref_mat_ii,ids = t.lcs2mat_score(ref_lcs,ref_origo,args.cutoff)
+    for j in xrange(len(ref_pdb.models)):
+        ref_mat_ii = ref_pdb.models[j].get_mat_score(args.cutoff)
         ref_mat.extend(ref_mat_ii)
-
     kernel = kde.gaussian_kde(ref_mat)
     kernel.set_bandwidth(0.25)
 
     print "# KDE computed. Bandwidth=",kernel.factor
     print "# Calculating ESCORE..."
 
-    for f in files:
-        atoms,sequence = pb.get_coord(f)
-        for ii,model in enumerate(atoms):
-            #print model[0]
-
-            lcs,origo = t.coord2lcs(model)
-            # Cutoff is slightly augmented 
-            #mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
-            mat,ids = t.lcs2mat_score(lcs,origo,args.cutoff+0.2)
+    for i in xrange(0,len(files)):
+        cur_pdb = reader.Pdb(files[i],base_only=True)
+        for j in xrange(len(cur_pdb.models)):
+            mat = cur_pdb.models[j].get_mat_score(args.cutoff+0.2)
             val = kernel(mat)
             string = '%8.5f ' % (sum(val))
-            if(args.perres):
-                #print val.shape, len(origo)
-                for kk in range(len(sequence[ii])):
-                    ss = 0.0
-                    for el in range(len(val)):
-                        if(kk in ids[el]):
-                            ss += val[el]
-                    string += '%8.5f ' % (ss) 
-
-            string += '%s.%i \n' % (f,ii)
+            string += '%s.%i \n' % (files[i],j)
             fh.write(string)
 
 ####################### SCORING ########################

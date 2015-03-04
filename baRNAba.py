@@ -13,6 +13,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import cProfile
 
 import sys
 import time
@@ -27,64 +28,69 @@ def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
     parser.add_argument("--name", dest="name",help="Job ID",default='',required=False)
-    parser.add_argument("--trjconv", dest="gmx",help="Gromacs trjconv name. Necessary only when analyzing gro/xtc trajectories",default='',required=False)
     parser.add_argument("--skip", dest="skip",help="Skip frames in gro/xtc file",default='1',required=False)
 
- 
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
 
+    # TESTED
     parser_a = subparsers.add_parser('ERMSD', help='calculate ERMSD')
-    parser_a.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=True)
-    parser_a.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
+    parser_a.add_argument("--pdb", dest="reference",help="Reference PDB file",required=True)
+    parser_a.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_a.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_a.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
-                              help='Type of ERMSD calculation')    
     parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD ",action='store_true',default=False)
 
-
+    # TESTED
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')
-    parser_b.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
+    parser_b.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=False)
     parser_b.add_argument("--force-field", dest="ff",help="PDB force field file",default='',required=True)
     parser_b.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
     parser_b.add_argument("--type", dest="type",default='standard',choices=['standard','beta'],
                               help='Type of ESCORE calculation (default=standard), beta not implemented')    
-    parser_b.add_argument("--per-residue", dest="perres",help="Calculate per-residue score",action='store_true',default=False)
+    #parser_b.add_argument("--per-residue", dest="perres",help="Calculate per-residue score",action='store_true',default=False)
 
+
+    # CHECK
     parser_c = subparsers.add_parser('SS_MOTIF', help='Search single stranded (hairpin loop) RNA motif ')
-    parser_c.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
-    parser_c.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
+    parser_c.add_argument("--query", dest="reference",help="Reference PDB file",required=True)
+    parser_c.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_c.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_c.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
-    parser_c.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)   
-    parser_c.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
-                              help='Type of ERMSD calculation (default=vector)')    
+    parser_c.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.7,type=float)    
+    parser_c.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides",default=0,type=int)   
+    parser_c.add_argument("--sequence", dest="seq",help="Sequence Accepts ACGU/NRY/ format. Default = any",required=False,default=None)
+    parser_c.add_argument("--dumpPDB", dest="dump_pdb",help="Write pdb files",action='store_true',default=False)
 
     parser_d = subparsers.add_parser('DS_MOTIF', help='Search RNA Double stranded (internal loop) motifs')
-    parser_d.add_argument("--query", dest="pdb",help="Reference PDB file",required=True)
-    parser_d.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
+    parser_d.add_argument("--query", dest="reference",help="Reference PDB file",required=True)
+    parser_d.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_d.add_argument("--l1", dest="l1",help="Length of first strand",required=True,type=int)    
     parser_d.add_argument("--l2", dest="l2",help="Lenght of second strand",required=True,type=int)    
     parser_d.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_d.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.8,type=float)    
+    parser_d.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.7,type=float)    
     parser_d.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides per strand)",default=0,type=int)    
-    parser_d.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
-                              help='Type of ERMSD calculation (default=scalar)')    
+    parser_d.add_argument("--sequence", dest="seq",help="Sequence Accepts ACGU/NRY/ format. Default = any",required=False,default=None)
+    parser_d.add_argument("--dumpPDB", dest="dump_pdb",help="Write pdb files",action='store_true',default=False)
 
+    # TESTED BUT CHECK
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
-    #parser_e.add_argument("--pdb", dest="pdb",help="Reference PDB file",required=False)
-    parser_e.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=False)
-    parser_e.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=1.58,type=float)    
-    parser_e.add_argument("--compact", dest="compact",help="use compact format",action='store_true')    
+    parser_e.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+    parser_e.add_argument("--pymol", dest="pymol",help="Write script.pml file for coloring",action='store_true',default=False)
 
+    # TESTED
     parser_f = subparsers.add_parser('DUMP', help='DUMP structural parameters')
-    parser_f.add_argument("-f", dest="files",help="PDB/XTC file(s)",nargs="+",default='',required=True)
+    parser_f.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_f.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_f.add_argument("--type", dest="type",default='vector',choices=['scalar','vector'],
-                              help='Type of calculation')    
     parser_f.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
     parser_f.add_argument("--dumpR", dest="dumpR",help="Write R vectors on .rvec file",action='store_true',default=False)
     parser_f.add_argument("--dumpLCS", dest="dumpL",help="Write LCS on .lcs file",action='store_true',default=False)
     parser_f.add_argument("--hread", dest="read",help="make output human-readable",action='store_true',default=False)
+
+    # TESTED
+    parser_g = subparsers.add_parser('SPLIT', help='SPLIT structure in multiple PDB')
+    parser_g.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+    #parser_g.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
+    parser_g.add_argument("--dumpPDB", dest="dump_pdb",help="Write pdb files",action='store_true',default=False)
+    parser_g.add_argument("--sequence", dest="seq",help="Sequence type. Accepts ACGU/NRY/% format",required=True)
+    parser_g.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
 
     args = parser.parse_args()
 
@@ -93,47 +99,52 @@ def parse():
 
 ####################### ERMSD ########################
 
-def ermsd(args,files):
+def ermsd(args):
 
     import ermsd    
-    ermsd.ermsd(args,files)
+    ermsd.ermsd(args)
 
 
 ####################### SCORING ########################
         
-def score(args,files):
+def score(args):
 
     import score
-    score.score(args,files)
+    score.score(args)
 
 
 ####################### MOTIF #########################
 
-def ss_motif(args,files):
+def ss_motif(args):
 
     import ss_motif
-    ss_motif.ss_motif(args,files)
+    ss_motif.ss_motif(args)
 
 
-def ds_motif(args,files):
+def ds_motif(args):
 
     import ds_motif
-    ds_motif.ds_motif(args,files)
+    ds_motif.ds_motif(args)
     
 ##################### ANNOTATE #######################
 
-def annotate(args,files):
+def annotate(args):
 
     import annotate
-    annotate.annotate(args,files)
+    annotate.annotate(args)
 
 ##################### ANNOTATE #######################
 
-def dump(args,files):
+def dump(args):
 
     import dump
-    dump.dump(args,files)
+    dump.dump(args)
 
+####################  SPLIT #######################
+
+def split(args):
+    import split
+    split.split(args)
 
 
 ####################### MAIN #########################
@@ -143,7 +154,6 @@ def main():
     def filename(args):
         # create output filename
         if(args.name == ''):
-            #w = (args.pdb).split(".pdb")[0].split("/")[-1] + "."
             w = time.strftime("%j.%m.%M.")
             outfile = w + args.subparser_name + ".rna"
             args.name = outfile
@@ -153,32 +163,7 @@ def main():
             print "# Your output will be written to",outfile
             args.name = outfile
 
-    # check arguments and process file list
-    def check(args):
-        
-        noref = ["ANNOTATE","ESCORE","DUMP"]
-        if(args.subparser_name in noref):
-            files = []
-        else:
-            files = [args.pdb]
-        for f in args.files:
-            extension = f[-4:]
-            if(extension == '.pdb'):
-                files.append(f)
-            else:
-                if(extension == '.xtc' or extension=='.gro'):
-                    if(len(args.files) != 1):
-                        print "# Fatal error. You cannot provide multiple XTC trajectories"
-                        sys.exit(1)
-                    else:
-                        import pdbreader as pb
-                        trj = pb.xtc2pdb(f,args)        
-                        files.append(trj)
-                else:
-                    print "# Fatal error. Extension ",extension,"not recognized. Please check your -f file(s)"
-                    sys.exit(1)
-        return files
-
+    
     # check at startup!
     try:
         import numpy
@@ -195,20 +180,19 @@ def main():
     # Parse options
     args = parse()
 
-    # check xtc or pdb and return list
-    files = check(args)
+    # check pdb file
+    for f in args.files:
+        assert f[-4:]==".pdb", "# FATAL: PDB format only"
+
 
     # create filename
     outfile = filename(args)
 
     # call appropriate function
-    options = {'ERMSD' : ermsd,\
-                   'ESCORE' : score,\
-                   'SS_MOTIF' : ss_motif,\
-                   'DS_MOTIF' : ds_motif,\
-                   'ANNOTATE' : annotate,\
-                   'DUMP' : dump }
-    options[args.subparser_name](args,files)
+    options = {'ERMSD' : ermsd,'ESCORE' : score,'SS_MOTIF' : ss_motif,'DS_MOTIF' : ds_motif,\
+                   'ANNOTATE' : annotate,'DUMP' : dump,'SPLIT' : split}
+
+    options[args.subparser_name](args)
     
 ####################### MAIN ########################    
 
