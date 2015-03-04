@@ -17,10 +17,10 @@ def stringify(fname,jj,data,seq,hread=True):
 
     if(hread==False):
         data = data.reshape(-1)
-        s = ''
+        s = '%s.%i ' % (fname,jj)
         for el in data:
             s += '%10.6f ' % el
-        s += '%s.%i \n' % (fname,jj)
+        s += '\n'
         return s
     else:
         print len(seq),data.shape
