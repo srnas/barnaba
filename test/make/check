@@ -45,9 +45,7 @@ else
 echo "+ Find the bug!"
 echo "+ To replace references, go to the test directory and"
 echo "+ type 'make reset'"
-if [ -n "$fail" ] ; then
   exit 1
-fi
 fi
 echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo
