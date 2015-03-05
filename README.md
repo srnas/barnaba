@@ -1,5 +1,7 @@
+[![Build Status](https://travis-ci.org/srnas/barnaba.svg)](https://travis-ci.org/srnas/barnaba)
 
 INTRODUCTION
+============
 BaRNAba is a tool for analyzing RNA three-dimensional structures.
 BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi.
 For bugs, questions or comments contact Sandro at sbottaro@sissa.it. 
@@ -10,6 +12,7 @@ in RNA structure and dynamics.
 Nucleic Acids Research (2014)
 
 INSTALLATION
+============
 BaRNAba is distributed as a Python script. It requires
 Python version 2.7 with Numpy and Scipy libraries.
 
@@ -23,6 +26,7 @@ or download a zip file from the web:
 
 
 USAGE
+=====
 
 * minimal help
   ./baRNAba --help 
