@@ -1,2 +1,4 @@
+install:
+  - pip install numpy
 script:
   - cd test && make 
