@@ -19,7 +19,7 @@ import sys
 import time
 
 if sys.version_info[0] != 2 or sys.version_info[1] != 7:
-    print "# Python 2.7 is required. Aborting"
+    sys.stderr.write('# Python 2.7 is required. Aborting \n')
     sys.exit(1)
 else:
     import argparse
@@ -168,13 +168,13 @@ def main():
     try:
         import numpy
     except ImportError:
-        print "# Numpy is not installed"
+        sys.stderr.write('# Numpy is not installed \n')
         sys.exit(1)
 
     try:
         import scipy
     except ImportError:
-        print "# Scipy is not installed"
+        sys.stderr.write('# Scipy is not installed \n')
         sys.exit(1)
 
     # Parse options
@@ -182,7 +182,7 @@ def main():
 
     # check pdb file
     for f in args.files:
-        assert f[-4:]==".pdb", "# FATAL: PDB format only"
+        assert f[-4:]==".pdb", "# Error: PDB format only"
 
 
     # create filename

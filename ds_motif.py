@@ -53,11 +53,11 @@ def ds_motif(args):
 
     indeces1=np.arange(0,ref_len1)
     ref_mat1 = ref_pdb.models[0].get_4dmat(args.cutoff,indeces1)
-    print ref_mat1.shape
+    
     ref_mat_f1 = ref_mat1.reshape(-1,4)
     indeces2=np.arange(ref_len1,ref_len)
     ref_mat2 = ref_pdb.models[0].get_4dmat(args.cutoff,indeces2)
-    print ref_mat2.shape
+    
     ref_mat_f2 = ref_mat2.reshape(-1,4)
 
     # calculate center of mass distances

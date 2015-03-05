@@ -16,8 +16,8 @@ cp ../* .
 ./test.sh >out 2>err
 
 echo "Done."
-echo "Here is the output file:"
-cat out
+#echo "Here is the output file:"
+#cat out
 echo "Here is the error file:"
 cat err
 

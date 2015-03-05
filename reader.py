@@ -165,7 +165,8 @@ class Structure:
             if(None in v):
                 null = [0.0,0.0,0.0]
                 v = [null,null,null]
-                print "# Warning: No C2,C4 or C6 atoms in residue ", residue.residue_n, residue.residue_t
+                err = "# Warning: No C2,C4 or C6 atoms in residue %s %s \n" % (residue.residue_n, residue.residue_t)
+                sys.stderr.write(err)
                 if(permissive==False):
                     return None,None
                 
@@ -529,7 +530,8 @@ class Pdb:
                 # skip alternate locations
                 ALT = line[16:17].strip()
                 if(ALT!="" and ALT !="A"):
-                    print "# Warning: the PDB contains alternative locations for residue", REST,str(RESN),ALT
+                    err =  "# Warning: the PDB contains alternative locations for residue %s %s %s \n" % (REST,str(RESN),ALT)
+                    sys.stderr.write(err)
                     continue
 
                 # skip hydrogens and unknown atomtypes
