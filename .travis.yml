@@ -1,4 +1,4 @@
-install:
-  - pip install numpy
+before_install:
+ - sudo apt-get install -qq python-numpy python-scipy
 script:
   - cd test && make 
