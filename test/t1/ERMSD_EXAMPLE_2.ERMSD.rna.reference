@@ -1,0 +1,48 @@
+# This is a baRNAba run.
+# files ['../../../examples/DATA/samples.pdb']
+# cutoff 2.4
+# name ERMSD_EXAMPLE_2.ERMSD.rna
+# reference ../../../examples/DATA/sample1.pdb
+# subparser_name ERMSD
+# skip 1
+# ermsf False
+  2.449141 ../../../examples/DATA/samples.pdb - 0 
+  2.443277 ../../../examples/DATA/samples.pdb - 1 
+  2.447702 ../../../examples/DATA/samples.pdb - 2 
+  2.456866 ../../../examples/DATA/samples.pdb - 3 
+  2.453229 ../../../examples/DATA/samples.pdb - 4 
+  2.443754 ../../../examples/DATA/samples.pdb - 5 
+  2.468985 ../../../examples/DATA/samples.pdb - 6 
+  2.441678 ../../../examples/DATA/samples.pdb - 7 
+  2.462143 ../../../examples/DATA/samples.pdb - 8 
+  2.483477 ../../../examples/DATA/samples.pdb - 9 
+  2.468713 ../../../examples/DATA/samples.pdb - 10 
+  2.443758 ../../../examples/DATA/samples.pdb - 11 
+  2.441612 ../../../examples/DATA/samples.pdb - 12 
+  2.456286 ../../../examples/DATA/samples.pdb - 13 
+  2.442537 ../../../examples/DATA/samples.pdb - 14 
+  2.448795 ../../../examples/DATA/samples.pdb - 15 
+  2.459893 ../../../examples/DATA/samples.pdb - 16 
+  2.445062 ../../../examples/DATA/samples.pdb - 17 
+  2.452034 ../../../examples/DATA/samples.pdb - 18 
+  2.443156 ../../../examples/DATA/samples.pdb - 19 
+  2.469256 ../../../examples/DATA/samples.pdb - 20 
+  2.481743 ../../../examples/DATA/samples.pdb - 21 
+  2.472213 ../../../examples/DATA/samples.pdb - 22 
+  2.459590 ../../../examples/DATA/samples.pdb - 23 
+  2.484455 ../../../examples/DATA/samples.pdb - 24 
+  2.457201 ../../../examples/DATA/samples.pdb - 25 
+  2.455246 ../../../examples/DATA/samples.pdb - 26 
+  2.469306 ../../../examples/DATA/samples.pdb - 27 
+  2.458258 ../../../examples/DATA/samples.pdb - 28 
+  2.469766 ../../../examples/DATA/samples.pdb - 29 
+  2.459482 ../../../examples/DATA/samples.pdb - 30 
+  2.464470 ../../../examples/DATA/samples.pdb - 31 
+  2.457806 ../../../examples/DATA/samples.pdb - 32 
+  2.459920 ../../../examples/DATA/samples.pdb - 33 
+  2.456835 ../../../examples/DATA/samples.pdb - 34 
+  2.477814 ../../../examples/DATA/samples.pdb - 35 
+  2.476325 ../../../examples/DATA/samples.pdb - 36 
+  2.462526 ../../../examples/DATA/samples.pdb - 37 
+  2.457715 ../../../examples/DATA/samples.pdb - 38 
+  2.458212 ../../../examples/DATA/samples.pdb - 39 
