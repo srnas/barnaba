@@ -466,7 +466,7 @@ class Structure:
                 if(is_match("".join(sub_seq),query)): idx.append(range(j,j+l1))
 
         # one bulged base
-        if(bulges==1):
+        if(bulges>0):
             for j in xrange(0,len(self.sequence)-l1-1):
                 sub_seq = self.sequence[j:j+l1+1]
                 sub_chain = self.chain[j:j+l1+1]
@@ -477,7 +477,7 @@ class Structure:
                         if(is_match("".join(sub_seq_tmp),query)):idx.append(tmp_idx)
 
         # Two bulges
-        if(bulges==2):
+        if(bulges>1):
             for j in xrange(0,len(self.sequence)-l1-2):
                 sub_seq = self.sequence[j:j+l1+2]
                 sub_chain = self.chain[j:j+l1+2]
