@@ -141,13 +141,84 @@ class Structure:
     def get_com(self,idx=None):
 
         if(idx==None):
-            idx = range(len(self.residues))
+            idx = xrange(len(self.residues))
 
         coords = []
         for i in idx:
             coords.append(self.residues[i].get_com())
         return np.array(coords)
 
+    def get_bb_torsions(self):
+        def calc_dihe(vecs):
+            if(any(x == None for x in vecs)):
+                return None
+            vecs = np.array(vecs)
+            b = vecs[:-1] - vecs[1:]
+            norms = [np.linalg.norm(b[0]),np.linalg.norm(b[1]),np.linalg.norm(b[2])]
+            if(any(x>1.7 for x in norms)):
+                err = "# Warning: a bond lenght is suspiciously large:" + norms
+                err += " This dihedral will not be calculated \n"
+                sys.stderr.write(err)
+                return None
+            
+            # "Flip" the first vector so that eclipsing vectors have dihedral=0
+            b[0] *= -1
+            # Use dot product to find the components of b1 and b3 that are not
+            # perpendicular to b2. Subtract those components. The resulting vectors
+            # lie in parallel planes.
+            v = np.array( [ v - (v.dot(b[1])/b[1].dot(b[1])) * b[1] for v in [b[0], b[2]] ] )
+            v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1,1)
+            b1 = b[1] / norms[1]
+            x = np.dot(v[0], v[1])
+            m = np.cross(v[0], b1)
+            y = np.dot(m, v[1])
+            return np.degrees(np.arctan2( y, x ))
+        
+        idx = xrange(len(self.residues))
+        angles = []
+        for i in idx:
+            residue = self.residues[i]
+
+            ang = [None]*7
+
+            at1 = residue.get_atom("P")
+            at2 = residue.get_atom("O5'")
+            at3 = residue.get_atom("C5'")
+            at4 = residue.get_atom("C4'")
+            at5 = residue.get_atom("C3'")
+            at6 = residue.get_atom("O3'")            
+
+            if(i!=0 and (residue.chain == self.residues[i-1].chain)):
+                at0 = self.residues[i-1].get_atom("O3'")
+                ang[0] = calc_dihe([at0,at1,at2,at3]) # alpha  [O3-P-O5-C5]
+            ang[1] = calc_dihe([at1,at2,at3,at4])     # beta   [ P-O5p-C5p-C4p]
+            ang[2] = calc_dihe([at2,at3,at4,at5])     # gamma [ O5p-C5p-C4p-C3p]
+            ang[3] = calc_dihe([at3,at4,at5,at6])     # delta [ C5p-C4p-C3p-O3p]
+                
+            if(i!=idx[-1] and (residue.chain == self.residues[i+1].chain)):
+                at7 = self.residues[i+1].get_atom("P")     
+                at8 = self.residues[i+1].get_atom("O5'")
+                ang[4] = calc_dihe([at4,at5,at6,at7])    # epsilon [C4p-C3p-O3p-P]
+                ang[5] = calc_dihe([at5,at6,at7,at8])    # zeta[C3p-O3p-P-O5p]
+
+            at9 = residue.get_atom("O4'")     
+            at10 = residue.get_atom("C1'")     
+            if(residue.residue_t == "A" or residue.residue_t == "G"):
+                # chi (pur) [O4p-C1p-N9-C4]
+                at11 = residue.get_atom("N9")
+                at12 = residue.get_atom("C4")
+
+            if(residue.residue_t == "C" or residue.residue_t == "U"):
+                # chi (pyr) [O4p-C1p-N1-C2]
+                at11 = residue.get_atom("N1") 
+                at12 = residue.get_atom("C2")
+            ang[6] = calc_dihe([at9,at10,at11,at12])
+            angles.append(ang)
+
+        return angles
+            
+
+            
     def get_lcs(self,idx=None,permissive=True):
 
         if(idx==None):
@@ -305,6 +376,8 @@ class Structure:
 
         return np.array(mat).T
 
+
+        
 
     def get_annotation(self):
 
