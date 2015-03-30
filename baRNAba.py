@@ -92,6 +92,9 @@ def parse():
     #parser_g.add_argument("--sequence", dest="seq",help="Sequence type. Accepts ACGU/NRY/% format",required=True)
     #parser_g.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
 
+    parser_h = subparsers.add_parser('TORSION', help='Annotate RNA structure')
+    parser_h.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+
     args = parser.parse_args()
 
     return args
@@ -139,6 +142,13 @@ def dump(args):
 
     import dump
     dump.dump(args)
+
+##################### ANNOTATE #######################
+    
+def torsion(args):
+
+    import torsions
+    torsions.torsions(args)
 
 ####################  SPLIT #######################
 
@@ -190,7 +200,7 @@ def main():
 
     # call appropriate function
     options = {'ERMSD' : ermsd,'ESCORE' : score,'SS_MOTIF' : ss_motif,'DS_MOTIF' : ds_motif,\
-                   'ANNOTATE' : annotate,'DUMP' : dump}
+                   'ANNOTATE' : annotate,'DUMP' : dump,'TORSION':torsion}
 
     options[args.subparser_name](args)
     
