@@ -94,6 +94,7 @@ def parse():
 
     parser_h = subparsers.add_parser('TORSION', help='Annotate RNA structure')
     parser_h.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+    parser_h.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
 
     args = parser.parse_args()
 

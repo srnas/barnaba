@@ -25,7 +25,6 @@ def torsions(args):
 
     for i in xrange(0,len(files)):
         cur_pdb = reader.Pdb(files[i],base_only=False)
-
         for j in xrange(len(cur_pdb.models)):
 
             string = '# ' + files[i] + "-" + str(j) + "\n"
@@ -35,16 +34,25 @@ def torsions(args):
             
             # calculate interactions
             bb_torsion = cur_pdb.models[j].get_bb_torsions()
-            for k in range(len(bb_torsion)):
-                string += "%10s" % (cur_pdb.models[j].sequence_id[k])
-                for l in range(len(bb_torsion[k])):
-                    try:
-                        string += "%10.3f" % bb_torsion[k][l]
-                    except:
-                        string += "%10s" % bb_torsion[k][l]
-                string += "\n"
+            if(args.hread):
+                for k in range(len(bb_torsion)):
+                    string += "%10s" % (cur_pdb.models[j].sequence_id[k])
+                    for l in range(len(bb_torsion[k])):
+                        try:
+                            string += "%10.3f" % bb_torsion[k][l]
+                        except:
+                            string += "%10s" % bb_torsion[k][l]
+                    string += "\n"
+            else:
+                for k in range(len(bb_torsion)):
+                    for l in range(len(bb_torsion[k])):
+                        try:
+                            string += "%10.3f" % bb_torsion[k][l]
+                        except:
+                            string += "%10s" % bb_torsion[k][l]
+            string += "\n"
             fh.write(string)
-
+                
             # calculate interactions
             #ss_torsion = cur_pdb.models[j].get_sugar_torsion()
 
