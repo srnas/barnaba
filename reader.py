@@ -121,12 +121,13 @@ class Residue:
 
 class Structure:
 
-    def __init__(self,residue_data,natoms):
+    def __init__(self,residue_data,natoms,name):
 
         self.residues = []
         self.sequence = []
         self.sequence_id = []
         self.chain = []
+        self.name = name
         start = 0
         for i in xrange(len(natoms)):
 
@@ -156,7 +157,8 @@ class Structure:
             b = vecs[:-1] - vecs[1:]
             norms = [np.linalg.norm(b[0]),np.linalg.norm(b[1]),np.linalg.norm(b[2])]
             if(any(x>1.7 for x in norms)):
-                err = "# Warning: a bond lenght is suspiciously large:" + norms
+                err = "# Warning: a bond lenght is suspiciously large: %s" %(self.name)
+                err += str(norms[0])  + " " + str(norms[1]) + " " +  str(norms[2])
                 err += " This dihedral will not be calculated \n"
                 sys.stderr.write(err)
                 return None
@@ -532,11 +534,15 @@ class Structure:
 
         idx = []
         l1 = len(query)
-        for j in xrange(0,len(self.sequence)-l1):
+        for j in xrange(0,len(self.sequence)-l1+1):
             sub_seq = self.sequence[j:j+l1]
             sub_chain = self.chain[j:j+l1]
             if(sub_chain[0] == sub_chain[-1]):
-                if(is_match("".join(sub_seq),query)): idx.append(range(j,j+l1))
+                numbers = np.array([int(x.split("_")[0]) for x in (self.sequence_id[j:j+l1])])
+                diff = numbers[1:]-numbers[:-1]
+                if(any(x!=1 for x in diff) == False):
+                    if(is_match("".join(sub_seq),query)):
+                        idx.append(range(j,j+l1))
 
         # one bulged base
         if(bulges>0):
@@ -626,7 +632,8 @@ class Pdb:
             if(line[0:6].strip()=="ENDMDL"):
                 if(len(data) > 1):
                     natoms.append(num)
-                    self.models.append(Structure(data,natoms))
+                    name = filename+ "." + str(len(self.models))
+                    self.models.append(Structure(data,natoms,name))
                     data = []
                     natoms = []
                     num = 0
@@ -639,7 +646,8 @@ class Pdb:
         # one last time (when ENDMDL misses)
         if(len(data) > 1):
             natoms.append(num)
-            self.models.append(Structure(data,natoms))
+            name = filename+ "." + str(len(self.models))
+            self.models.append(Structure(data,natoms,name))
 
 
 
