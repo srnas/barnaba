@@ -1,9 +1,6 @@
 import sys
 import numpy as np
 from scipy.spatial import distance
-#from multiprocessing import Pool,cpu_count
-#from joblib import Parallel, delayed
-#import profile
 
 class Names:
 
@@ -55,8 +52,10 @@ class Names:
     theta1 = 0.16
     theta2 = 2.0
     theta3 = -2.0
-
-
+    
+    # pconst for sugar pucker
+    #Pconst = 2.0*(np.sin(np.pi/5.) + np.sin(np.pi/2.5))
+    Pconst = 3.0776835
 
 class Atom:
 
@@ -149,39 +148,43 @@ class Structure:
             coords.append(self.residues[i].get_com())
         return np.array(coords)
 
-    def get_bb_torsions(self):
-        def calc_dihe(vecs):
-            if(any(x == None for x in vecs)):
-                return None
-            vecs = np.array(vecs)
-            b = vecs[:-1] - vecs[1:]
-            norms = [np.linalg.norm(b[0]),np.linalg.norm(b[1]),np.linalg.norm(b[2])]
-            if(any(x>1.7 for x in norms)):
-                err = "# Warning: a bond lenght is suspiciously large: %s" %(self.name)
-                err += str(norms[0])  + " " + str(norms[1]) + " " +  str(norms[2])
-                err += " This dihedral will not be calculated \n"
-                sys.stderr.write(err)
-                return None
+
+    def calc_dihe(self,vecs):
+
+        if(any(x == None for x in vecs)):
+            return float('nan')
+        vecs = np.array(vecs)
+        b = vecs[:-1] - vecs[1:]
+        norms = [np.linalg.norm(b[0]),np.linalg.norm(b[1]),np.linalg.norm(b[2])]
+        if(any(x>1.7 for x in norms)):
+            err = "# Warning: a bond lenght is suspiciously large: %s \n" %(self.name)
+            err += "# %5.2f %5.2f %5.2f \n" % (norms[0],norms[1],norms[2])
+            err += "# This dihedral will not be calculated \n"
+            sys.stderr.write(err)
+            return float('nan')
             
-            # "Flip" the first vector so that eclipsing vectors have dihedral=0
-            b[0] *= -1
-            # Use dot product to find the components of b1 and b3 that are not
-            # perpendicular to b2. Subtract those components. The resulting vectors
-            # lie in parallel planes.
-            v = np.array( [ v - (v.dot(b[1])/b[1].dot(b[1])) * b[1] for v in [b[0], b[2]] ] )
-            v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1,1)
-            b1 = b[1] / norms[1]
-            x = np.dot(v[0], v[1])
-            m = np.cross(v[0], b1)
-            y = np.dot(m, v[1])
-            return np.degrees(np.arctan2( y, x ))
+        # "Flip" the first vector so that eclipsing vectors have dihedral=0
+        b[0] *= -1
+        # Use dot product to find the components of b1 and b3 that are not
+        # perpendicular to b2. Subtract those components. The resulting vectors
+        # lie in parallel planes.
+        v = np.array( [ v - (v.dot(b[1])/b[1].dot(b[1])) * b[1] for v in [b[0], b[2]] ] )
+        v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1,1)
+        b1 = b[1] / norms[1]
+        x = np.dot(v[0], v[1])
+        m = np.cross(v[0], b1)
+        y = np.dot(m, v[1])
+
+        return np.arctan2( y, x )
+
+    def get_bb_torsions(self):
         
         idx = xrange(len(self.residues))
         angles = []
         for i in idx:
             residue = self.residues[i]
 
-            ang = [None]*7
+            ang = [float('nan')]*7
 
             at1 = residue.get_atom("P")
             at2 = residue.get_atom("O5'")
@@ -192,16 +195,16 @@ class Structure:
 
             if(i!=0 and (residue.chain == self.residues[i-1].chain)):
                 at0 = self.residues[i-1].get_atom("O3'")
-                ang[0] = calc_dihe([at0,at1,at2,at3]) # alpha  [O3-P-O5-C5]
-            ang[1] = calc_dihe([at1,at2,at3,at4])     # beta   [ P-O5p-C5p-C4p]
-            ang[2] = calc_dihe([at2,at3,at4,at5])     # gamma [ O5p-C5p-C4p-C3p]
-            ang[3] = calc_dihe([at3,at4,at5,at6])     # delta [ C5p-C4p-C3p-O3p]
+                ang[0] = self.calc_dihe([at0,at1,at2,at3]) # alpha  [O3-P-O5-C5]
+            ang[1] = self.calc_dihe([at1,at2,at3,at4])     # beta   [ P-O5p-C5p-C4p]
+            ang[2] = self.calc_dihe([at2,at3,at4,at5])     # gamma [ O5p-C5p-C4p-C3p]
+            ang[3] = self.calc_dihe([at3,at4,at5,at6])     # delta [ C5p-C4p-C3p-O3p]
                 
             if(i!=idx[-1] and (residue.chain == self.residues[i+1].chain)):
                 at7 = self.residues[i+1].get_atom("P")     
                 at8 = self.residues[i+1].get_atom("O5'")
-                ang[4] = calc_dihe([at4,at5,at6,at7])    # epsilon [C4p-C3p-O3p-P]
-                ang[5] = calc_dihe([at5,at6,at7,at8])    # zeta[C3p-O3p-P-O5p]
+                ang[4] = self.calc_dihe([at4,at5,at6,at7])    # epsilon [C4p-C3p-O3p-P]
+                ang[5] = self.calc_dihe([at5,at6,at7,at8])    # zeta[C3p-O3p-P-O5p]
 
             at9 = residue.get_atom("O4'")     
             at10 = residue.get_atom("C1'")     
@@ -214,10 +217,46 @@ class Structure:
                 # chi (pyr) [O4p-C1p-N1-C2]
                 at11 = residue.get_atom("N1") 
                 at12 = residue.get_atom("C2")
-            ang[6] = calc_dihe([at9,at10,at11,at12])
+            ang[6] = self.calc_dihe([at9,at10,at11,at12])
             angles.append(ang)
 
-        return angles
+        return np.degrees(angles)
+
+
+    def get_pucker(self):
+        
+        idx = xrange(len(self.residues))
+        angles = []
+        for i in idx:
+            residue = self.residues[i]
+
+            ang = [float('nan')]*7
+
+            at1 = residue.get_atom("C4'")
+            at2 = residue.get_atom("O4'")
+            at3 = residue.get_atom("C1'")
+            at4 = residue.get_atom("C2'")
+            at5 = residue.get_atom("C3'")
+
+            ang[0] = self.calc_dihe([at1,at2,at3,at4])      # v0: C4'-O4'-C1'-C2'
+            ang[1] = self.calc_dihe([at2,at3,at4,at5])      # v1: O4'-C1'-C2'-C3'
+            ang[2] = self.calc_dihe([at3,at4,at5,at1])      # v2: C1'-C2'-C3'-C4'
+            ang[3] = self.calc_dihe([at4,at5,at1,at2])      # v3: C2'-C3'-C4'-O4'
+            ang[4] = self.calc_dihe([at5,at1,at2,at3])      # v4: C3'-C4'-O4'-C1'
+
+
+            x1=ang[4]+ang[1]-ang[3]-ang[0]
+            x2=Names.Pconst*ang[2]
+            p0 = np.arctan2(x1,x2) 
+            if(p0<0):
+                p0 += 2.0*np.pi
+            tm = ang[2]/np.cos(p0)  
+            ang[5] = tm
+            ang[6] = p0
+
+            angles.append(ang)
+
+        return np.degrees(angles)
             
 
             

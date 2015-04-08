@@ -14,10 +14,9 @@
 import reader as reader
 import numpy as np
 
-def torsions(args):
+def pucker(args):
 
-
-    print "# Calculating torsion angles..."
+    print "# Sugar pucker ..."
     files = args.files
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
@@ -31,34 +30,24 @@ def torsions(args):
 
             
             # calculate interactions
-            bb_torsion = cur_pdb.models[j].get_bb_torsions()
+            pucker = cur_pdb.models[j].get_pucker()
             if(args.hread):
                 string = '# ' + files[i] + "-" + str(j) + "\n"
                 string += "# " + "".join(cur_pdb.models[j].sequence) + "\n"
-                for k in range(len(bb_torsion)):
+                for k in range(len(pucker)):
                     string += "%10s" % (cur_pdb.models[j].sequence_id[k])
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
+                    for l in range(len(pucker[k])):
+                        string += "%10.3f " % pucker[k][l]
                     string += "\n"
+
             else:
+
                 string = files[i] + "." + str(j) + " "
-                for k in range(len(bb_torsion)):
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
-
-                # e2e stuff..
-                pp1 = cur_pdb.models[j].residues[0].get_atom("C2")
-                pp2 = cur_pdb.models[j].residues[-1].get_atom("C2")
-                if(pp1 != None and pp2 != None):
-                    diff = np.array(pp1)-np.array(pp2)
-                    e2e =  np.sqrt(np.sum(diff**2))
-                    string += " %f " % (e2e)
-                else:
-                    print "# No C2?", files[i]
-                    string += " NaN "
-                # end...
-
+                for k in range(len(pucker)):
+                    for l in range(len(pucker[k])):
+                        string += "%10.3f " % pucker[k][l]
                 string += "\n"
+
             fh.write(string)
                 
             # calculate interactions
