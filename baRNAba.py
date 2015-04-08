@@ -96,6 +96,10 @@ def parse():
     parser_h.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_h.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
 
+    parser_i = subparsers.add_parser('PUCKER', help='Calculate Suguar pucker')
+    parser_i.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+    parser_i.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
+
     args = parser.parse_args()
 
     return args
@@ -144,12 +148,19 @@ def dump(args):
     import dump
     dump.dump(args)
 
-##################### ANNOTATE #######################
+ ##################### ANNOTATE #######################
     
 def torsion(args):
 
     import torsions
     torsions.torsions(args)
+
+##################### ANNOTATE #######################
+    
+def pucker(args):
+
+    import pucker
+    pucker.pucker(args)
 
 ####################  SPLIT #######################
 
@@ -201,7 +212,7 @@ def main():
 
     # call appropriate function
     options = {'ERMSD' : ermsd,'ESCORE' : score,'SS_MOTIF' : ss_motif,'DS_MOTIF' : ds_motif,\
-                   'ANNOTATE' : annotate,'DUMP' : dump,'TORSION':torsion}
+                   'ANNOTATE' : annotate,'DUMP' : dump,'TORSION':torsion,'PUCKER':pucker}
 
     options[args.subparser_name](args)
     
