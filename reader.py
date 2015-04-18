@@ -283,6 +283,11 @@ class Structure:
                     return None,None
                 
             coords.append(v)
+        if(len(coords)<2):
+            err =  "# Warning: less than 2 RNA residues in PDB \n"
+            sys.stderr.write(err)
+            return None,None
+        
         coords = np.array(coords)
 
         # calculate center of mass

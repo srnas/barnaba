@@ -69,9 +69,12 @@ def dump(args):
                 fh_dumpL.write(s)
 
             if(args.dumpG==True):
-                mat = pdb.models[j].get_4dmat(args.cutoff)
-                s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
-                fh_dumpG.write(s)
+                
+                mat = pdb.models[j].get_4dmat(args.cutoff,permissive=False)
+                if(mat!=None):
+                    s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
+                    fh_dumpG.write(s)
+                    
 
             if(args.dumpR==True):
                 mat = pdb.models[j].get_3dmat(args.cutoff)
