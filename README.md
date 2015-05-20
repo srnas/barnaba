@@ -4,7 +4,7 @@
 BaRNAba is a tool for analyzing RNA three-dimensional structures.
 BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi.
 For bugs, questions or comments contact Sandro at sbottaro@sissa.it. 
-If you use baRNAba in your work,  please cite the follwing paper:
+If you use baRNAba in your work,  please cite the following paper:
 
 S.Bottaro, F. di Palma, G.Bussi. The role of nucleobases 
 in RNA structure and dynamics. 
