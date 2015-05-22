@@ -5,11 +5,18 @@ from scipy.spatial import distance
 class Names:
 
     # list of all RNA atoms
+#    rna_atoms = ["P","OP1","OP2","O1P","O2P",\
+#                 "O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'",\
+#                 "N9","C8","N7","C5","C6","N6","N1","C2","N3","C4",\
+#                 "N1","C2","O2","N3","N4",\
+#                 "N2","O4","O6" ]
+
     rna_atoms = ["P","OP1","OP2","O1P","O2P",\
                  "O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'",\
-                 "N9","C8","N7","C5","C6","N6","N1","C2","N3","C4",\
-                 "N1","C2","O2","N3","N4",\
-                 "N2","O4","O6" ]
+                 "N9","C8","N7","C6","N6","O6","C5",\
+                 "C4","N4","O4","N3",\
+                 "O2","N2","C2","N1" ]
+
 
     # list of all RNA atoms
     base_atoms = ["C2","C4","C6"]
@@ -99,6 +106,13 @@ class Residue:
             if(atom_t == self.atoms[i].atom_t):
                 return self.atoms[i].coords
         return None
+
+    def get_atomobject(self,atom_t):
+        for i in xrange(len(self.atoms)):
+            if(atom_t == self.atoms[i].atom_t):
+                return self.atoms[i]
+        return None
+
         
     def set_name(self,name):
         self.residue_t = name
