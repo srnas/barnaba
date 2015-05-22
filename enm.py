@@ -110,7 +110,8 @@ def enm(args):
             print '# Writing to files'
             feval=open(args.name+".eval.dat",'w')
             for i in xrange(len(eigens[0])):
-                feval.write(str(i)+" "+ str.format("{:.6e}",eigens[0][i])+"\n")
+                stri = "%5d %.6e \n" % (i,eigens[0][i])
+                feval.write(stri)
             feval.close()
             
             MAXVEC=args.ntop
@@ -120,13 +121,11 @@ def enm(args):
                     break
                 fevec=open(args.name+".evec"+str(k).zfill(len(str(args.ntop+6)))+".dat",'w')
                 fevec.write("# Eigenvector number "+str(k)+"\n")
-                fevec.write("# componet beads index & x-component & y-component $ z-component \n")
+                fevec.write("# componet beads index & x-component & y-component & z-component \n")
+                stri = ""
                 for i in xrange(len(eigens[1][:,k])/3):                    
-                    fevec.write(str(i)+" ")
-                    fevec.write(str.format("{:10.6f}",eigens[1][3*i+0,k])+" ")
-                    fevec.write(str.format("{:10.6f}",eigens[1][3*i+1,k])+" ")
-                    fevec.write(str.format("{:10.6f}",eigens[1][3*i+2,k])+" ")
-                    fevec.write("\n") 
+                    stri += "%5d %10.6f %10.6f %10.6f \n" % (i,eigens[1][3*i+0,k],eigens[1][3*i+1,k],eigens[1][3*i+2,k])
+                fevec.write(stri) 
                 fevec.close()
                 nvec+=1
 
@@ -171,7 +170,8 @@ def enm(args):
                                 C_ji_munu+=lambd*v_j_mu*v_i_nu
                         sigma+=d[mu]*d[nu]*(C_ii_munu+C_jj_munu-C_ij_munu-C_ji_munu)
                     
-                fC2.write(str(i)+" "+str(j)+" "+str.format("{:.6e}",sigma)+"\n")
+                stri = "%5d %5d %10.6f \n" % (i,j,sigma)
+                fC2.write(stri)
             fC2.close()
 
 #    fh.close()

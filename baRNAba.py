@@ -102,7 +102,7 @@ def parse():
 
     parser_j = subparsers.add_parser('ENM', help='Calculate ENM')
     parser_j.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
-    parser_j.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in Angstrom (default=9)",default=10,type=float)
+    parser_j.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in Angstrom (default=9)",default=9.0,type=float)
     parser_j.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SBP','AA'], help='Type of ENM (default=SBP)')    
     parser_j.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
 
