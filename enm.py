@@ -119,9 +119,11 @@ def enm(args):
             for k in xrange(len(eigens[0])):
                 if nvec>MAXVEC:
                     break
+                if (not args.zmodes) and eigens[0][k]<TOL:
+                    continue
                 fevec=open(args.name+".evec"+str(k).zfill(len(str(args.ntop+6)))+".dat",'w')
                 fevec.write("# Eigenvector number "+str(k)+"\n")
-                fevec.write("# componet beads index & x-component & y-component & z-component \n")
+                fevec.write("# beads index & x-component & y-component & z-component \n")
                 stri = ""
                 for i in xrange(len(eigens[1][:,k])/3):                    
                     stri += "%5d %10.6f %10.6f %10.6f \n" % (i,eigens[1][3*i+0,k],eigens[1][3*i+1,k],eigens[1][3*i+2,k])
