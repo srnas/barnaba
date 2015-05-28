@@ -107,6 +107,18 @@ def enm(args):
             print '# Diagonalization'
             eigens=eigh(mat,lower=True)
 
+            # fix phase to make tests reproducible
+            for i in xrange(len(eigens[0])):
+                m=0.0
+                for k in xrange(len(eigens[1][:,i])):
+                    if(eigens[1][k,i]>TOL):
+                        m=1.0
+                        break
+                    if(eigens[1][k,i]<-TOL):
+                        m=-1.0
+                        break
+                eigens[1][:,i]*=m
+
             print '# Writing to files'
             feval=open(args.name+".eval.dat",'w')
             for i in xrange(len(eigens[0])):
