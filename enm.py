@@ -110,7 +110,10 @@ def enm(args):
             print '# Writing to files'
             feval=open(args.name+".eval.dat",'w')
             for i in xrange(len(eigens[0])):
-                stri = "%5d %.6e \n" % (i,eigens[0][i])
+                if (not args.zmodes) and eigens[0][i]<TOL:
+                    stri = "%5d %.6e \n" % (i,0.0)
+                else:
+                    stri = "%5d %.6e \n" % (i,eigens[0][i])
                 feval.write(stri)
             feval.close()
             
