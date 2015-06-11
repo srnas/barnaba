@@ -17,12 +17,10 @@ class Residue:
         for i in xrange(len(atoms_data)):
             # make sure that atoms is not duplicated
             # this can happen with multiple occupancy
-            print atoms_data[i]
             assert(atoms_data[i][1] not in self.atom_types)
             self.atom_numbers.append(int(atoms_data[i][0]))
             self.atom_types.append(atoms_data[i][1])
             self.atom_coords.append([atoms_data[i][5],atoms_data[i][6],atoms_data[i][7]])
-        print "##"
         self.lcs_atoms = self.get_lcs_coords()
         
 
