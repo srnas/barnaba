@@ -14,7 +14,7 @@
 import reader as reader
 import numpy as np
 import definitions
-
+import sys
 
 def pucker_angles(coords):
 
@@ -23,6 +23,7 @@ def pucker_angles(coords):
     diffs = coords_plus[:,:-1]-coords_plus[:,1:]
     norm_sq = np.sum(diffs**2,axis=2)
     print np.sqrt(np.max(norm_sq)),np.sqrt(np.min(norm_sq))
+
     # calculate angles. The mathc could be in principle moved to a
     # generic calc_dihedral function... however with this approach 
     # norm is calculated only once

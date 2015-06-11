@@ -34,7 +34,7 @@ class Names:
 
 class Pdb:
 
-    def __init__(self,filename,res_mode,at_mode):
+    def __init__(self,filename,res_mode,at_mode,verbose=False):
 
         ok_residues = []
         if("R" in res_mode):
@@ -45,10 +45,10 @@ class Pdb:
             ok_residues.extend(Names.prt_residues[:])
 
         self.models = []
-        self._parse(filename,ok_residues,at_mode)
+        self._parse(filename,ok_residues,at_mode,verbose)
 
         
-    def _parse(self,filename,ok_residues,at_mode):
+    def _parse(self,filename,ok_residues,at_mode,verbose):
 
         def readline(line):
             res_type = line[17:20].strip()
@@ -61,18 +61,18 @@ class Pdb:
             X = float(line[30:38])
             Y = float(line[38:46])
             Z = float(line[46:54])
+            insertion = line[26]
 
             # not used - but in case
             segid = line[72:76]
             bfactor = float(line[60:66])
             occupancy = float(line[54:60])
             res_mytype = Names.residue_dict[res_type]
-            res_id = res_num + "_" + res_type + "_" + chain
+            res_id = res_num + "_" + res_type + "_" + chain + "_" + insertion
             #mol_id = "XXX"
             #if(res_type in Names.rna_residues): mol_id = "RNA"
             #if(res_type in Names.dna_residues): mol_id = "DNA"
             #if(res_type in Names.prt_residues): mol_id = "PROT"
-
             
             vv = [atom_num,atom_type,res_type,chain,res_num,X,Y,Z,res_mytype,res_id]
             return vv
@@ -93,6 +93,7 @@ class Pdb:
 
                 # skip residues
                 res_type = line[17:20].strip()
+                #print res_type
                 if(res_type not in ok_residues): continue
                 #print res_type
 
@@ -103,7 +104,11 @@ class Pdb:
                 if(at_mode == "PUCKER" and atom_type not in definitions.rna_pucker): continue
 
                 # skip if alternative position is different from A or nothing
-                if(line[16]  != " " and line[16] != "A"): continue
+                if(line[16]  != " " and line[16] != "A"): 
+                    if(verbose): sys.stderr.write("# Warning: skipping residue with multiple occupancy %s \n" % (line[16]))
+                    continue
+
+
                 model.append(readline(line))
                 
         fh.close()
