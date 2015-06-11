@@ -27,11 +27,8 @@ class Model:
 
         coords = []
         if(idxs[0]==None): idxs=range(len(self.sequence))
-        for i in idxs:
-            if(len(self.residues[i].lcs_atoms)==0):
-                print self.sequence_id[i]
-            else:
-                coords.append(self.residues[i].lcs_atoms)
+
+        coords = [self.residues[i].get_lcs_coords() for i in idxs]
 
         if(len(coords)==0): return [],[]
 
@@ -327,7 +324,7 @@ class Model:
 
         com = []
         for i in idx:
-            com.extend(self.residues[i].lcs_atoms)
+            com.extend(self.residues[i].get_lcs_coords())
         return np.average(np.array(com),axis=0)
 
 

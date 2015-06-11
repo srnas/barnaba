@@ -80,17 +80,10 @@ def pucker(args):
         for j in xrange(len(cur_pdb.models)):
            
             mod = cur_pdb.models[j]
+
             coords = []
             for k in xrange(len(mod.residues)):               
-                cc = []
-                for at in definitions.rna_pucker:
-                    coord = mod.residues[k][at]
-                    if(len(coord) == 0): 
-                        err = "# Warning: no %s atom in residue %s \n" % (at,mod.sequence_id[k])
-                        sys.stderr.write(err)
-                        cc.append([-999,-999,-999])
-                    else:
-                        cc.append(coord)
+                cc = [mod.residues[k][at] for at in definitions.rna_pucker]
                 coords.append(cc)
             coords = np.array(coords)
             pucker,i1,i2 = pucker_angles(coords)

@@ -38,6 +38,10 @@ tol=0.000001
 # list of all RNA atoms for lcs
 rna_lcs = ["C2","C4","C6"]
 rna_pucker = ["C4'","O4'","C1'","C2'","C3'"]
+rna_torsion = ["P","O5'","C5'","C4'","C3'","O3'","O4'","C1'","N9","C4","N1","C2"]
+rna_backbone = ["P","O5'","C5'","C4'","C3'","O3'"]
+rna_chi_pur = ["O4'","C1'","N9","C4"]
+rna_chi_pyr = ["O4'","C1'","N1","C2"]
 
 # Rna only for the moment being
 heavy_atoms = ["P","OP1","OP2","O1P","O2P",\

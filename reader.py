@@ -102,6 +102,7 @@ class Pdb:
                 if(at_mode == "ALL"  and "H" in atom_type): continue
                 if(at_mode == "LCS" and atom_type not in definitions.rna_lcs): continue
                 if(at_mode == "PUCKER" and atom_type not in definitions.rna_pucker): continue
+                if(at_mode == "BB" and atom_type not in definitions.rna_torsion): continue
 
                 # skip if alternative position is different from A or nothing
                 if(line[16]  != " " and line[16] != "A"): 
@@ -139,7 +140,7 @@ class Pdb:
                     model.append(data_tmp)
                     data_tmp = []
             self.models.append(md.Model(model))
-            
+        
             
                 
 

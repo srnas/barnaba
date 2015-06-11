@@ -10,6 +10,6 @@ $BARNABA --name ERMSD_EXAMPLE_2 ERMSD --pdb $DATA/sample1.pdb -f $DATA/samples.p
 
 # Calculate ERMSD distance between sample1.pdb and sample2.pdb. 
 # Additionally calculate per-residue ERMSD flucutations
-$BARNABA --name ERMSD_EXAMPLE_3 ERMSD --pdb $DATA/sample1.pdb -f $DATA/sample2.pdb --ermsf
+$BARNABA --name ERMSD_EXAMPLE_3 ERMSD --pdb $DATA/sample1.pdb -f $DATA/sample2.pdb --per-res
 
 

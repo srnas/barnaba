@@ -1,3 +1,4 @@
+import sys
 pyr = ["rC","rU","dC","dU","dT"]
 pur = ["rA","rG","dA","dG"]
 
@@ -21,23 +22,19 @@ class Residue:
             self.atom_numbers.append(int(atoms_data[i][0]))
             self.atom_types.append(atoms_data[i][1])
             self.atom_coords.append([atoms_data[i][5],atoms_data[i][6],atoms_data[i][7]])
-        self.lcs_atoms = self.get_lcs_coords()
-        
+        #self.lcs_atoms = self.get_lcs_coords()
 
+        
+    # return coordinates of given atom (accession by name)
     def __getitem__(self,atom_type):
         try:
             idx = self.atom_types.index(atom_type)
             return self.atom_coords[idx]
         except:
-            return []
+            err = "# Warning: no %s atom in residue %s \n" % (atom_type,self.res_id)
+            sys.stderr.write(err)
+            return [-9999.,-9999.,-9999.]
 
-    # return coordinates of given atom
-    def get_atom_coords(self,atom_type):
-        try:
-            idx = self.atom_types.index(atom_type)
-            return self.atom_coords[idx]
-        except:
-            return []
 
     # return all coordinates
     def get_coords(self):
