@@ -37,7 +37,7 @@ def parse():
     parser_a.add_argument("--pdb", dest="reference",help="Reference PDB file",required=True)
     parser_a.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_a.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
-    parser_a.add_argument("--ermsf", dest="ermsf",help="Print per-residue ERMSD ",action='store_true',default=False)
+    parser_a.add_argument("--per-res", dest="perres",help="Print per-residue eERMSD",action='store_true',default=False)
 
     # TESTED
     parser_b = subparsers.add_parser('ESCORE', help='Calculate Escore')

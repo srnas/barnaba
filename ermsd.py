@@ -48,7 +48,7 @@ def ermsd(args):
             diff = (cur_mat_f-ref_mat_f)**2
             ermsd = np.sqrt(np.sum(np.sum(diff))/ref_len)
 
-            if(args.ermsf==False):
+            if(args.perres==False):
                 string = '%10.6f %s - %i \n' % (ermsd,files[i],j)
             else:
                 string = '%10.6f - ' % (ermsd)
