@@ -25,7 +25,7 @@ def ds_motif(args):
     print "# Finding 3D Single Strand Motifs..."
     assert args.bulges < 3, "# FATAL: cannot do bulges > 2"
 
-    ref_pdb = reader.Pdb(args.reference,base_only=True)
+    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode,at_mode="LCS")
     assert len(ref_pdb.models)==1, "# FATAL: The query PDB contains more that one model"
     ref_len1 = args.l1
     ref_len2 = args.l2 
@@ -44,7 +44,7 @@ def ds_motif(args):
     # OK...
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
@@ -62,8 +62,8 @@ def ds_motif(args):
 
     # calculate center of mass distances
     # this will be used to prune the search!
-    ref_com1 = np.sum(ref_pdb.models[0].get_com(indeces1),axis=0)/ref_len1
-    ref_com2 = np.sum(ref_pdb.models[0].get_com(indeces2),axis=0)/ref_len2
+    ref_com1 = ref_pdb.models[0].get_lcs_com(indeces1)
+    ref_com2 = ref_pdb.models[0].get_lcs_com(indeces2)
     diff_com = (ref_com2-ref_com1)**2
     dd= np.sqrt(np.sum(diff_com))
 
@@ -71,9 +71,9 @@ def ds_motif(args):
 
         # if no PDBdump, read base atoms only (gives little speed-up)
         if(args.dump_pdb==True):
-            cur_pdb = reader.Pdb(files[i],base_only=False)
+            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="AA")
         else:
-            cur_pdb = reader.Pdb(files[i],base_only=True)
+            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="LCS")
 
         # read models
         counter = 0    
@@ -88,28 +88,30 @@ def ds_motif(args):
             com1 = []
             all_idx1 = cur_pdb.models[j].get_idx(query1,args.bulges)
             for idx in all_idx1:
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx,permissive=False)
+                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx)
                 red_mat = gmat.reshape(-1,4)
                 diff = (red_mat-ref_mat_f1)**2
                 ermsd_sq = np.sum(np.sum(diff))/ref_len1
                 if(ermsd_sq < treshold_sq):
                     tmp_idx1.append(idx)
-                    com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len1
-                    com1.append(com)
+                    #com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len1
+                    #print idx, cur_pdb.models[j].get_lcs_com(idx)
+                    com1.append(cur_pdb.models[j].get_lcs_com(idx))
 
             # strand 2
             tmp_idx2 = []
             com2 = []
             all_idx2 = cur_pdb.models[j].get_idx(query2,args.bulges)
             for idx in all_idx2:
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx,permissive=False)
+                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx)
                 red_mat = gmat.reshape(-1,4)
                 diff = (red_mat-ref_mat_f2)**2
                 ermsd_sq = np.sum(np.sum(diff))/ref_len2
                 if(ermsd_sq < treshold_sq):
                     tmp_idx2.append(idx)
-                    com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len2
-                    com2.append(com)
+                    #print idx, cur_pdb.models[j].get_lcs_com(idx)
+                    #com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len2
+                    com2.append(cur_pdb.models[j].get_lcs_com(idx))
                                         
 
              

@@ -13,38 +13,102 @@
 
 import reader as reader
 import numpy as np
+import definitions
 
+
+def pucker_angles(coords):
+
+    # duplicate some coordinates to allow looping
+    coords_plus = np.hstack((coords,coords[:,0:3]))
+    diffs = coords_plus[:,:-1]-coords_plus[:,1:]
+    norm_sq = np.sum(diffs**2,axis=2)
+    print np.sqrt(np.max(norm_sq)),np.sqrt(np.min(norm_sq))
+    # calculate angles. The mathc could be in principle moved to a
+    # generic calc_dihedral function... however with this approach 
+    # norm is calculated only once
+
+    angles = []
+    for i in xrange(coords_plus.shape[1]-3):
+        b0 = -diffs[:,i]
+        b1 = diffs[:,i+1]
+        b2 = diffs[:,i+2]
+        ss = np.sum(b0*b1,axis=1)
+
+        v0= b0-((np.sum(b0*b1,axis=1)*b1.T)/norm_sq[:,i+1]).T
+        v2= b2-((np.sum(b2*b1,axis=1)*b1.T)/norm_sq[:,i+1]).T
+        x = np.sum(v0*v2,axis=1)
+        m = np.cross(v0,b1).T/np.sqrt(norm_sq[:,i+1])
+        y = np.sum(m.T*v2,axis=1)
+        angles.append(np.arctan2( y, x ))
+    angles = np.array(angles)
+
+    # now calculate phase and amplitude of pucker
+    x1 = angles[4]+angles[1]-angles[3]-angles[0]
+    #Pconst = 2.0*(np.sin(np.pi/5.) + np.sin(np.pi/2.5))
+    x2 = 3.0776835*angles[2]
+
+    # phase
+    p0 = np.arctan2(x1,x2) 
+    p0[np.where( p0 < 0.0 )] += 2.0*np.pi
+
+    # amplitude
+    tm = angles[2]/np.cos(p0)  
+
+    #print angles.shape,p0.shape,tm.shape
+    angles = np.vstack((angles,tm))
+    angles = np.vstack((angles,p0))
+
+    return np.degrees(angles.T)
+
+
+    
 def pucker(args):
 
     print "# Sugar pucker ..."
     files = args.files
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=False)
-        for j in xrange(len(cur_pdb.models)):
 
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="PUCKER")
+
+        for j in xrange(len(cur_pdb.models)):
+           
+            mod = cur_pdb.models[j]
+            coords = []
+            for k in xrange(len(mod.residues)):               
+                cc = []
+                for at in definitions.rna_pucker:
+                    coord = mod.residues[k][at]
+                    if(len(coord) == 0): 
+                        err = "# Warning: no %s atom in residue %s \n" % (at,mod.sequence_id[k])
+                        sys.stderr.write(err)
+                        cc.append([-999,-999,-999])
+                    else:
+                        cc.append(coord)
+                coords.append(cc)
+            coords = np.array(coords)
+            pucker = pucker_angles(coords)
             
-            # calculate interactions
-            pucker = cur_pdb.models[j].get_pucker()
+
             if(args.hread):
                 string = '# ' + files[i] + "-" + str(j) + "\n"
                 string += "# " + "".join(cur_pdb.models[j].sequence) + "\n"
-                for k in range(len(pucker)):
+                for k in xrange(len(pucker)):
                     string += "%10s" % (cur_pdb.models[j].sequence_id[k])
-                    for l in range(len(pucker[k])):
+                    for l in xrange(len(pucker[k])):
                         string += "%10.3f " % pucker[k][l]
                     string += "\n"
 
             else:
 
                 string = files[i] + "." + str(j) + " "
-                for k in range(len(pucker)):
-                    for l in range(len(pucker[k])):
+                for k in xrange(len(pucker)):
+                    for l in xrange(len(pucker[k])):
                         string += "%10.3f " % pucker[k][l]
                 string += "\n"
 

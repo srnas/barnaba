@@ -24,7 +24,7 @@ def ss_motif(args):
     print "# Finding 3D Single Strand Motifs..."
     assert args.bulges < 3, "# FATAL: cannot do bulges > 2"
 
-    ref_pdb = reader.Pdb(args.reference,base_only=True)
+    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode,at_mode="LCS")
     assert len(ref_pdb.models)==1, "# FATAL: Reference PDB file cannot have multiple models" 
     ref_len = len(ref_pdb.models[0].sequence)
     if(args.seq==None):
@@ -38,7 +38,7 @@ def ss_motif(args):
     # OK...
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
@@ -51,9 +51,9 @@ def ss_motif(args):
 
         # if no PDBdump, read base atoms only (gives little speed-up)
         if(args.dump_pdb==True):
-            cur_pdb = reader.Pdb(files[i],base_only=False)
+            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="AA")
         else:
-            cur_pdb = reader.Pdb(files[i],base_only=True)
+            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="LCS")
 
         # read models
         counter = 0    
@@ -63,7 +63,7 @@ def ss_motif(args):
             
             all_idx = cur_pdb.models[j].get_idx(query,args.bulges)
             for idx in all_idx:
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx,permissive=False)
+                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx)
                 red_mat = gmat.reshape(-1,4)
                 diff = (red_mat-ref_mat_f)**2
                 ermsd_sq = np.sum(np.sum(diff))/ref_len

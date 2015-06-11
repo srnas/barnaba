@@ -28,7 +28,7 @@ def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
     parser.add_argument("--name", dest="name",help="Job ID",default='',required=False)
-    parser.add_argument("--skip", dest="skip",help="Skip frames in gro/xtc file",default='1',required=False)
+    parser.add_argument("--res-mode", dest="res_mode",help="set mode: R:RNA,D:DNA,P:PROTEIN",default='R',required=False)
 
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
 
@@ -106,6 +106,7 @@ def parse():
     parser_j.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SBP','AA'], help='Type of ENM (default=SBP)')    
     parser_j.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
     parser_j.add_argument("--zmodes", dest="zmodes",help="Write modes corresponding to zero eigenvalues",action='store_true',default=False)
+
 
     #parser_j.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
 

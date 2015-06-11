@@ -22,13 +22,13 @@ def ermsd(args):
 
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
 
     # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.reference,base_only=True)
+    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode,at_mode="LCS")
     assert len(ref_pdb.models)==1, "# FATAL: Reference PDB file cannot have multiple models" 
     ref_len = len(ref_pdb.models[0].sequence)
     ref_mat = ref_pdb.models[0].get_4dmat(args.cutoff)
@@ -36,7 +36,7 @@ def ermsd(args):
 
     #all the rest and calculate ERMSD on-the-fly
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=True)
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="LCS")
         for j in xrange(len(cur_pdb.models)):
             assert ref_len == len(cur_pdb.models[j].sequence) , "# FATAL: sequence lenghts mismatch"
 

@@ -23,7 +23,7 @@ def stringify(fname,jj,data,seq,hread=True):
         s += '\n'
         return s
     else:
-        print len(seq),data.shape
+        #print len(seq),data.shape
         s = '# %s %i \n' % (fname,jj)
         for j in range(data.shape[0]):
             for k in range(data.shape[0]):
@@ -50,9 +50,14 @@ def dump(args):
         fh_dumpL = open(args.name+ ".lcs",'w')
 
     for i in xrange(0,len(files)):
-        pdb = reader.Pdb(files[i],base_only=True)
+        pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="LCS")
 
         for j in xrange(len(pdb.models)):
+
+            if(len(pdb.models[j].residues)<2):
+                err =  "# Warning: the PDB %s contains less than 2 nucleotides \n" % (files[i])
+                sys.stderr.write(err)
+                continue
 
             if(args.dumpL==True):
                 lcs,origo = pdb.models[j].get_lcs()
@@ -70,10 +75,9 @@ def dump(args):
 
             if(args.dumpG==True):
                 
-                mat = pdb.models[j].get_4dmat(args.cutoff,permissive=False)
-                if(mat!=None):
-                    s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
-                    fh_dumpG.write(s)
+                mat = pdb.models[j].get_4dmat(args.cutoff)
+                s = stringify(files[i],j,mat,pdb.models[j].sequence_id,hread=args.read)
+                fh_dumpG.write(s)
                     
 
             if(args.dumpR==True):

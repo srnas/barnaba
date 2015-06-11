@@ -12,9 +12,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import reader as reader
+import definitions 
 
-op = ['(','[','{','<']
-cl = [')',']','}','>']          
 
 ##################### ANNOTATE #######################
 
@@ -71,15 +70,18 @@ def pymol_script(pdbname,seq,interactions):
 def annotate(args):
 
     print "# Annotating RNA structures..."
+    print "# Annotation is currently available in RNA-only mode..."
+
     files = args.files
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
+        
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=True)
+        cur_pdb = reader.Pdb(files[i],res_mode="R",at_mode="LCS")
 
         for j in xrange(len(cur_pdb.models)):
 
@@ -113,8 +115,8 @@ def annotate(args):
                 start1 = openings[idx1]
                 end1 = closings[idx1]
 
-                anno[start1] = op[levels[start1]]
-                anno[end1] = cl[levels[end1]]
+                anno[start1] = definitions.op[levels[start1]]
+                anno[end1] = definitions.cl[levels[end1]]
 
             # print dotbracket
             string += '# ' + "".join(anno) + "\n"
