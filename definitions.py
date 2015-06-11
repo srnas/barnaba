@@ -19,9 +19,6 @@ theta1 = 0.16
 theta2 = 2.0
 theta3 = -2.0
 
-# pconst for sugar pucker
-#Pconst = 2.0*(np.sin(np.pi/5.) + np.sin(np.pi/2.5))
-Pconst = 3.0776835
 
 
 
@@ -48,3 +45,8 @@ heavy_atoms = ["P","OP1","OP2","O1P","O2P",\
                    "N9","C8","N7","C6","N6","O6","C5",\
                    "C4","N4","O4","N3",\
                    "O2","N2","C2","N1" ]
+
+# max bond lenght squared in sugar (1.75^2)
+maxbond_pucker_sq = 3.0625
+# min bond lenght squared in sugar (1.1^2)
+minbond_pucker_sq = 1.21
