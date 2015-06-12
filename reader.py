@@ -7,6 +7,8 @@ class Names:
 
     rna_residues = ["U","rU","RU","RU5","RU3","C","rC","RC","RC5","RC3",\
                     "G","rG","RG","RG5","RG3","A","rA","RA","RA5","RA3"]
+    rna_special = ["2MG","H2U","OMC","YG","PSU","5MC","7MG","1MA","OMU","OMG","UR3"]
+
     dna_residues = ["T","dT","DT","DT5","DT3","dC","DC","DC5","DC3",\
                     "dG","DG","DG5","DG3","dA","DA","DA5","DA3"]
     prt_residues = ["ALA","ARG","ASN","ASP","ASPP","CYS","GLN","GLU","GLY",\
@@ -18,19 +20,23 @@ class Names:
 
         
     residue_dict = {'U': 'rU', 'rU':'rU','RU':'rU','RU5':'rU','RU3':'rU',\
-                    'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA',\
-                    'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC',\
-                    'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG',\
-                    'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
-                    'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
-                    'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
-                    'dG':'dG','DG':'dG','DG5':'dG','DG3':'dG',\
-                    "ALA":"ALA","ARG":"ARG","ASN":"ASN","ASP":"ASP",\
-                    "CYS":"CYS","GLN":"GLN","GLU":"GLU","GLY":"GLY",\
-                    "HSD":"HSD","HSE":"HSD","HSP":"HSD","ILE":"ILE",\
-                    "LEU":"LEU","LYS":"LYS","LSN":"LYS","MET":"MET",\
-                    "PHE":"PHE","PRO":"PRO","SER":"SER","THR":"THR",\
-                    "TRP":"TRP","TYR":"TYR","VAL":"VAL","HOH":"HOH"};
+                        'H2U':'rU','PSU':'rU','OMU':'rU','UR3':'rU',\
+                        'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA',\
+                        '1MA':'rA',\
+                        'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC',\
+                        'OMC':'rC','5MC':'rC',\
+                        'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG',\
+                        '2MG':'rG','YG':'rG','7MG':'rG','OMG':'rG',\
+                        'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
+                        'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
+                        'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
+                        'dG':'dG','DG':'dG','DG5':'dG','DG3':'dG',\
+                        "ALA":"ALA","ARG":"ARG","ASN":"ASN","ASP":"ASP",\
+                        "CYS":"CYS","GLN":"GLN","GLU":"GLU","GLY":"GLY",\
+                        "HSD":"HSD","HSE":"HSD","HSP":"HSD","ILE":"ILE",\
+                        "LEU":"LEU","LYS":"LYS","LSN":"LYS","MET":"MET",\
+                        "PHE":"PHE","PRO":"PRO","SER":"SER","THR":"THR",\
+                        "TRP":"TRP","TYR":"TYR","VAL":"VAL","HOH":"HOH"};
 
 class Pdb:
 
@@ -39,6 +45,8 @@ class Pdb:
         ok_residues = []
         if("R" in res_mode):
             ok_residues.extend(Names.rna_residues[:])
+        if("S" in res_mode):
+            ok_residues.extend(Names.rna_special[:])
         if("D" in res_mode):
             ok_residues.extend(Names.dna_residues[:])
         if("P" in res_mode):
