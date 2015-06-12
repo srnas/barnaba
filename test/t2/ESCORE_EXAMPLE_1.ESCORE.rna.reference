@@ -1,10 +1,10 @@
 # This is a baRNAba run.
-# files ['../../../examples/DATA/samples.pdb']
 # cutoff 1.58
-# name ESCORE_EXAMPLE_1.ESCORE.rna
-# subparser_name ESCORE
-# skip 1
 # ff ../../../examples/DATA/1S72.pdb
+# files ['../../../examples/DATA/samples.pdb']
+# name ESCORE_EXAMPLE_1.ESCORE.rna
+# res_mode R
+# subparser_name ESCORE
 # type standard
  0.14637 ../../../examples/DATA/samples.pdb.0 
  0.14607 ../../../examples/DATA/samples.pdb.1 
