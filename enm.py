@@ -52,7 +52,7 @@ def enm(args):
             for k in xrange(len(cur_pdb.models[j].sequence)):
                 resi = cur_pdb.models[j].residues[k]
                 for atom_type in atoms_req:
-                    cc = resi[atom_type]
+                    cc = resi.get_atom(atom_type)
                     if(len(cc)!=0):
                         coords.append(cc)
                         if(atom_type=="C2"):

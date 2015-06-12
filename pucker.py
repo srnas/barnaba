@@ -22,8 +22,10 @@ def pucker_angles(coords):
     coords_plus = np.hstack((coords,coords[:,0:3]))
     diffs = coords_plus[:,:-1]-coords_plus[:,1:]
     norm_sq = np.sum(diffs**2,axis=2)
-    idx_up = np.where(norm_sq>definitions.maxbond_pucker_sq)
-    idx_low = np.where(norm_sq<definitions.minbond_pucker_sq)
+    # if one atom is missing, all are set to nan
+    idx_no = np.where(norm_sq>definitions.maxbond_sq)[0]
+    norm_sq[idx_no,:] = 0.0
+
     # calculate angles. The mathc could be in principle moved to a
     # generic calc_dihedral function... however with this approach 
     # norm is calculated only once
@@ -59,7 +61,7 @@ def pucker_angles(coords):
     angles = np.vstack((angles,tm))
     angles = np.vstack((angles,p0))
 
-    return np.degrees(angles.T),idx_up,idx_low
+    return np.degrees(angles.T)
 
 
     
@@ -86,7 +88,7 @@ def pucker(args):
                 cc = [mod.residues[k][at] for at in definitions.rna_pucker]
                 coords.append(cc)
             coords = np.array(coords)
-            pucker,i1,i2 = pucker_angles(coords)
+            pucker = pucker_angles(coords)
 
 
             if(args.hread):
@@ -95,11 +97,7 @@ def pucker(args):
                 for k in xrange(len(pucker)):
                     string += "%10s" % (cur_pdb.models[j].sequence_id[k])
                     for l in xrange(len(pucker[k])):
-                        if((k in i1[0] and l in i1[1]) or \
-                           (k in i2[0] and l in i2[1]) ):
-                            string += "%10.3f " % float('nan')
-                        else:
-                            string += "%10.3f " % pucker[k][l]
+                        string += "%10.3f " % pucker[k][l]
                     string += "\n"
 
             else:
@@ -107,11 +105,7 @@ def pucker(args):
                 string = files[i] + "." + str(j) + " "
                 for k in xrange(len(pucker)):
                     for l in xrange(len(pucker[k])):
-                        if((k in i1[0] and l in i1[1]) or \
-                        (k in i2[0] and l in i2[1]) ):
-                            string += "%10.3f " % float('nan')
-                        else:
-                            string += "%10.3f " % pucker[k][l]
+                        string += "%10.3f " % pucker[k][l]
                 string += "\n"
 
             fh.write(string)

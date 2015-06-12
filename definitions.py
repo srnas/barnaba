@@ -50,7 +50,9 @@ heavy_atoms = ["P","OP1","OP2","O1P","O2P",\
                    "C4","N4","O4","N3",\
                    "O2","N2","C2","N1" ]
 
-# max bond lenght squared in sugar (1.75^2)
-maxbond_pucker_sq = 3.0625
-# min bond lenght squared in sugar (1.1^2)
-minbond_pucker_sq = 1.21
+crazy_vec = [-9999.,-9999.-9999.]
+# max bond lenght squared (1.8^2)
+maxbond_sq = 3.24
+# min bond lenght squared (1.1^2)
+minbond_sq = 1.21
+

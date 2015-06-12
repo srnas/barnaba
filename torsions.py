@@ -15,34 +15,68 @@ import reader as reader
 import numpy as np
 import definitions
 
+
+def dihedral(b0,b1,b2,norm):
+
+    ss = np.sum(b0*b1)
+    v0= b0-((np.sum(b0*b1)*b1)*norm)
+    v2= b2-((np.sum(b2*b1)*b1)*norm)
+    x = np.sum(v0*v2)
+    m = np.cross(v0,b1)*np.sqrt(norm)
+    y = np.sum(m*v2)
+    return np.arctan2( y, x )
+
     
-#
-#def bb_angles(coords):
-#
-#    diffs = coords_plus[:,:-1]-coords_plus[:,1:]
-#    norm_sq = np.sum(diffs**2,axis=2)
-#    #idx_up = np.where(norm_sq>definitions.maxbond_pucker_sq)
-#    #idx_low = np.where(norm_sq<definitions.minbond_pucker_sq)
-#    # calculate angles. The mathc could be in principle moved to a
-#    # generic calc_dihedral function... however with this approach 
-#    # norm is calculated only once
-#
-#    angles = []
-#    for i in xrange(coords_plus.shape[1]-3):
-#        b0 = -diffs[:,i]
-#        b1 = diffs[:,i+1]
-#        b2 = diffs[:,i+2]
-#        ss = np.sum(b0*b1,axis=1)
-#
-#        v0= b0-((np.sum(b0*b1,axis=1)*b1.T)/norm_sq[:,i+1]).T
-#        v2= b2-((np.sum(b2*b1,axis=1)*b1.T)/norm_sq[:,i+1]).T
-#        x = np.sum(v0*v2,axis=1)
-#        m = np.cross(v0,b1).T/np.sqrt(norm_sq[:,i+1])
-#        y = np.sum(m.T*v2,axis=1)
-#        angles.append(np.arctan2( y, x ))
-#    angles = np.array(angles)
-#
-#    return np.degrees(angles.T),idx_up,idx_low
+
+def bb_angles(coords):
+
+    diffs = coords[:-1]-coords[1:]
+
+    norm_sq = np.sum(diffs**2,axis=1)
+    
+    # set to zero when atom is missing
+    not_me = np.where(norm_sq>definitions.maxbond_sq)[0]
+    no_idx = []
+    for i in not_me:
+        if(i>1): no_idx.append(i-1)
+        no_idx.append(i)
+        if(i<norm_sq.shape[0]-1): no_idx.append(i+1)
+    norm_sq[no_idx] = 0.0
+    
+    norm_sq_inv = 1./norm_sq
+
+    angles = [float('nan')] # First is alpha 
+    for i in xrange(coords.shape[0]-3):
+        angles.append(dihedral(-diffs[i],diffs[i+1],diffs[i+2],norm_sq_inv[i+1]))
+    
+    angles.append(float('nan')) # Add two more angles at the end!
+    angles.append(float('nan')) # Add two more angles at the end!
+
+    return np.array(angles).reshape(-1,6)
+
+def chi_angles(coords):
+    
+    diffs = coords[:,:-1]-coords[:,1:]
+
+    norm_sq = np.sum(diffs**2,axis=2)
+    norm_sq[np.where(norm_sq>definitions.maxbond_sq)[0],:] = 0.0
+
+    b0 = -diffs[:,0]
+    b1 = diffs[:,1]
+    b2 = diffs[:,2]
+    ss = np.sum(b0*b1,axis=1)
+
+    v0= b0-((np.sum(b0*b1,axis=1)*b1.T)/norm_sq[:,1]).T
+    v2= b2-((np.sum(b2*b1,axis=1)*b1.T)/norm_sq[:,1]).T
+    x = np.sum(v0*v2,axis=1)
+    m = np.cross(v0,b1).T/np.sqrt(norm_sq[:,1])
+    y = np.sum(m.T*v2,axis=1)
+    
+    return  np.arctan2(y,x)
+
+
+
+    #return np.degrees(angles.T),idx_up,idx_low
 #
 def torsions(args):
 
@@ -82,8 +116,12 @@ def torsions(args):
                 coords_chi.append(cc_tmp)
                                     
             coords_bb = np.array(coords_bb)
+            bb_torsion = bb_angles(coords_bb)
+
             coords_chi = np.array(coords_chi)
-            
+            chi_torsion = chi_angles(coords_chi)
+            bb_torsion = np.degrees(np.column_stack((bb_torsion,chi_torsion)))
+
             # calculate angles
             #bb_torsion = cur_pdb.models[j].get_bb_torsions()
             if(args.hread):

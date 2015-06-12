@@ -1,4 +1,5 @@
 import sys
+
 pyr = ["rC","rU","dC","dU","dT"]
 pur = ["rA","rG","dA","dG"]
 
@@ -18,7 +19,11 @@ class Residue:
         for i in xrange(len(atoms_data)):
             # make sure that atoms is not duplicated
             # this can happen with multiple occupancy
-            assert(atoms_data[i][1] not in self.atom_types)
+            if(atoms_data[i][1] in self.atom_types):
+                err = "# Warning: atom %s is already present in residue %s \n" % (atoms_data[i][1],self.res_id)
+                sys.stderr.write(err)
+                continue
+                
             self.atom_numbers.append(int(atoms_data[i][0]))
             self.atom_types.append(atoms_data[i][1])
             self.atom_coords.append([atoms_data[i][5],atoms_data[i][6],atoms_data[i][7]])
@@ -35,6 +40,14 @@ class Residue:
             sys.stderr.write(err)
             return [-9999.,-9999.,-9999.]
 
+
+    # return all coordinates (silent version, used in ENM)
+    def get_atom(self,atom_type):
+        try:
+            idx = self.atom_types.index(atom_type)
+            return self.atom_coords[idx]
+        except:
+            return []
 
     # return all coordinates
     def get_coords(self):
