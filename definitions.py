@@ -27,6 +27,7 @@ pairings = ['WC','WW','WS','WH','HH','HS','HW','SS','SH','SW']
 op = ['(','[','{','<']
 cl = [')',']','}','>']          
 
+known_abbrev = ["A","C","G","U","N","Y","R","%"]
 
 #Tolerance to identify zero-eigenvalues modes, 
 #corresponding to translational and rotational degrees of freedom.

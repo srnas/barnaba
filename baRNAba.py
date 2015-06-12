@@ -85,12 +85,12 @@ def parse():
     parser_f.add_argument("--hread", dest="read",help="make output human-readable",action='store_true',default=False)
 
     # TESTED
-    #parser_g = subparsers.add_parser('SPLIT', help='SPLIT structure in multiple PDB')
-    #parser_g.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
-    #parser_g.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
-    #parser_g.add_argument("--dumpPDB", dest="dump_pdb",help="Write pdb files",action='store_true',default=False)
-    #parser_g.add_argument("--sequence", dest="seq",help="Sequence type. Accepts ACGU/NRY/% format",required=True)
-    #parser_g.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
+    parser_g = subparsers.add_parser('SNIPPET', help='SPLIT structure in multiple PDB')
+    parser_g.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
+    parser_g.add_argument("--dumpPDB", dest="dump_pdb",help="Write pdb files",action='store_true',default=False)
+    parser_g.add_argument("--sequence", dest="seq",help="Sequence type. Accepts ACGU/NRY/@ format",required=True)
+    parser_g.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
+    #parser_g.add_argument("--helix", dest="helix",help="require one WC",action='store_true',default=False)
 
     parser_h = subparsers.add_parser('TORSION', help='Annotate RNA structure')
     parser_h.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
@@ -186,6 +186,11 @@ def enm(args):
     import enm
     enm.enm(args)
 
+####################  SNIPPET  #######################
+
+def snippet(args):
+    import snippet
+    snippet.snippet(args)
 
 ####################### MAIN #########################
 
@@ -230,7 +235,8 @@ def main():
 
     # call appropriate function
     options = {'ERMSD' : ermsd,'ESCORE' : score,'SS_MOTIF' : ss_motif,'DS_MOTIF' : ds_motif,\
-                   'ANNOTATE' : annotate,'DUMP' : dump,'TORSION':torsion,'PUCKER':pucker,'ENM':enm}
+                   'ANNOTATE' : annotate,'DUMP' : dump,'TORSION':torsion,'PUCKER':pucker,'ENM':enm,\
+                   'SNIPPET' : snippet}
 
     options[args.subparser_name](args)
     
