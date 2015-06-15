@@ -43,6 +43,7 @@ rna_torsion = ["P","O5'","C5'","C4'","C3'","O3'","O4'","C1'","N9","C4","N1","C2"
 rna_backbone = ["P","O5'","C5'","C4'","C3'","O3'"]
 rna_chi_pur = ["O4'","C1'","N9","C4"]
 rna_chi_pyr = ["O4'","C1'","N1","C2"]
+term_5prime = ["OP1","OP2","P","OP3"]
 
 # Rna only for the moment being
 heavy_atoms = ["P","OP1","OP2","O1P","O2P",\

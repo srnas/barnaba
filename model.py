@@ -301,7 +301,7 @@ class Model:
                             
         return pairs, openings,closings
 
-    def string_pdb(self,idx=None):
+    def string_pdb(self,idx=None,noP=False):
 
         if(idx==None):
             idx = range(len(self.residues))
@@ -310,8 +310,11 @@ class Model:
         string += "REMARK "
         string += " ".join([self.sequence_id[i] for i in idx])
         string += "\n"
-        for i in idx:
-            string += self.residues[i].pdb_string()
+        for serial,i in enumerate(idx):
+            if(noP==True and serial==0):
+                string += self.residues[i].pdb_string(noP=True)
+            else:
+                string += self.residues[i].pdb_string()
         string += "ENDMDL\n"
         return string
 
