@@ -5,8 +5,11 @@ import sys
 class Names:
 
 
-    rna_residues = ["U","rU","RU","RU5","RU3","C","rC","RC","RC5","RC3",\
-                    "G","rG","RG","RG5","RG3","A","rA","RA","RA5","RA3"]
+    rna_residues = ["U","rU","RU","RU5","RU3","U3","U5",\
+                    "C","rC","RC","RC5","RC3","C3","C5",\
+                    "G","rG","RG","RG5","RG3","G3","G5",\
+                    "A","rA","RA","RA5","RA3","A3","A5"]
+    
     rna_special = ["2MG","H2U","OMC","YG","PSU","5MC","7MG","1MA","OMU","OMG","UR3"]
 
     dna_residues = ["T","dT","DT","DT5","DT3","dC","DC","DC5","DC3",\
@@ -19,13 +22,13 @@ class Names:
     known_abbrev = ["A","C","G","U","N","Y","R","%"]
 
         
-    residue_dict = {'U': 'rU', 'rU':'rU','RU':'rU','RU5':'rU','RU3':'rU',\
+    residue_dict = {'U': 'rU', 'rU':'rU','RU':'rU','RU5':'rU','RU3':'rU','U3':'rU','U5':'rU',\
                         'H2U':'rU','PSU':'rU','OMU':'rU','UR3':'rU',\
-                        'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA',\
+                        'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA','A3':'rA','A5':'rA',\
                         '1MA':'rA',\
-                        'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC',\
+                        'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC','C3':'rC','C5':'rC',\
                         'OMC':'rC','5MC':'rC',\
-                        'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG',\
+                        'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG','G3':'rG','G5':'rG',\
                         '2MG':'rG','YG':'rG','7MG':'rG','OMG':'rG',\
                         'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
                         'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
