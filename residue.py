@@ -1,4 +1,5 @@
 import sys
+import definitions
 
 pyr = ["rC","rU","dC","dU","dT"]
 pur = ["rA","rG","dA","dG"]
@@ -68,7 +69,7 @@ class Residue:
 
 
     # return string with pdb
-    def pdb_string(self):
+    def pdb_string(self,noP=False):
         string = ""
         occ = 1.0
         bfac = 1.0
@@ -76,6 +77,9 @@ class Residue:
         for i in xrange(len(self.atom_types)):
 
             atype = self.atom_types[i]
+            if(noP==True and atype in definitions.term_5prime):
+                continue
+            
             anum = self.atom_numbers[i]
             x = self.atom_coords[i][0]
             y = self.atom_coords[i][1]

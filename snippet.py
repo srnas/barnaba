@@ -98,7 +98,7 @@ def snippet(args):
                         + pdb.models[j].sequence_id[idx[0]][:-2] + "_"\
                         + pdb.models[j].sequence_id[idx[-1]][:-2] + ".pdb"
                     fh_pdb = open(new_pdb,'w')
-                    fh_pdb.write(pdb.models[j].string_pdb(idx))
+                    fh_pdb.write(pdb.models[j].string_pdb(idx,noP=True))
                     fh_pdb.close()
 
                 gmat = pdb.models[j].get_4dmat(args.cutoff,idx)
