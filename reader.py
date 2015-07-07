@@ -10,26 +10,27 @@ class Names:
                     "G","rG","RG","RG5","RG3","G3","G5",\
                     "A","rA","RA","RA5","RA3","A3","A5"]
     
-    rna_special = ["2MG","H2U","OMC","YG","PSU","5MC","7MG","1MA","OMU","OMG","UR3"]
+    rna_special = ["2MG","H2U","OMC","YG","PSU","5MC","7MG","1MA","OMU","OMG","UR3","1MG","5MU"]
 
     dna_residues = ["T","dT","DT","DT5","DT3","dC","DC","DC5","DC3",\
                     "dG","DG","DG5","DG3","dA","DA","DA5","DA3"]
     prt_residues = ["ALA","ARG","ASN","ASP","ASPP","CYS","GLN","GLU","GLY",\
                     "HSD","HSE","HSP","ILE","LEU","LYS","LSN","MET","PHE",\
                     "PRO","SER","THR","TRP","TYR","VAL"]
+
     ions = ["MG","HOH"]
     
     known_abbrev = ["A","C","G","U","N","Y","R","%"]
 
         
     residue_dict = {'U': 'rU', 'rU':'rU','RU':'rU','RU5':'rU','RU3':'rU','U3':'rU','U5':'rU',\
-                        'H2U':'rU','PSU':'rU','OMU':'rU','UR3':'rU',\
+                        'H2U':'rU','PSU':'rU','OMU':'rU','UR3':'rU','5MU':'rU',\
                         'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA','A3':'rA','A5':'rA',\
                         '1MA':'rA',\
                         'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC','C3':'rC','C5':'rC',\
                         'OMC':'rC','5MC':'rC',\
                         'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG','G3':'rG','G5':'rG',\
-                        '2MG':'rG','YG':'rG','7MG':'rG','OMG':'rG',\
+                        '2MG':'rG','YG':'rG','7MG':'rG','OMG':'rG','1MG':'rG',\
                         'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
                         'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
                         'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
