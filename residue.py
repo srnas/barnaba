@@ -39,7 +39,7 @@ class Residue:
         except:
             err = "# Warning: no %s atom in residue %s \n" % (atom_type,self.res_id)
             sys.stderr.write(err)
-            return [-9999.,-9999.,-9999.]
+            return [float('nan'),float('nan',),float('nan')]
 
 
     # return all coordinates (silent version, used in ENM)

@@ -41,8 +41,7 @@ def bb_angles(coords):
         if(i>1): no_idx.append(i-1)
         no_idx.append(i)
         if(i<norm_sq.shape[0]-1): no_idx.append(i+1)
-    norm_sq[no_idx] = 0.0
-    
+    norm_sq[no_idx] = float('nan')
     norm_sq_inv = 1./norm_sq
 
     angles = [float('nan')] # First is alpha 
