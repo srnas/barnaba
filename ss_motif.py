@@ -82,4 +82,4 @@ def ss_motif(args):
                         fh_pdb = open(new_pdb,'w')
                         fh_pdb.write(cur_pdb.models[j].string_pdb(idx))
                         fh_pdb.close()
-        fh.close()
+    fh.close()
