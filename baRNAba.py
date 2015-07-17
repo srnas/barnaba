@@ -74,6 +74,7 @@ def parse():
     parser_e = subparsers.add_parser('ANNOTATE', help='Annotate RNA structure')
     parser_e.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_e.add_argument("--pymol", dest="pymol",help="Write script.pml file for coloring",action='store_true',default=False)
+    parser_e.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
 
     # TESTED
     parser_f = subparsers.add_parser('DUMP', help='DUMP structural parameters')

@@ -135,8 +135,8 @@ class Model:
             for r1,r2 in zip(s1,s2):
                 if(r1==r2): continue
                 if(r2=="N"): continue
-                if(r2=="Y" and (r1=="C" or r1=="U")): continue
-                if(r2=="R" and (r1=="G" or r1=="A")): continue
+                if(r2=="Y" and (r1=="rC" or r1=="rU")): continue
+                if(r2=="R" and (r1=="rG" or r1=="rA")): continue
                 return False
             return True
 
@@ -249,10 +249,10 @@ class Model:
                 if(z1_abs < 2.0 and z2_abs < 2.0):
 
                     # check  wc-pair
-                    r1 = self.sequence[ii]
-                    r2 = self.sequence[jj]
-                    if((r1 == 'A' and r2 == 'U') or  (r1 == 'U' and r2 == 'A') or \
-                           (r1 == 'C' and r2 == 'G') or  (r1 == 'G' and r2 == 'C')):
+                    r1 = self.residues[ii].res_mytype
+                    r2 = self.residues[jj].res_mytype
+                    if((r1 == 'rA' and r2 == 'rU') or  (r1 == 'rU' and r2 == 'rA') or \
+                           (r1 == 'rC' and r2 == 'rG') or  (r1 == 'rG' and r2 == 'rC')):
                         dev1  = R1 - definitions.wc_mean
                         dev2  = R2 - definitions.wc_mean
                         maha1 = np.einsum('...k,...kl,...l->...', dev1, definitions.inv_sigma, dev1)
@@ -263,7 +263,7 @@ class Model:
                             int_type = "WC"
 
                     # GU 
-                    if((r1 == 'U' and r2 == 'G') or  (r1 == 'U' and r2 == 'G')):
+                    if((r1 == 'rU' and r2 == 'rG') or  (r1 == 'rU' and r2 == 'rG')):
                         angle1 = np.arctan2(R1[1],R1[0])
                         angle2 = np.arctan2(R2[1],R2[0])
                         if((angle1> definitions.theta1 and angle1 <= definitions.theta2) and \
