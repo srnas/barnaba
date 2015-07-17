@@ -1,5 +1,6 @@
 # This is a baRNAba run.
 # files ['../../../examples/DATA/1S72.pdb']
+# hread True
 # name 5_EXAMPLE.ANNOTATE.rna
 # pymol False
 # res_mode R
