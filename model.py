@@ -135,8 +135,8 @@ class Model:
             for r1,r2 in zip(s1,s2):
                 if(r1==r2): continue
                 if(r2=="N"): continue
-                if(r2=="Y" and (r1=="rC" or r1=="rU")): continue
-                if(r2=="R" and (r1=="rG" or r1=="rA")): continue
+                if(r2=="Y" and (r1=="C" or r1=="U")): continue
+                if(r2=="R" and (r1=="G" or r1=="A")): continue
                 return False
             return True
 
