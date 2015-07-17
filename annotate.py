@@ -121,10 +121,21 @@ def annotate(args):
             # print dotbracket
             string += '# ' + "".join(anno) + "\n"
 
-            # print interactions 
-            for el in interactions:
-                string += "%10s %10s %2s \n" % (cur_pdb.models[j].sequence_id[el[0]],cur_pdb.models[j].sequence_id[el[1]],el[2])
-            fh.write(string)
+            if(args.hread):
+                # print interactions 
+                for el in interactions:
+                    string += "%10s %10s %2s \n" % (cur_pdb.models[j].sequence_id[el[0]],cur_pdb.models[j].sequence_id[el[1]],el[2])
+                fh.write(string)
+            else:
+                merged = [str(el[0]) + "_" + str(el[1]) for el in interactions]
+                for i1 in xrange(len(cur_pdb.models[j].sequence_id)):
+                    for i2 in xrange(i1+1,len(cur_pdb.models[j].sequence_id)):
+                        symbol = ".."
+                        lab = str(i1) + "_" + str(i2)
+                        if(lab in merged):
+                            symbol = interactions[merged.index(lab)][2]
+                        string += "%2s " % symbol
+                fh.write(string + "\n")
 
             if(args.pymol == True):
                 pymol_script(files[i],cur_pdb.models[j].sequence_id, interactions)
