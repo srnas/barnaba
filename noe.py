@@ -11,61 +11,45 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import reader as reader
 import numpy as np
+import reader as reader
 
+####################### MOTIF #########################
 
-def ermsd(args):
-    
+def noe(args):
+
+    # sanity checks
     files = args.files
-    print "# Calculating ERMSD..."
-
+    print "# Calculating NOES"
+    
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
     for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
-        
-    # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode)
-    ref_len = len(ref_pdb.model.sequence)
-    ref_mat = ref_pdb.model.get_gmat(args.cutoff)
 
-    if(args.xtc!=None):
-        assert len(files)==1, "# Error: when providing XTC trajectories, specify a single reference PDB file with -f"
-        
-    #all the rest and calculate ERMSD on-the-fly
     for i in xrange(0,len(files)):
-        
+
         cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
         cur_pdb.set_xtc(args.xtc)
-        cur_len = len(cur_pdb.model.sequence)
-        assert cur_len==ref_len, "# Fatal error: sequence lengths mismatch %d %d \n" %(cur_len,ref_len)
-
-            
+        cur_pdb.model.set_h_idx()
+        
         idx = 0
         eof = True
+        data = []
         while(eof):
-            cur_mat = cur_pdb.model.get_gmat(args.cutoff)
-            diff = (ref_mat-cur_mat)**2
-            val = np.sqrt(np.sum(diff)/ref_len)
-
-            string = "%8i %10.6f  " % (idx,val)
-            if(args.perres):
-                string += ";"
-                per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ref_len)
-                for k in xrange(len(per_res)):
-                    string += " %10.6f " % (per_res[k])
-            string += "%s \n" % (files[i])
-            fh.write(string)
-            
+            data.append(cur_pdb.model.calc_pairwise_h())
             idx += 1
             if(args.xtc==None):
                 eof = cur_pdb.read()
             else:
                 eof = cur_pdb.read_xtc()
-                                
+        data = np.array(data)
+        triu = np.triu_indices(len(cur_pdb.model.h_labels), 1)
+        string = ""
+        for j in range(len(data[0])):
+            avg = np.power(np.average(data[:,j]),-1./6.)
+            if(avg<args.cutoff):
+                string += "%12s %12s %8.4f \n" % (cur_pdb.model.h_labels[triu[0][j]],cur_pdb.model.h_labels[triu[1][j]], avg)
+        fh.write(string)
     fh.close()
-    return 0
-
-

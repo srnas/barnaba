@@ -14,12 +14,9 @@
 
 import reader as reader
 import numpy as np
-
 from scipy.linalg import eigh
 from scipy.spatial import distance
-
 import definitions
-
 
 
 
@@ -39,22 +36,25 @@ def enm(args):
         atoms_req = definitions.heavy_atoms
 
     # loop over files
-    for i in xrange(0,len(files)):
+    if(len(files)>1):
+        print "# WARNING: ENM will be calculated only for the first PDB "
         
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="ALL")
-
-        # loop over models
-        for j in xrange(len(cur_pdb.models)):
-            
+    for i in xrange(0,1):
+        
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        eof = True
+        while(eof):
+                        
             coords = []
             C2_indeces = []
             #find beads
-            for k in xrange(len(cur_pdb.models[j].sequence)):
-                resi = cur_pdb.models[j].residues[k]
+            
+            for k in xrange(len(cur_pdb.model.sequence)):
+                resi = cur_pdb.model.residues[k]
                 for atom_type in atoms_req:
-                    cc = resi.get_atom(atom_type)
-                    if(len(cc)!=0):
-                        coords.append(cc)
+                    idx = resi.get_idx(atom_type) 
+                    if(idx!=None):
+                        coords.append(cur_pdb.model.coords[idx])
                         if(atom_type=="C2"):
                             C2_indeces.append(len(coords)-1)
             print "# Read ", len(coords), "coordinates"
@@ -175,6 +175,6 @@ def enm(args):
                 stri = "%5d %5d %10.6f \n" % (i,j,sigma)
                 fC2.write(stri)
             fC2.close()
+            eof = cur_pdb.read()
 
-#    fh.close()
     return 0

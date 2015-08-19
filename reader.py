@@ -1,6 +1,14 @@
 import definitions
 import model as md
 import sys
+import numpy as np
+
+
+try:
+    from xdrfile import libxdrfile2
+except:
+    print "# Xdrfile not installed. XTC trajectories cannot be read"
+    print "# https://pythonhosted.org/MDAnalysis/documentation_pages/coordinates/xdrfile/core.html"
 
 class Names:
 
@@ -23,14 +31,14 @@ class Names:
     known_abbrev = ["A","C","G","U","N","Y","R","%"]
 
         
-    residue_dict = {'U': 'rU', 'rU':'rU','RU':'rU','RU5':'rU','RU3':'rU','U3':'rU','U5':'rU',\
-                        'H2U':'rU','PSU':'rU','OMU':'rU','UR3':'rU','5MU':'rU',\
-                        'A': 'rA', 'rA':'rA','RA':'rA','RA5':'rA','RA3':'rA','A3':'rA','A5':'rA',\
-                        '1MA':'rA',\
-                        'C': 'rC', 'rC':'rC','RC':'rC','RC5':'rC','RC3':'rC','C3':'rC','C5':'rC',\
-                        'OMC':'rC','5MC':'rC',\
-                        'G': 'rG', 'rG':'rG','RG':'rG','RG5':'rG','RG3':'rG','G3':'rG','G5':'rG',\
-                        '2MG':'rG','YG':'rG','7MG':'rG','OMG':'rG','1MG':'rG',\
+    residue_dict = {'U': 'U', 'rU':'U','RU':'U','RU5':'U','RU3':'U','U3':'U','U5':'U',\
+                        'H2U':'U','PSU':'U','OMU':'U','UR3':'U','5MU':'U',\
+                        'A': 'A', 'rA':'A','RA':'A','RA5':'A','RA3':'A','A3':'A','A5':'A',\
+                        '1MA':'A',\
+                        'C': 'C', 'rC':'C','RC':'C','RC5':'C','RC3':'C','C3':'C','C5':'C',\
+                        'OMC':'C','5MC':'C',\
+                        'G': 'G', 'rG':'G','RG':'G','RG5':'G','RG3':'G','G3':'G','G5':'G',\
+                        '2MG':'G','YG':'G','7MG':'G','OMG':'G','1MG':'G',\
                         'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
                         'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
                         'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
@@ -44,25 +52,29 @@ class Names:
 
 class Pdb:
 
-    def __init__(self,filename,res_mode,at_mode,verbose=False):
+    def __init__(self,filename,res_mode):
 
-        ok_residues = []
+        self.ok_residues = []
         if("R" in res_mode):
-            ok_residues.extend(Names.rna_residues[:])
+            self.ok_residues.extend(Names.rna_residues[:])
         if("S" in res_mode):
-            ok_residues.extend(Names.rna_special[:])
+            self.ok_residues.extend(Names.rna_special[:])
         if("D" in res_mode):
-            ok_residues.extend(Names.dna_residues[:])
+            self.ok_residues.extend(Names.dna_residues[:])
         if("P" in res_mode):
-            ok_residues.extend(Names.prt_residues[:])
-
-        self.models = []
-        self._parse(filename,ok_residues,at_mode,verbose)
-
+            self.ok_residues.extend(Names.prt_residues[:])
+        self.time = 0
+        self.filename = filename
+        self.fh = open(filename,'r')
+        self.natoms = 0
+        self.model = None
+        self.xtc = None
+        self.parse()
         
-    def _parse(self,filename,ok_residues,at_mode,verbose):
-
+    def parse(self):
+        
         def readline(line):
+            
             res_type = line[17:20].strip()
             res_num = line[22:26].strip()
             atom_type = line[12:16].strip()
@@ -73,88 +85,84 @@ class Pdb:
             X = float(line[30:38])
             Y = float(line[38:46])
             Z = float(line[46:54])
-            insertion = line[26]
-
+            
             # not used - but in case
-            segid = line[72:76]
-            bfactor = float(line[60:66])
-            occupancy = float(line[54:60])
+            #segid = line[72:76]
+            #bfactor = float(line[60:66])
+            #occupancy = float(line[54:60])
             res_mytype = Names.residue_dict[res_type]
-            res_id = res_num + "_" + res_type + "_" + chain + "_" + insertion
-            #mol_id = "XXX"
-            #if(res_type in Names.rna_residues): mol_id = "RNA"
-            #if(res_type in Names.dna_residues): mol_id = "DNA"
-            #if(res_type in Names.prt_residues): mol_id = "PROT"
+            res_id = res_num + "_" + res_type + "_" + chain 
             
             vv = [atom_num,atom_type,res_type,chain,res_num,X,Y,Z,res_mytype,res_id]
             return vv
-        
-        # read file
-        models_tmp  = []
-        model = []
-        print "# Reading", filename
-        fh = open(filename,'r')
-        for line in fh:
-            at = line[0:6].strip()
-            
-            if(at=="ENDMDL" and len(model)!=0):
-                models_tmp.append(model)
-                model = []
-                
-            if(at =="ATOM" or at == "HETATM"):
 
+        # read file
+        tmp_data = []
+        for line in self.fh:
+            
+            at = line[0:6].strip()
+            if(at =="ATOM" or at == "HETATM"):
                 # skip residues
                 res_type = line[17:20].strip()
-                #print res_type
-                if(res_type not in ok_residues): continue
-                #print res_type
-
-                # skip atoms
-                atom_type = line[12:16].strip()
-                if(at_mode == "ALL"  and "H" in atom_type): continue
-                if(at_mode == "LCS" and atom_type not in definitions.rna_lcs): continue
-                if(at_mode == "PUCKER" and atom_type not in definitions.rna_pucker): continue
-                if(at_mode == "BB" and atom_type not in definitions.rna_torsion): continue
-
+                if(res_type not in self.ok_residues): continue
+                
                 # skip if alternative position is different from A or nothing
                 if(line[16]  != " " and line[16] != "A"): 
-                    if(verbose): sys.stderr.write("# Warning: skipping residue with multiple occupancy %s \n" % (line[16]))
+                    sys.stderr.write("# Warning: skipping residue with multiple occupancy %s \n" % (line[17:26]))
                     continue
-
-
-                model.append(readline(line))
-                
-        fh.close()
-        # one last time if ENDMDL is missing
-        if(len(model)!=0):
-            models_tmp.append(model)
+                # skip insertions as well
+                insertion = line[26]
+                if(insertion!=" "):
+                    sys.stderr.write("# Warning: skipping insertion residue %s \n" % (line[17:27]))
+                    continue
+    
+                tmp_data.append(readline(line))
+                self.natoms += 1
+                        
+            if(at=="ENDMDL"):
+                self.model = md.Model(tmp_data)
+                return 0
             
-        # make sure there is at least one residue in file
-        if(len(models_tmp)==0):
-            err = "# Error: no valid residues in PDB file %s \n" % filename
-            sys.stderr.write(err)
-
-        # rearrange now
-        self.models = []
-        for i in xrange(len(models_tmp)):
-            data_tmp = []
-            mod = models_tmp[i]
-            model = []
-            for j in xrange(len(mod)):
-
-                data_tmp.append(mod[j])
-
-                cur_id = mod[j][-1]
-                if(j+1==len(mod)): next_id = "XXX"
-                else: next_id = mod[j+1][-1]
-
-                if(next_id != cur_id):
-                    model.append(data_tmp)
-                    data_tmp = []
-            self.models.append(md.Model(model))
-        
+        if(self.model==None):
+            self.model = md.Model(tmp_data)
+            return 0
             
                 
 
         
+    def read(self):
+
+        assert self.model != None, "# Model uninitialized. call parse before read!"
+
+        data = []
+        for line in self.fh:
+            at = line[0:6].strip()
+            if(at =="ATOM" or at == "HETATM"):
+                vv = [float(line[30:38]),float(line[38:46]) ,float(line[46:54])]
+                data.append(vv)
+            if(at=="ENDMDL"):
+                self.model.set_coords(np.array(data))
+                return 1
+        self.fh.close()
+        return 0
+
+    def set_xtc(self,xtcfile):
+        if(xtcfile!=None):
+            natoms = libxdrfile2.read_xtc_natoms(xtcfile)
+            assert natoms==self.natoms
+            self.xtc = libxdrfile2.xdrfile_open(xtcfile, 'r')
         
+    def read_xtc(self):
+            
+        assert self.model != None, "# Model uninitialized. call parse before read!"
+
+        coords = np.zeros((self.natoms,3), dtype=np.float32)
+        box = np.zeros((3, 3), dtype=np.float32)
+        
+        status,step,time,prec = libxdrfile2.read_xtc(self.xtc, box, coords)
+        self.model.set_coords(10.0*coords)
+        if(status):
+            libxdrfile2.xdrfile_close(self.xtc)
+            return 0
+        else:
+            return 1

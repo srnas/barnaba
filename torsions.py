@@ -16,67 +16,6 @@ import numpy as np
 import definitions
 
 
-def dihedral(b0,b1,b2,norm):
-
-    ss = np.sum(b0*b1)
-    v0= b0-((np.sum(b0*b1)*b1)*norm)
-    v2= b2-((np.sum(b2*b1)*b1)*norm)
-    x = np.sum(v0*v2)
-    m = np.cross(v0,b1)*np.sqrt(norm)
-    y = np.sum(m*v2)
-    return np.arctan2( y, x )
-
-    
-
-def bb_angles(coords):
-
-    diffs = coords[:-1]-coords[1:]
-
-    norm_sq = np.sum(diffs**2,axis=1)
-    
-    # set to zero when atom is missing
-    not_me = np.where(norm_sq>definitions.maxbond_sq)[0]
-    no_idx = []
-    for i in not_me:
-        if(i>1): no_idx.append(i-1)
-        no_idx.append(i)
-        if(i<norm_sq.shape[0]-1): no_idx.append(i+1)
-    norm_sq[no_idx] = float('nan')
-    norm_sq_inv = 1./norm_sq
-
-    angles = [float('nan')] # First is alpha 
-    for i in xrange(coords.shape[0]-3):
-        angles.append(dihedral(-diffs[i],diffs[i+1],diffs[i+2],norm_sq_inv[i+1]))
-    
-    angles.append(float('nan')) # Add two more angles at the end!
-    angles.append(float('nan')) # Add two more angles at the end!
-
-    return np.array(angles).reshape(-1,6)
-
-def chi_angles(coords):
-    
-    diffs = coords[:,:-1]-coords[:,1:]
-
-    norm_sq = np.sum(diffs**2,axis=2)
-    norm_sq[np.where(norm_sq>definitions.maxbond_sq)[0],:] = 0.0
-
-    b0 = -diffs[:,0]
-    b1 = diffs[:,1]
-    b2 = diffs[:,2]
-    ss = np.sum(b0*b1,axis=1)
-
-    v0= b0-((np.sum(b0*b1,axis=1)*b1.T)/norm_sq[:,1]).T
-    v2= b2-((np.sum(b2*b1,axis=1)*b1.T)/norm_sq[:,1]).T
-    x = np.sum(v0*v2,axis=1)
-    m = np.cross(v0,b1).T/np.sqrt(norm_sq[:,1])
-    y = np.sum(m.T*v2,axis=1)
-    
-    return  np.arctan2(y,x)
-
-
-
-    #return np.degrees(angles.T),idx_up,idx_low
-#
 def torsions(args):
 
 
@@ -88,61 +27,141 @@ def torsions(args):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
+    if(args.bb):
+        fh_bb = open(args.name + ".backbone",'w')
+    if(args.pucker):
+        fh_pu = open(args.name + ".pucker",'w')
+    if(args.jcoupling):
+        fh_j3 = open(args.name + ".j3",'w')
+    
     for i in xrange(0,len(files)):
-        
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,at_mode="TOR")
 
-        for j in xrange(len(cur_pdb.models)):
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        ll = len(cur_pdb.model.sequence)
+        if(args.xtc!=None):
+            cur_pdb.set_xtc(args.xtc)
 
-            mod = cur_pdb.models[j]
+        if(args.bb):
+            cur_pdb.model.set_bb_index()
+        if(args.pucker):
+            cur_pdb.model.set_pucker_index()
+        if(args.jcoupling):
+            cur_pdb.model.set_j3_index()
+            
+        idx = 0
+        eof = True
+        while(eof):
 
-            # fetch bb atoms and chi atoms
-            coords_bb = []
-            coords_chi = []
-            for k in xrange(len(mod.residues)):
+            ################################
+            ### calculate backbone angles ##
+            ################################
 
-                # get atoms for backbone
-                cc_tmp = [mod.residues[k][at]  for at in definitions.rna_backbone]
-                coords_bb.extend(cc_tmp)
+            if(args.bb):
+                bb_angles, chi_angles = cur_pdb.model.calc_bb_torsion()
+                idx1 = 0
+                idx2 = 0
+                angles = []
+                for res in range(ll):
+                    string = ""
+                    for bbs in range(6):
+                        if(cur_pdb.model.missing[res*6+bbs]):
+                            string +=  "%10.3f " % float('nan')
+                        else:
+                            string +=  "%10.3f "%  bb_angles[idx1]
+                            idx1 += 1
+                            
+                    if(cur_pdb.model.chi_missing[res]):
+                        string +=  "%10.3f " % float('nan')
+                    else:
+                        string +=  "%10.3f " %chi_angles[idx2]
+                        idx2 += 1
+                    angles.append(string)
+                    
+                # now print to file
+                if(args.hread):
+                    fh_bb.write("# " + files[i] + " " + str(idx) + "\n")
+                    fh_bb.write("#%10s%10s %10s %10s %10s %10s %10s %10s \n" % ("","ALPHA","BETA","GAMMA","DELTA","EPSILON","ZETA","CHI"))
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_bb.write(stri + "\n")
+                else:
+                    fh_bb.write("%10d %s \n"% (idx,"".join(angles)))
+                    
 
-                # get atoms for chi angles
-                cc_tmp = []
-                atoms =  definitions.rna_chi_pur
-                if(mod.residues[k].res_mytype == "rU" or mod.residues[k].res_mytype == "rC"):
-                    atoms = definitions.rna_chi_pyr
-
-                cc_tmp = [mod.residues[k][at]  for at in atoms]
-                coords_chi.append(cc_tmp)
-                                    
-            coords_bb = np.array(coords_bb)
-            bb_torsion = bb_angles(coords_bb)
-
-            coords_chi = np.array(coords_chi)
-            chi_torsion = chi_angles(coords_chi)
-            bb_torsion = np.degrees(np.column_stack((bb_torsion,chi_torsion)))
-
-            # calculate angles
-            #bb_torsion = cur_pdb.models[j].get_bb_torsions()
-            if(args.hread):
-                string = '# ' + files[i] + "-" + str(j) + "\n"
-                string += "# " + "".join(cur_pdb.models[j].sequence) + "\n"
-                for k in range(len(bb_torsion)):
-                    string += "%10s" % (cur_pdb.models[j].sequence_id[k])
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
-                    string += "\n"
-            else:
-                string = files[i] + "." + str(j) + " "
-                for k in range(len(bb_torsion)):
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
-
-                string += "\n"
-            fh.write(string)
+            ################################
+            ### calculate pucker angles  # #
+            ################################
+            if(args.pucker):
+                pucker_angles = cur_pdb.model.calc_pucker()
+                idx1 = 0
+                angles = []
+                for res in range(ll):
+                    string = ""
+                    if(cur_pdb.model.pucker_missing[res]):
+                        angles.append("%10.3f " % float('nan'))
+                    else:
+                        angles.append("".join(["%10.3f "% el for el in pucker_angles[idx1]]))
+                        idx1 += 1
+                        
+                if(args.hread):
+                    fh_pu.write("# " + files[i] + " " + str(idx) + "\n")
+                    fh_pu.write("#%10s%10s %10s %10s %10s %10s %10s %10s \n" % ("","NU1","NU2","NU3","NU4","NU5","AMPLITUDE","PHASE"))
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_pu.write(stri + "\n")
+                else:
+                    fh_pu.write("%10d %s \n"% (idx,"".join(angles)))
+                            
+            ################################
+            ### calculate pucker angles  # #
+            ################################
+            if(args.jcoupling):
+                j3_angles = cur_pdb.model.calc_j3()
+                idx1 = 0
+                angles = []
+                lj = len(definitions.j3)
+                for res in range(ll):
+                    string = ""
+                    for bbs in range(lj):
+                        if(cur_pdb.model.j3_missing[res*lj+bbs]):
+                            string +=  "%10.3f " % float('nan')
+                        else:
+                            if(args.raw):
+                                val = j3_angles[idx1]
+                            else:
+                                cos = np.cos(j3_angles[idx1])
+                                val =  cos*cos*definitions.j3[bbs][2][0] + \
+                                       cos*definitions.j3[bbs][2][1] +\
+                                       definitions.j3[bbs][2][2]
+                            string +=  "%10.3f "%  val
+                            idx1 += 1
+                    angles.append(string)
+                    
+                # now print to file
+                if(args.hread):
+                    fh_j3.write("# " + files[i] + " " + str(idx) + "\n")
+                    ss = "#%10s" % ""
+                    for el in definitions.j3:
+                        ss+= "%10s " % el[0]
+                    fh_j3.write(ss + "\n")
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_j3.write(stri + "\n")
+                else:
+                    fh_j3.write("%10d %s \n"% (idx,"".join(angles)))
                 
+                        
+            
+            idx += 1
+            if(args.xtc==None):
+                eof = cur_pdb.read()
+            else:
+                eof = cur_pdb.read_xtc()
 
 
     fh.close()
     return 0
             
-##################### ANNOTATE #######################

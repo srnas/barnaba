@@ -21,9 +21,7 @@ theta3 = -2.0
 
 
 
-
-interactions = ['..','>>','<<','<>','><','WC','WW','WS','WH','HH','HS','HW','SS','SH','SW','XX']
-pairings = ['WC','WW','WS','WH','HH','HS','HW','SS','SH','SW']
+pairings = ['WC','WW','WS','WH','HH','HS','HW','SS','SH','SW',"GU"]
 op = ['(','[','{','<']
 cl = [')',']','}','>']          
 
@@ -45,6 +43,18 @@ rna_chi_pur = ["O4'","C1'","N9","C4"]
 rna_chi_pyr = ["O4'","C1'","N1","C2"]
 term_5prime = ["OP1","OP2","P","OP3"]
 
+# first index is label, second atoms, third karplus parameters
+# you can add more to this list if you wish
+
+j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0]],\
+      ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0]],\
+      ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0]],\
+      ["H4H5'",  ["H4'","C4'","C5'","1H5'"], [9.7,1.8,0.0]],\
+      ["H4H5''", ["H4'","C4'","C5'","2H5'"], [9.7,1.8,0.0]],\
+      ["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
+      ["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
+      ["H3P",    ["H3'","C3'","O3'","P"],   [15.3,-6.1,1.6]]]
+
 # Rna only for the moment being
 heavy_atoms = ["P","OP1","OP2","O1P","O2P",\
                    "O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'",\
@@ -58,3 +68,6 @@ maxbond_sq = 3.24
 # min bond lenght squared (1.1^2)
 minbond_sq = 1.21
 
+pyr = ["C","U","dC","dU","dT"]
+pur = ["A","G","dA","dG"]
+rna = ["A","U","C","G"]
