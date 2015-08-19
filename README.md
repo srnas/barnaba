@@ -57,6 +57,21 @@ Currently, baRNAba can perform different tasks:
    ./baRNAba NOE -f file1.pdb file2.pdb  
 
 
+# GROMACS XTC FILES
+baRNAba can read xtc trajectory files as well if the library libxdrfile2 is correctly installed:
+
+	cd xtc
+	python setup.py build --build-lib=.
+	python setup.py install --user
+
+xtc files can be read using the --xtc argument. The topology file, in PDB format, has to be
+specified using -f, for example
+
+./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb --xtc samples.xtc
+
+calculates the ERMSD between sample1 and sample2, and all snapshots in samples.xtc
+sample2.pdb must contain all the atoms (in the correct order!) as in the xtc file.
+
 
 
 
