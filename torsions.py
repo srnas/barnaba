@@ -131,7 +131,7 @@ def torsions(args):
                             if(args.raw):
                                 val = j3_angles[idx1]
                             else:
-                                cos = np.cos(j3_angles[idx1])
+                                cos = np.cos(np.radians(j3_angles[idx1]))
                                 val =  cos*cos*definitions.j3[bbs][2][0] + \
                                        cos*definitions.j3[bbs][2][1] +\
                                        definitions.j3[bbs][2][2]
