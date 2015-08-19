@@ -2,10 +2,11 @@
 
 set -e
 
-# calculate TORSION and pucker angles.
+# calculate backbone and pucker angles
 
-$BARNABA --name 7_EXAMPLE_TOR TORSION  -f $DATA/1S72.pdb --hread
-$BARNABA --name 7_EXAMPLE_PUC TORSION  -f $DATA/1S72.pdb --hread
+$BARNABA --name 7_EXAMPLE_TOR TORSION  -f $DATA/1S72.pdb --pucker --hread
+$BARNABA --name 7_EXAMPLE_TOR TORSION  -f $DATA/1S72.pdb --backbone --hread
+
 
 
 

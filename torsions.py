@@ -21,19 +21,19 @@ def torsions(args):
 
     print "# Calculating torsion angles..."
     files = args.files
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba run.\n")
-    for k in sorted(args.__dict__):
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
+
+    header = ["# " + str(k) + " " + str(args.__dict__[k]) + "\n" for k in sorted(args.__dict__)]
 
     if(args.bb):
         fh_bb = open(args.name + ".backbone",'w')
+        fh_bb.write("".join(header))
     if(args.pucker):
         fh_pu = open(args.name + ".pucker",'w')
+        fh_pu.write("".join(header))
     if(args.jcoupling):
         fh_j3 = open(args.name + ".j3",'w')
-    
+        fh_j3.write("".join(header))
+        
     for i in xrange(0,len(files)):
 
         cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
@@ -161,7 +161,11 @@ def torsions(args):
             else:
                 eof = cur_pdb.read_xtc()
 
-
-    fh.close()
+    if(args.bb):
+        fh_bb.close()
+    if(args.pucker):
+        fh_pu.close()
+    if(args.jcoupling):
+        fh_j3.close()
     return 0
             

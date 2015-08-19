@@ -94,12 +94,12 @@ def dihedral(vecs):
     norm_sq_inv = 1.0/norm_sq
     large_norm =  (norm_sq>2.9).nonzero()
     if(len(large_norm[0])>0):
-        err = "# Warning: a bond lenght is suspiciously large % \n"
-        print norm_sq[norm_sq>2.9]
-        print large_norm
-        exit()
+        for jj in range(len(large_norm[0])):
+            i1 = large_norm[0][jj]
+            err = "# Warning: a bond lenght is suspiciously large %f %d \n" % (np.sqrt(norm_sq[i1]),i1)
+            sys.stderr.write(err)
         norm_sq_inv[large_norm] = float('nan')
-        sys.stderr.write(err)
+
 
     #print (np.sum(b0*b1,axis=1)*b1).shape
     v0 = b0 - b1*((np.sum(b0*b1,axis=1)*norm_sq_inv)[:,np.newaxis])

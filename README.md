@@ -28,12 +28,12 @@ or download a zip file from the web:
 * minimal help
   ./baRNAba --help 
 
-Currently, baRNAba can perform 5 different tasks:
+Currently, baRNAba can perform different tasks:
 1. Calculate the ERMSD between structures
-   ./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb
+   ./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb ...
 
-2. Calculate the ESCORE
-   ./baRNAba ESCORE --force-field 1S72.pdb -f sample1.pdb
+2. Calculate ESCORE
+   ./baRNAba ESCORE --force-field 1S72.pdb -f sample1.pdb ...
 
 3. Find hairpin loop motif
    ./baRNAba SS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... 
@@ -44,7 +44,12 @@ Currently, baRNAba can perform 5 different tasks:
 5. Annotate structures/trajectories according to the Leontis/Westhof classification.  
    ./baRNAba ANNOTATE -f file1.pdb file2.pdb ...
 
-practical examples can be found in the examples folder. 
+6. Calculate dihedral backbone angles
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --backbone --hread 
+
+7. Calculate dihedral pucker angles
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --pucker --hread 
+
 
 
 
