@@ -106,7 +106,6 @@ def ds_motif(args):
             distsf = distance.cdist([ref_mat_tot],gmatsf)/np.sqrt(ref_len)
             below_tf = (distsf<args.treshold).nonzero()[1]
             for ss in below_tf:
-                print dd,dmine[ss],1.5*dd
                 seq = "_".join([cur_pdb.model.sequence_id[p] for p in idx_combo[ss] ])
                 string = '%8.5f %s %i - %s \n' % (distsf[0,ss],files[i],idx,seq)
                 fh.write(string)
