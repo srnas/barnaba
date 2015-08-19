@@ -6,4 +6,5 @@
 # reference ../../../examples/DATA/sample1.pdb
 # res_mode R
 # subparser_name ERMSD
-  0.963475 ../../../examples/DATA/sample2.pdb - 0 
+# xtc None
+       0   0.934175  ../../../examples/DATA/sample2.pdb 
