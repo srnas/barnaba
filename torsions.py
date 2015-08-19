@@ -15,6 +15,21 @@ import reader as reader
 import numpy as np
 import definitions
 
+sign = [+1,-1,-1,+1]
+
+def calc(angle,j3_spec):
+
+    # standard Karplus
+    cos = np.cos(angle)
+    kk = j3_spec[2]
+    val =  cos*cos*kk[0] +  cos*kk[1] + kk[2] 
+    # more terms...
+    if(j3_spec[0] == "H4H5'" or j3_spec[0] == "H4H5''"):
+        for i in range(4):
+            dchi = j3_spec[3][i]
+            cos_i = np.cos(sign[i]*angle + kk[5]*np.abs(dchi)*np.pi/180.0)
+            val += (kk[3] + kk[4]*cos_i*cos_i)*dchi
+    return val
 
 def torsions(args):
 
@@ -131,10 +146,7 @@ def torsions(args):
                             if(args.raw):
                                 val = j3_angles[idx1]
                             else:
-                                cos = np.cos(np.radians(j3_angles[idx1]))
-                                val =  cos*cos*definitions.j3[bbs][2][0] + \
-                                       cos*definitions.j3[bbs][2][1] +\
-                                       definitions.j3[bbs][2][2]
+                                val = calc(np.radians(j3_angles[idx1]),definitions.j3[bbs])
                             string +=  "%10.3f "%  val
                             idx1 += 1
                     angles.append(string)
