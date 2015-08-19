@@ -44,6 +44,7 @@ def noe(args):
                 eof = cur_pdb.read()
             else:
                 eof = cur_pdb.read_xtc()
+
         data = np.array(data)
         triu = np.triu_indices(len(cur_pdb.model.h_labels), 1)
         string = ""
@@ -52,4 +53,5 @@ def noe(args):
             if(avg<args.cutoff):
                 string += "%12s %12s %8.4f \n" % (cur_pdb.model.h_labels[triu[0][j]],cur_pdb.model.h_labels[triu[1][j]], avg)
         fh.write(string)
+
     fh.close()
