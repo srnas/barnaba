@@ -50,6 +50,12 @@ Currently, baRNAba can perform different tasks:
 7. Calculate dihedral pucker angles
    ./baRNAba TORSION -f file1.pdb file2.pdb ... --pucker --hread 
 
+8. Calculate J-couplings (H1'H2', H2'H3' H3'H4', H4'H5', H4'H5'',1H5P,2H5P,H3P_+)
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --jcoupling --hread 
+
+9. Calculate NOE signal
+   ./baRNAba NOE -f file1.pdb file2.pdb  
+
 
 
 
