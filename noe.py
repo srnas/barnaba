@@ -16,6 +16,8 @@ import reader as reader
 
 ####################### MOTIF #########################
 
+
+
 def noe(args):
 
     # sanity checks
@@ -46,12 +48,18 @@ def noe(args):
                 eof = cur_pdb.read_xtc()
 
         data = np.array(data)
+        bins = 5
+        if(len(data)<10):
+            bins = 1
+        blocks = np.linspace(0,len(data),bins,dtype=int)
         triu = np.triu_indices(len(cur_pdb.model.h_labels), 1)
         string = ""
         for j in range(len(data[0])):
             avg = np.power(np.average(data[:,j]),-1./6.)
+            block_avg = [np.power(np.average(data[blocks[k]:blocks[k+1],j]),-1./6.) for k in range(len(blocks)-1)]
+            block_error = np.std(block_avg)/np.sqrt(bins-1)
             if(avg<args.cutoff):
-                string += "%12s %12s %8.4f \n" % (cur_pdb.model.h_labels[triu[0][j]],cur_pdb.model.h_labels[triu[1][j]], avg)
+                string += "%12s %12s %8.4f %8.4f \n" % (cur_pdb.model.h_labels[triu[0][j]],cur_pdb.model.h_labels[triu[1][j]], avg ,block_error)
         fh.write(string)
 
     fh.close()
