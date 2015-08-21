@@ -116,7 +116,7 @@ def parse():
     parser_k = subparsers.add_parser('NOE', help='Calculate NOE')
     parser_k.add_argument("-f", dest="files",help="PDB file(s)",nargs="+",default='',required=True)
     parser_k.add_argument("--xtc",dest="xtc",help="XTC gromacs trajectory",required=False,default=None)
-    parser_k.add_argument("--cutoff", dest="cutoff",help="Print to file only average distance below cutoff",default=7.0,type=float)  
+    parser_k.add_argument("--cutoff", dest="cutoff",help="Print to file only average distance below cutoff",default=8.0,type=float)  
     
     args = parser.parse_args()
 
