@@ -78,8 +78,11 @@ def chain_consistency(indeces,seq_id):
                 removeme.append(ii)
                 continue
     # remove 
-    for el in removeme[::-1]:
+    removeme = sorted(list(set(removeme)))[::-1]
+    for el in removeme:
+        print len(indeces)
         indeces.pop(el)
+
     #return indeces
 
 

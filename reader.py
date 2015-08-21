@@ -52,7 +52,7 @@ class Names:
 
 class Pdb:
 
-    def __init__(self,filename,res_mode):
+    def __init__(self,filename,res_mode,permissive=False):
 
         self.ok_residues = []
         if("R" in res_mode):
@@ -69,9 +69,11 @@ class Pdb:
         self.natoms = 0
         self.model = None
         self.xtc = None
-        self.parse()
-        
-    def parse(self):
+        print "# Initializing file", filename 
+        self.parse(permissive)
+
+
+    def parse(self,permissive=False):
         
         def readline(line):
             
@@ -120,11 +122,11 @@ class Pdb:
                 self.natoms += 1
                         
             if(at=="ENDMDL"):
-                self.model = md.Model(tmp_data)
+                self.model = md.Model(tmp_data,not permissive)
                 return 0
             
         if(self.model==None):
-            self.model = md.Model(tmp_data)
+            self.model = md.Model(tmp_data,not permissive)
             return 0
             
                 

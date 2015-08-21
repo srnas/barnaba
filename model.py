@@ -4,6 +4,8 @@ from scipy.spatial import distance
 import residue as rd
 import tools
 import definitions
+import sys
+
 
 class Model:
 
@@ -307,11 +309,17 @@ class Model:
     def get_gmat(self,cutoff,ii=[]):
 
         ll = len(ii)
+        mat = np.zeros((ll,ll,4))
+
         if(ll==0):
             ll = len(self.sequence)
             ii = range(ll)            
             
         dotp,m_idx = self.get_3dmat(cutoff,ii)
+        # if all zeros
+        if(len(dotp)==0):
+            return mat
+
         dotp *= np.array(definitions.scale)[np.newaxis,:]
 
         dotp_norm = np.sqrt(np.sum(dotp**2,axis=1))

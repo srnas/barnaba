@@ -41,12 +41,17 @@ def snippet(args):
     
     for i in xrange(0,len(files)):
 
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        try:
+            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,permissive=True)
+        except:
+            print "# SKIPPING", files[i]
+            continue
         cur_len = len(cur_pdb.model.sequence)
         if(cur_len<sum(ll)): continue
 
         # single strand
         indeces = tools.get_idx(cur_pdb.model.sequence,query[0],bulges=0)
+
         # check chain consistency - remove 
         tools.chain_consistency(indeces,cur_pdb.model.sequence_id)
 
@@ -61,6 +66,7 @@ def snippet(args):
         while(eof):
             
             for index in indeces:
+
                 seq_out = "".join([cur_pdb.model.sequence[res] for res in index])
                 f_res = cur_pdb.model.sequence_id[index[0]]
                 l_res = cur_pdb.model.sequence_id[index[-1]]
