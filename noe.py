@@ -51,7 +51,8 @@ def noe(args):
         bins = 5
         if(len(data)<10):
             bins = 1
-        blocks = np.linspace(0,len(data),bins,dtype=int)
+        blocks = np.linspace(0,len(data),bins)
+        blocks = [int(el) for el in blocks]
         triu = np.triu_indices(len(cur_pdb.model.h_labels), 1)
         string = ""
         for j in range(len(data[0])):
