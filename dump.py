@@ -69,7 +69,7 @@ def dump(args):
                 s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
                 fh_dumpR.write(s)
             if(args.dumpP==True):
-                mat = cur_pdb.model.get_other_mat(args.cutoff,"P")
+                mat = cur_pdb.model.get_other_mat(args.cutoff,args.atomtype)
                 s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
                 fh_dumpP.write(s)
                 

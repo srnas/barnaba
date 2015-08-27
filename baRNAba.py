@@ -86,6 +86,7 @@ def parse():
     parser_f.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
     parser_f.add_argument("--dumpR", dest="dumpR",help="Write R vectors on .rvec file",action='store_true',default=False)
     parser_f.add_argument("--dumpP", dest="dumpP",help="Write P vectors on .pvec file",action='store_true',default=False)
+    parser_f.add_argument("--atom", dest="atomtype",help="Specify atom type (default = P)",default="P",required=False)
     parser_f.add_argument("--hread", dest="read",help="make output human-readable",action='store_true',default=False)
     parser_f.add_argument("--xtc",dest="xtc",help="XTC gromacs trajectory",required=False,default=None)
 
