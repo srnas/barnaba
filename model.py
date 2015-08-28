@@ -309,14 +309,15 @@ class Model:
     def get_gmat(self,cutoff,ii=[]):
 
         ll = len(ii)
-        mat = np.zeros((ll,ll,4))
 
         if(ll==0):
             ll = len(self.sequence)
             ii = range(ll)            
+        mat = np.zeros((ll,ll,4))
             
         dotp,m_idx = self.get_3dmat(cutoff,ii)
         # if all zeros
+
         if(len(dotp)==0):
             return mat
 
@@ -334,7 +335,7 @@ class Model:
         # set to zero when norm is larger than cutoff
         gmat[dotp_norm>cutoff] = 0.0
         
-        mat = np.zeros((ll,ll,4))
+        #mat = np.zeros((ll,ll,4))
         mat[m_idx[:,0],m_idx[:,1]] = gmat
         
         return mat

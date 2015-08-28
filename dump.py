@@ -26,11 +26,11 @@ def stringify(fname,jj,data,seq,hread=True):
         s = '# %s %i \n' % (fname,jj)
         for j in range(data.shape[0]):
             for k in range(data.shape[0]):
-                if(all(data[j,k]) != 0.0):
-                    s += '%10s %10s ' % (seq[j],seq[k])
-                    for l in range(len(data[j,k])):
-                        s += '%10.6f ' % data[j,k,l]
-                    s+= "\n"
+                #if(all(data[j,k]) != 0.0):
+                s += '%10s %10s ' % (seq[j],seq[k])
+                for l in range(len(data[j,k])):
+                    s += '%10.6f ' % data[j,k,l]
+                s+= "\n"
         return s
     
 def dump(args):
