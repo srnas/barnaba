@@ -31,16 +31,10 @@ class Names:
                   ["O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'",\
                        "N1","C2","O2","N3","C4","O4","C5","C6"]]
 
-    rnas = ['U','rU','RU','RU5','RU3','U3','U5',\
-                'C','rC','RC','RC5','RC3','C3','C5',\
-                'G','rG','RG','RG5','RG3','G3','G5',\
-                'A','rA','RA','RA5','RA3','A3','A5',]
-
-    residue_dict = {'A': 'A', 'rA':'A','RA':'A','RA5':'A','RA3':'A','A3':'A','A5':'A',\
-                    'U': 'U', 'rU':'U','RU':'U','RU5':'U','RU3':'U','U3':'U','U5':'U',\
-                    'C': 'C', 'rC':'C','RC':'C','RC5':'C','RC3':'C','C3':'C','C5':'C',\
-                    'G': 'G', 'rG':'G','RG':'G','RG5':'G','RG3':'G','G3':'G','G5':'G'}
-
+    rnas = ['U','rU','RU','RU5','RU3',\
+                'C','rC','RC','RC5','RC3',\
+                'G','rG','RG','RG5','RG3',\
+                'A','rA','RA','RA5','RA3']
     rna_l = ["A","C","U","G"]
     f_factors = [5.,5.,3.]
     scale = [1./f_factors[0],1./f_factors[1],1./f_factors[2]]
@@ -666,9 +660,10 @@ class Pdb:
                 # skip non-RNA
                 if(REST not in Names.rnas):
                     continue
-
-                REST = Names.residue_dict[REST]
-                    
+                # change name
+                if(len(REST) > 1):
+                    REST = REST[1]
+                
                 # skip alternate locations
                 ALT = line[16:17].strip()
                 if(ALT!="" and ALT !="A"):
