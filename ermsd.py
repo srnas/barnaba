@@ -22,44 +22,49 @@ def ermsd(args):
 
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
-
-
+        
     # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.reference,base_only=True)
-    assert len(ref_pdb.models)==1, "# FATAL: Reference PDB file cannot have multiple models" 
-    ref_len = len(ref_pdb.models[0].sequence)
-    ref_mat = ref_pdb.models[0].get_4dmat(args.cutoff)
-    ref_mat_f = ref_mat.reshape(-1,4)
+    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode)
+    ref_len = len(ref_pdb.model.sequence)
+    ref_mat = ref_pdb.model.get_gmat(args.cutoff)
 
+    if(args.xtc!=None):
+        assert len(files)==1, "# Error: when providing XTC trajectories, specify a single reference PDB file with -f"
+        
     #all the rest and calculate ERMSD on-the-fly
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=True)
-        for j in xrange(len(cur_pdb.models)):
-            assert ref_len == len(cur_pdb.models[j].sequence) , "# FATAL: sequence lenghts mismatch"
+        
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        cur_pdb.set_xtc(args.xtc)
+        cur_len = len(cur_pdb.model.sequence)
+        assert cur_len==ref_len, "# Fatal error: sequence lengths mismatch %d %d \n" %(cur_len,ref_len)
 
-            # get 4d matrix
-            cur_mat = cur_pdb.models[j].get_4dmat(args.cutoff)
-            cur_mat_f = cur_mat.reshape(-1,4)
             
-            # calculate difference
-            diff = (cur_mat_f-ref_mat_f)**2
-            ermsd = np.sqrt(np.sum(np.sum(diff))/ref_len)
+        idx = 0
+        eof = True
+        while(eof):
+            cur_mat = cur_pdb.model.get_gmat(args.cutoff)
+            diff = (ref_mat-cur_mat)**2
+            val = np.sqrt(np.sum(diff)/ref_len)
 
-            if(args.ermsf==False):
-                string = '%10.6f %s - %i \n' % (ermsd,files[i],j)
-            else:
-                string = '%10.6f - ' % (ermsd)
-                for k in xrange(ref_len):
-                    diff1 = (cur_mat[k,:]-ref_mat[k,:])**2
-                    ermsf = np.sqrt(np.sum(np.sum(diff1))/ref_len) 
-                    string += " %10.6f " % (ermsf)
-                string += '- %s - %i \n' % (files[i],j)
+            string = "%8i %10.6f  " % (idx,val)
+            if(args.perres):
+                string += ";"
+                per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ref_len)
+                for k in xrange(len(per_res)):
+                    string += " %10.6f " % (per_res[k])
+            string += "%s \n" % (files[i])
             fh.write(string)
-        print "# Calculated", len(cur_pdb.models),"ERMSD",files[i]
-
+            
+            idx += 1
+            if(args.xtc==None):
+                eof = cur_pdb.read()
+            else:
+                eof = cur_pdb.read_xtc()
+                                
     fh.close()
     return 0
 

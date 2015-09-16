@@ -1,0 +1,25 @@
+
+############
+INSTALLATION
+############
+
+baRNAba can be downloaded from https://github.com/srnas/barnaba and used as a python script:
+./barnaba --help
+
+
+REQUIREMENTS
+############
+*python version>=2.7
+*numpy
+*scipy 
+cd xtc
+
+LIBXDRFILE2
+############
+Libxdrfile2 allows to read GROMACS xtc files.
+You can install it as a library:
+
+cd xtc
+python setup.py build --build-lib=.
+python setup.py install --user
+

@@ -13,7 +13,6 @@
 
 import reader as reader
 import kde as kde
-#import tools as tools
 
 ####################### SCORING ########################
         
@@ -21,34 +20,46 @@ def score(args):
 
     files = args.files
     print "# Calculating ESCORE..."
-    print "# This is a baRNAba run."
 
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
-
     # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.ff,base_only=True)
-    ref_mat = []
-    for j in xrange(len(ref_pdb.models)):
-        ref_mat_ii = ref_pdb.models[j].get_mat_score(args.cutoff)
-        ref_mat.extend(ref_mat_ii)
+    ref_pdb = reader.Pdb(args.ff,res_mode=args.res_mode)
+    ref_len = len(ref_pdb.model.sequence)
+    ref_mat = ref_pdb.model.get_mat_score(args.cutoff)
+
     kernel = kde.gaussian_kde(ref_mat)
     kernel.set_bandwidth(0.25)
 
     print "# KDE computed. Bandwidth=",kernel.factor
     print "# Calculating ESCORE..."
+    
+    if(args.xtc!=None):
+        assert len(files)==1, "# Error: when providing XTC trajectories, specify a single reference PDB file with -f"
 
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=True)
-        for j in xrange(len(cur_pdb.models)):
-            mat = cur_pdb.models[j].get_mat_score(args.cutoff+0.2)
-            val = kernel(mat)
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        cur_pdb.set_xtc(args.xtc)
+            
+        idx = 0
+        eof = True
+        while(eof):
+            cur_mat = cur_pdb.model.get_mat_score(args.cutoff+0.2)
+            val = kernel(cur_mat)
             string = '%8.5f ' % (sum(val))
-            string += '%s.%i \n' % (files[i],j)
+            string += '%s.%i \n' % (files[i],idx)
             fh.write(string)
+            idx += 1
+            if(args.xtc==None):
+                eof = cur_pdb.read()
+            else:
+                eof = cur_pdb.read_xtc()
+                                
+    fh.close()
+    return 0
 
 ####################### SCORING ########################

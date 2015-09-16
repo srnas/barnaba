@@ -13,6 +13,7 @@
 
 import numpy as np
 import reader as reader
+import tools
 from scipy.spatial import distance
 
 
@@ -22,11 +23,10 @@ def ds_motif(args):
 
     # sanity checks
     files = args.files
-    print "# Finding 3D Single Strand Motifs..."
-    assert args.bulges < 3, "# FATAL: cannot do bulges > 2"
+    print "# Finding 3D Double Stranded Motifs..."
 
-    ref_pdb = reader.Pdb(args.reference,base_only=True)
-    assert len(ref_pdb.models)==1, "# FATAL: The query PDB contains more that one model"
+    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode)
+
     ref_len1 = args.l1
     ref_len2 = args.l2 
     ref_len = ref_len1+ref_len2
@@ -44,102 +44,79 @@ def ds_motif(args):
     # OK...
     fh = open(args.name,'w')
     fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
+    for k in sorted(args.__dict__):
         s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
         fh.write(s)
 
-    ref_mat_tot = ref_pdb.models[0].get_4dmat(args.cutoff)
-    ref_mat_tot_f = ref_mat_tot.reshape(-1,4)
+    ref_mat_tot = ref_pdb.model.get_gmat(args.cutoff).reshape(-1)
 
     indeces1=np.arange(0,ref_len1)
-    ref_mat1 = ref_pdb.models[0].get_4dmat(args.cutoff,indeces1)
+    ref_mat1 = ref_pdb.model.get_gmat(args.cutoff,indeces1).reshape(-1)
     
-    ref_mat_f1 = ref_mat1.reshape(-1,4)
     indeces2=np.arange(ref_len1,ref_len)
-    ref_mat2 = ref_pdb.models[0].get_4dmat(args.cutoff,indeces2)
+    ref_mat2 = ref_pdb.model.get_gmat(args.cutoff,indeces2).reshape(-1)
     
-    ref_mat_f2 = ref_mat2.reshape(-1,4)
 
     # calculate center of mass distances
     # this will be used to prune the search!
-    ref_com1 = np.sum(ref_pdb.models[0].get_com(indeces1),axis=0)/ref_len1
-    ref_com2 = np.sum(ref_pdb.models[0].get_com(indeces2),axis=0)/ref_len2
+    ref_com1 = ref_pdb.model.get_lcs_com(indeces1)
+    ref_com2 = ref_pdb.model.get_lcs_com(indeces2)
     diff_com = (ref_com2-ref_com1)**2
     dd= np.sqrt(np.sum(diff_com))
 
     for i in xrange(0,len(files)):
 
-        # if no PDBdump, read base atoms only (gives little speed-up)
-        if(args.dump_pdb==True):
-            cur_pdb = reader.Pdb(files[i],base_only=False)
-        else:
-            cur_pdb = reader.Pdb(files[i],base_only=True)
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        cur_pdb.set_xtc(args.xtc)
 
-        # read models
-        counter = 0    
-        treshold_sq = args.treshold*args.treshold 
+        cur_len = len(cur_pdb.model.sequence)
 
-        for j in xrange(len(cur_pdb.models)):
-            if(len(cur_pdb.models[j].sequence) < ref_len):
-                continue
+        if(cur_len<ref_len): continue
 
-            # strand 1            
-            tmp_idx1 = []
-            com1 = []
-            all_idx1 = cur_pdb.models[j].get_idx(query1,args.bulges)
-            for idx in all_idx1:
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx,permissive=False)
-                red_mat = gmat.reshape(-1,4)
-                diff = (red_mat-ref_mat_f1)**2
-                ermsd_sq = np.sum(np.sum(diff))/ref_len1
-                if(ermsd_sq < treshold_sq):
-                    tmp_idx1.append(idx)
-                    com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len1
-                    com1.append(com)
+        all_idx1 = tools.get_idx(cur_pdb.model.sequence,query1,args.bulges)
+        all_idx2 = tools.get_idx(cur_pdb.model.sequence,query2,args.bulges)
 
-            # strand 2
-            tmp_idx2 = []
-            com2 = []
-            all_idx2 = cur_pdb.models[j].get_idx(query2,args.bulges)
-            for idx in all_idx2:
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx,permissive=False)
-                red_mat = gmat.reshape(-1,4)
-                diff = (red_mat-ref_mat_f2)**2
-                ermsd_sq = np.sum(np.sum(diff))/ref_len2
-                if(ermsd_sq < treshold_sq):
-                    tmp_idx2.append(idx)
-                    com = np.sum(cur_pdb.models[j].get_com(idx),axis=0)/ref_len2
-                    com2.append(com)
-                                        
 
-             
+        idx = 0
+        eof = True
+        while(eof):
+
+            # get indeces and coms of first half
+            gmats1 =  [(cur_pdb.model.get_gmat(args.cutoff,index)).reshape(-1) for index in all_idx1]
+            dists1 = distance.cdist([ref_mat1],gmats1)/np.sqrt(ref_len1)
+            below_t1 = (dists1<args.treshold).nonzero()[1]
+            idx1 = [all_idx1[j] for j in below_t1]
+            com1 = [cur_pdb.model.get_lcs_com(all_idx1[j]) for j in below_t1]
+            
+            # get indeces of second half
+            gmats2 =  [(cur_pdb.model.get_gmat(args.cutoff,index)).reshape(-1) for index in all_idx2]
+            dists2 = distance.cdist([ref_mat2],gmats2)/np.sqrt(ref_len2)
+            below_t2 = (dists2<args.treshold).nonzero()[1]
+            idx2 = [all_idx2[j] for j in below_t2]
+            com2 = [cur_pdb.model.get_lcs_com(all_idx2[j]) for j in below_t2]
+            
+            # calculate all distances between center of mass
             dmat = distance.cdist(com1,com2)
-            c_idx = (dmat<2.5*dd).nonzero()
-            for idx in range(len(c_idx[0])):
-                idx_combo = tmp_idx1[c_idx[0][idx]]+tmp_idx2[c_idx[1][idx]]
-                # skip overlapping
-                if(len(np.union1d(tmp_idx1[c_idx[0][idx]],tmp_idx2[c_idx[1][idx]]))!=ref_len):
-                    continue
+            c_idx = (dmat<1.5*dd).nonzero()
 
-                gmat = cur_pdb.models[j].get_4dmat(args.cutoff,idx_combo)
-                red_mat = gmat.reshape(-1,4)
-                diff = (red_mat-ref_mat_tot_f)**2
-                ermsd_sq = np.sum(np.sum(diff))/ref_len
-                if(ermsd_sq < treshold_sq):
-                    ermsd = np.sqrt(ermsd_sq)
-                    seq = "_".join([cur_pdb.models[j].sequence_id[p] for p in idx_combo ])
-                    string = '%8.5f %s %i - %s \n' % (ermsd,files[i],j,seq)
-                    fh.write(string)
+            # get combo indeces
+            dmine = [dmat[c_idx[0][ii],c_idx[1][ii]] for ii in range(len(c_idx[0]))]
+            idx_combo = [idx1[c_idx[0][ii]] + idx2[c_idx[1][ii]] for ii in range(len(c_idx[0]))]
+            gmatsf = [(cur_pdb.model.get_gmat(args.cutoff,index)).reshape(-1) for index in idx_combo]
+            distsf = distance.cdist([ref_mat_tot],gmatsf)/np.sqrt(ref_len)
+            below_tf = (distsf<args.treshold).nonzero()[1]
+            for ss in below_tf:
+                seq = "_".join([cur_pdb.model.sequence_id[p] for p in idx_combo[ss] ])
+                string = '%8.5f %s %i - %s \n' % (distsf[0,ss],files[i],idx,seq)
+                fh.write(string)
 
-                    #print  " ".join([cur_pdb.models[j].sequence_id[p] for p in idx_combo ]), np.sqrt(ermsd_sq)
-                    if(args.dump_pdb == True):
-                        counter += 1
-                        seq = "".join([cur_pdb.models[j].sequence[p] for p in idx_combo ])
-                        ermsd_str = "%5.3f" % ermsd
-                        new_pdb = args.name + "_" + files[i].split("/")[-1].split(".pdb")[0] + "_" + str(counter).zfill(4) + "_" + ermsd_str.strip() + ".pdb"
-                        fh_pdb = open(new_pdb,'w')
-                        fh_pdb.write(cur_pdb.models[j].string_pdb(idx_combo))
-                        fh_pdb.close()
+            idx += 1
+            
+            if(args.xtc==None):
+                eof = cur_pdb.read()
+            else:
+                eof = cur_pdb.read_xtc()
+
 
 
     fh.close()

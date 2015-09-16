@@ -28,12 +28,12 @@ or download a zip file from the web:
 * minimal help
   ./baRNAba --help 
 
-Currently, baRNAba can perform 5 different tasks:
+Currently, baRNAba can perform different tasks:
 1. Calculate the ERMSD between structures
-   ./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb
+   ./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb ...
 
-2. Calculate the ESCORE
-   ./baRNAba ESCORE --force-field 1S72.pdb -f sample1.pdb
+2. Calculate ESCORE
+   ./baRNAba ESCORE --force-field 1S72.pdb -f sample1.pdb ...
 
 3. Find hairpin loop motif
    ./baRNAba SS_MOTIF --query motif.pdb -f file1.pdb file2.pdb ... 
@@ -44,7 +44,33 @@ Currently, baRNAba can perform 5 different tasks:
 5. Annotate structures/trajectories according to the Leontis/Westhof classification.  
    ./baRNAba ANNOTATE -f file1.pdb file2.pdb ...
 
-practical examples can be found in the examples folder. 
+6. Calculate dihedral backbone angles
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --backbone --hread 
+
+7. Calculate dihedral pucker angles
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --pucker --hread 
+
+8. Calculate J-couplings (H1'H2', H2'H3' H3'H4', H4'H5', H4'H5'',1H5P,2H5P,H3P_+)
+   ./baRNAba TORSION -f file1.pdb file2.pdb ... --jcoupling --hread 
+
+9. Calculate NOE signal
+   ./baRNAba NOE -f file1.pdb file2.pdb  
+
+
+# GROMACS XTC FILES
+baRNAba can read xtc trajectory files as well if the library libxdrfile2 is correctly installed:
+
+	cd xtc
+	python setup.py build --build-lib=.
+	python setup.py install --user
+
+xtc files can be read using the --xtc argument. The topology file, in PDB format, has to be
+specified using -f, for example
+
+./baRNAba ERMSD --pdb sample1.pdb -f sample2.pdb --xtc samples.xtc
+
+calculates the ERMSD between sample1 and sample2, and all snapshots in samples.xtc
+sample2.pdb must contain all the atoms (in the correct order!) as in the xtc file.
 
 
 

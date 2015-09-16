@@ -13,60 +13,171 @@
 
 import reader as reader
 import numpy as np
+import definitions
+
+sign = [+1,-1,-1,+1]
+
+def calc(angle,j3_spec):
+
+    # standard Karplus
+    cos = np.cos(angle)
+    kk = j3_spec[2]
+    val =  cos*cos*kk[0] +  cos*kk[1] + kk[2] 
+    # more terms...
+    if(j3_spec[0] == "H4H5'" or j3_spec[0] == "H4H5''"):
+        for i in range(4):
+            dchi = j3_spec[3][i]
+            cos_i = np.cos(sign[i]*angle + kk[5]*np.abs(dchi)*np.pi/180.0)
+            val += (kk[3] + kk[4]*cos_i*cos_i)*dchi
+    return val
 
 def torsions(args):
 
 
     print "# Calculating torsion angles..."
     files = args.files
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba run.\n")
-    for k in args.__dict__:
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
 
+    header = ["# " + str(k) + " " + str(args.__dict__[k]) + "\n" for k in sorted(args.__dict__)]
+
+    if(args.bb):
+        fh_bb = open(args.name + ".backbone",'w')
+        fh_bb.write("".join(header))
+    if(args.pucker):
+        fh_pu = open(args.name + ".pucker",'w')
+        fh_pu.write("".join(header))
+    if(args.jcoupling):
+        fh_j3 = open(args.name + ".j3",'w')
+        fh_j3.write("".join(header))
+        
     for i in xrange(0,len(files)):
-        cur_pdb = reader.Pdb(files[i],base_only=False)
-        for j in xrange(len(cur_pdb.models)):
 
+        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
+        ll = len(cur_pdb.model.sequence)
+        if(args.xtc!=None):
+            cur_pdb.set_xtc(args.xtc)
+
+        if(args.bb):
+            cur_pdb.model.set_bb_index()
+        if(args.pucker):
+            cur_pdb.model.set_pucker_index()
+        if(args.jcoupling):
+            cur_pdb.model.set_j3_index()
             
-            # calculate interactions
-            bb_torsion = cur_pdb.models[j].get_bb_torsions()
-            if(args.hread):
-                string = '# ' + files[i] + "-" + str(j) + "\n"
-                string += "# " + "".join(cur_pdb.models[j].sequence) + "\n"
-                for k in range(len(bb_torsion)):
-                    string += "%10s" % (cur_pdb.models[j].sequence_id[k])
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
-                    string += "\n"
-            else:
-                string = files[i] + "." + str(j) + " "
-                for k in range(len(bb_torsion)):
-                    for l in range(len(bb_torsion[k])):
-                        string += "%10.3f" % (bb_torsion[k][l])
+        idx = 0
+        eof = True
+        while(eof):
 
-                # e2e stuff..
-                pp1 = cur_pdb.models[j].residues[0].get_atom("C2")
-                pp2 = cur_pdb.models[j].residues[-1].get_atom("C2")
-                if(pp1 != None and pp2 != None):
-                    diff = np.array(pp1)-np.array(pp2)
-                    e2e =  np.sqrt(np.sum(diff**2))
-                    string += " %f " % (e2e)
+            ################################
+            ### calculate backbone angles ##
+            ################################
+
+            if(args.bb):
+                bb_angles, chi_angles = cur_pdb.model.calc_bb_torsion()
+                idx1 = 0
+                idx2 = 0
+                angles = []
+                for res in range(ll):
+                    string = ""
+                    for bbs in range(6):
+                        if(cur_pdb.model.missing[res*6+bbs]):
+                            string +=  "%10.3f " % float('nan')
+                        else:
+                            string +=  "%10.3f "%  bb_angles[idx1]
+                            idx1 += 1
+                            
+                    if(cur_pdb.model.chi_missing[res]):
+                        string +=  "%10.3f " % float('nan')
+                    else:
+                        string +=  "%10.3f " %chi_angles[idx2]
+                        idx2 += 1
+                    angles.append(string)
+                    
+                # now print to file
+                if(args.hread):
+                    fh_bb.write("# " + files[i] + " " + str(idx) + "\n")
+                    fh_bb.write("#%10s%10s %10s %10s %10s %10s %10s %10s \n" % ("","ALPHA","BETA","GAMMA","DELTA","EPSILON","ZETA","CHI"))
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_bb.write(stri + "\n")
                 else:
-                    print "# No C2?", files[i]
-                    string += " NaN "
-                # end...
+                    fh_bb.write("%10d %s \n"% (idx,"".join(angles)))
+                    
 
-                string += "\n"
-            fh.write(string)
+            ################################
+            ### calculate pucker angles  # #
+            ################################
+            if(args.pucker):
+                pucker_angles = cur_pdb.model.calc_pucker()
+                idx1 = 0
+                angles = []
+                for res in range(ll):
+                    string = ""
+                    if(cur_pdb.model.pucker_missing[res]):
+                        angles.append("%10.3f " % float('nan'))
+                    else:
+                        angles.append("".join(["%10.3f "% el for el in pucker_angles[idx1]]))
+                        idx1 += 1
+                        
+                if(args.hread):
+                    fh_pu.write("# " + files[i] + " " + str(idx) + "\n")
+                    fh_pu.write("#%10s%10s %10s %10s %10s %10s %10s %10s \n" % ("","NU1","NU2","NU3","NU4","NU5","AMPLITUDE","PHASE"))
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_pu.write(stri + "\n")
+                else:
+                    fh_pu.write("%10d %s \n"% (idx,"".join(angles)))
+                            
+            ################################
+            ### calculate pucker angles  # #
+            ################################
+            if(args.jcoupling):
+                j3_angles = cur_pdb.model.calc_j3()
+                idx1 = 0
+                angles = []
+                lj = len(definitions.j3)
+                for res in range(ll):
+                    string = ""
+                    for bbs in range(lj):
+                        if(cur_pdb.model.j3_missing[res*lj+bbs]):
+                            string +=  "%10.3f " % float('nan')
+                        else:
+                            if(args.raw):
+                                val = j3_angles[idx1]
+                            else:
+                                val = calc(np.radians(j3_angles[idx1]),definitions.j3[bbs])
+                            string +=  "%10.3f "%  val
+                            idx1 += 1
+                    angles.append(string)
+                    
+                # now print to file
+                if(args.hread):
+                    fh_j3.write("# " + files[i] + " " + str(idx) + "\n")
+                    ss = "#%10s" % ""
+                    for el in definitions.j3:
+                        ss+= "%10s " % el[0]
+                    fh_j3.write(ss + "\n")
+                    for res in range(ll):
+                        stri = "%10s " % cur_pdb.model.sequence_id[res]
+                        stri += angles[res]
+                        fh_j3.write(stri + "\n")
+                else:
+                    fh_j3.write("%10d %s \n"% (idx,"".join(angles)))
                 
-            # calculate interactions
-            #ss_torsion = cur_pdb.models[j].get_sugar_torsion()
+                        
+            
+            idx += 1
+            if(args.xtc==None):
+                eof = cur_pdb.read()
+            else:
+                eof = cur_pdb.read_xtc()
 
-
-
-    fh.close()
+    if(args.bb):
+        fh_bb.close()
+    if(args.pucker):
+        fh_pu.close()
+    if(args.jcoupling):
+        fh_j3.close()
     return 0
             
-##################### ANNOTATE #######################

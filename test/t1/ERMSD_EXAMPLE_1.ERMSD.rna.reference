@@ -1,9 +1,10 @@
 # This is a baRNAba run.
-# files ['../../../examples/DATA/sample2.pdb']
 # cutoff 2.4
+# files ['../../../examples/DATA/sample2.pdb']
 # name ERMSD_EXAMPLE_1.ERMSD.rna
+# perres False
 # reference ../../../examples/DATA/sample1.pdb
+# res_mode R
 # subparser_name ERMSD
-# skip 1
-# ermsf False
-  0.963475 ../../../examples/DATA/sample2.pdb - 0 
+# xtc None
+       0   0.934175  ../../../examples/DATA/sample2.pdb 

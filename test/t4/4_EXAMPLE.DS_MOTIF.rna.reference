@@ -1,16 +1,17 @@
 # This is a baRNAba run.
+# bulges 1
+# cutoff 2.4
+# dump_pdb False
 # files ['../../../examples/DATA/1S72.pdb']
-# subparser_name DS_MOTIF
+# l1 8
+# l2 7
 # name 4_EXAMPLE.DS_MOTIF.rna
 # reference ../../../examples/DATA/SARCIN.pdb
-# cutoff 2.4
-# skip 1
-# bulges 1
-# l2 7
-# dump_pdb False
-# l1 8
-# treshold 0.65
+# res_mode R
 # seq None
+# subparser_name DS_MOTIF
+# treshold 0.65
+# xtc None
  0.39400 ../../../examples/DATA/1S72.pdb 0 - 171_C_0_172_U_0_173_C_0_174_A_0_175_G_0_176_U_0_177_A_0_178_U_0_158_A_0_159_G_0_160_A_0_161_A_0_162_C_0_163_U_0_164_G_0 
  0.64009 ../../../examples/DATA/1S72.pdb 0 - 171_C_0_172_U_0_173_C_0_174_A_0_175_G_0_176_U_0_177_A_0_178_U_0_158_A_0_159_G_0_160_A_0_161_A_0_162_C_0_163_U_0_165_A_0 
  0.51129 ../../../examples/DATA/1S72.pdb 0 - 209_G_0_210_U_0_211_U_0_212_A_0_213_G_0_214_U_0_215_A_0_216_A_0_224_U_0_225_G_0_226_A_0_227_A_0_228_C_0_229_G_0_230_C_0 
