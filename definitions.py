@@ -52,12 +52,16 @@ chi_P = -0.05
 # first index is label, second atoms, third karplus parameters
 # you can add more to this list if you wish
 
+                                             # nu from Davies, BD Conformations of nucleosides and nucleotides
+                                             # Progress in NMR spectroscopy, 1977
 j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0]],\
       ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0]],\
       ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0]],\
+                                             # Generalised Karplus equation from Hasnoot, Altona. Thetraedron, 1980
                                              # P0    P1   --   P2    P3   P4
       ["H4H5'",  ["H4'","C4'","C5'","1H5'"], [13.21,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,0.0,chi_O,chi_O]],\
       ["H4H5''", ["H4'","C4'","C5'","2H5'"], [13.21,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,chi_O,chi_O,0.0]],\
+                                            #  HCOP from Lankhorst, Altona, 1984 
       ["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
       ["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
       ["H3P",    ["H3'","C3'","O3'","P"],   [15.3,-6.1,1.6]]]
