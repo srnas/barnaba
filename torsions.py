@@ -20,13 +20,11 @@ import definitions
 def calc(angle,j3_spec):
 
     # standard Karplus
-    cos = np.cos(angle)
     kk = j3_spec[2]
-    val =  cos*cos*kk[0] +  cos*kk[1] + kk[2] 
+    cos = np.cos(angle+kk[4])
+    sin = np.sin(angle+kk[4])
+    val =  cos*cos*kk[0] +  cos*kk[1] + kk[2] +kk[3]*cos*sin 
 
-    # more terms for generalised Karplus
-    if(j3_spec[0] == "H4H5'" or j3_spec[0] == "H4H5''"):
-        val += cos*np.sin(angle)*kk[3]
     return val
 
 def torsions(args):
