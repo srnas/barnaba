@@ -142,7 +142,7 @@ class Model:
             for j in xrange(len(definitions.j3)):
                 
                 atoms = [residue.get_idx(at_type) for at_type in definitions.j3[j][1]]
-                if(definitions.j3[j][0]=="H3P"):
+                if(definitions.j3[j][0]=="H3P" or definitions.j3[j][0]=="C4Pe"):
                     if(i!=len(self.sequence)-1):
                         atoms[-1] = self.residues[i+1].get_idx(definitions.j3[j][1][-1])
                     else:

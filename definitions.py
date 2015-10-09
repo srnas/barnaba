@@ -51,24 +51,31 @@ chi_P = -0.05
 
 # first index is label, second atoms, third karplus parameters
 # you can add more to this list if you wish
-
+td_pi = 2.094395
                                              # nu from Davies, BD Conformations of nucleosides and nucleotides
                                              # Progress in NMR spectroscopy, 1977
-j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0]],\
-      ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0]],\
-      ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0]],\
+j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0,0.0,0.0]],\
+      ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0,0.0,0.0]],\
+      ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0,0.0,0.0]],\
       # Generalised Karplus equation from Hasnoot, Altona. Thetraedron, 1980
       # P1    P2    --   P3    P4   P5   (P6 = 0 with 3 substituents)
       #["H4H5'",  ["H4'","C4'","C5'","1H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,0.0,chi_O,chi_O]],\
       #["H4H5''", ["H4'","C4'","C5'","2H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,chi_O,chi_O,0.0]],\
 
       # simiplification of altona hasnoot - in the form  A*cos*cos + B*cos + C + D*sin*cos
-      ["H4H5'",  ["H4'","C4'","C5'","1H5'"], [8.313139, -0.99, 1.373430,0.269906]],\
-      ["H4H5''", ["H4'","C4'","C5'","2H5'"], [8.313139, -0.99, 1.373430,-4.752290]],\
+      ["H4H5'",  ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,0.269906,-td_pi]],\
+      ["H4H5''", ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,-4.752290,0.0]],\
         #  HCOP from Lankhorst, Altona, 1984 
-      ["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      ["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      ["H3P",    ["H3'","C3'","O3'","P"],   [15.3,-6.1,1.6]]]
+      #["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
+      #["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
+      #  HCOP from Lee, Sarma 1976 
+      ["1H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,-td_pi]],\
+      ["2H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,td_pi]],\
+      # Marino and Scwhalbe
+      ["C4Pb",    ["C4'","C5'","O5'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
+      ["C4Pe",    ["C4'","C3'","O3'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
+      #  HCOP from Lankhorst, Altona, 1984 
+      ["H3P",    ["C4'","C3'","O3'","P"],   [15.3,-6.1,1.6,0.0,td_pi]]]
 
 # Rna only for the moment being
 heavy_atoms = ["P","OP1","OP2","O1P","O2P",\
