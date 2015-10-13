@@ -223,6 +223,7 @@ def annotate(args):
         seq_id = cur_pdb.model.sequence_id
         string = "#" + files[i]  + "\n"
         string += "# " + "".join(cur_pdb.model.sequence) + "\n"
+        fh.write(string)
 
         while(eof):
 
@@ -230,7 +231,7 @@ def annotate(args):
             mat,m_idx = cur_pdb.model.get_3dmat(cutoff,range(len(cur_pdb.model.sequence)))
             pairs,annotation,dotbracket = calculate(mat,m_idx,cur_pdb.model.sequence)
 
-            string += "# " + dotbracket + "\n"
+            string = "# " + dotbracket + "\n"
             if(args.hread):
                 
                 # print interactions
