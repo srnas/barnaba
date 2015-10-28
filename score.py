@@ -46,18 +46,13 @@ def score(args):
         cur_pdb.set_xtc(args.xtc)
             
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
             cur_mat = cur_pdb.model.get_mat_score(args.cutoff+0.2)
             val = kernel(cur_mat)
             string = '%8.5f ' % (sum(val))
             string += '%s.%i \n' % (files[i],idx)
             fh.write(string)
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
                                 
     fh.close()
     return 0

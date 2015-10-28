@@ -52,8 +52,7 @@ def ss_motif(args):
         # return indeces matching query
         indeces = tools.get_idx(cur_pdb.model.sequence,query,args.bulges)
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
             gmats = [(cur_pdb.model.get_gmat(args.cutoff,index)).reshape(-1) for index in indeces]
             dists = distance.cdist([ref_mat],gmats)/np.sqrt(ref_len)
         
@@ -63,10 +62,6 @@ def ss_motif(args):
                 string = '%8.5f %s %i - %s \n' % (dists[0,ss],files[i],idx,seq)
                 fh.write(string)
 
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
 
     fh.close()

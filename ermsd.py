@@ -44,13 +44,12 @@ def ermsd(args):
 
             
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
             cur_mat = cur_pdb.model.get_gmat(args.cutoff)
             diff = (ref_mat-cur_mat)**2
             val = np.sqrt(np.sum(diff)/ref_len)
 
-            string = "%8i %10.6f  " % (idx,val)
+            string = "%10i %10.6f  " % (idx,val)
             if(args.perres):
                 string += ";"
                 per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ref_len)
@@ -59,11 +58,7 @@ def ermsd(args):
             string += "%s \n" % (files[i])
             fh.write(string)
             
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
                                 
     fh.close()
     return 0

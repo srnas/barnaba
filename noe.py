@@ -37,15 +37,10 @@ def noe(args):
         cur_pdb.model.set_h_idx()
         
         idx = 0
-        eof = True
         data = []
-        while(eof):
+        while(idx>=0):
             data.append(cur_pdb.model.calc_pairwise_h())
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
 
         data = np.array(data)
         bins = 5

@@ -60,10 +60,10 @@ def snippet(args):
             tools.chain_consistency(indeces2,cur_pdb.model.sequence_id)
             # to be done....
             
-        eof = True
-        
+            
+        idx = 0
         new_pdb_r = files[i].split("/")[-1].split(".pdb")[0] + "_"
-        while(eof):
+        while(idx>=0):
             
             for index in indeces:
 
@@ -76,7 +76,7 @@ def snippet(args):
                 fh_pdb.write(cur_pdb.model.string_pdb(index,noP=True))
                 fh_pdb.close()
 
-            eof = cur_pdb.read()
+            idx = cur_pdb.read()
 
 
     fh.close()

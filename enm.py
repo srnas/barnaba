@@ -42,8 +42,8 @@ def enm(args):
     for i in xrange(0,1):
         
         cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        eof = True
-        while(eof):
+        eof = 0
+        while(eof>=0):
                         
             coords = []
             C2_indeces = []

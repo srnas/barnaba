@@ -218,14 +218,14 @@ def annotate(args):
 
         if(args.xtc!=None):
             cur_pdb.set_xtc(args.xtc)
+
         idx = 0
-        eof = True
         seq_id = cur_pdb.model.sequence_id
         string = "#" + files[i]  + "\n"
         string += "# " + "".join(cur_pdb.model.sequence) + "\n"
         fh.write(string)
 
-        while(eof):
+        while(idx>=0):
 
             cutoff = 1.58
             mat,m_idx = cur_pdb.model.get_3dmat(cutoff,range(len(cur_pdb.model.sequence)))
@@ -236,7 +236,7 @@ def annotate(args):
             if(args.hread):
                 
                 # print interactions
-                string += "# time %8i \n" % (idx)
+                string += "# time %10i \n" % (idx)
                 
                 for j in xrange(len(pairs)):
                     string += "%10s %10s %2s \n" % (seq_id[pairs[j][0]],seq_id[pairs[j][1]],annotation[j])
@@ -244,7 +244,7 @@ def annotate(args):
             else:
                 # very expensive - use only for short sequences...
                 merged = [str(el[0]) + "_" + str(el[1]) for el in pairs]
-                string += "%8i " % (idx)
+                string += "%10i " % (idx)
                 for i1 in xrange(len(seq_id)):
                     for i2 in xrange(i1+1,len(seq_id)):
                         symbol = ".."
@@ -257,12 +257,8 @@ def annotate(args):
             if(args.pymol == True):
                 pymol_script(files[i],seq_id, pairs,annotation)
 
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
-
+            idx = cur_pdb.read()
+            
     fh.close()
     return 0
             

@@ -78,8 +78,7 @@ def ds_motif(args):
 
 
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
 
             # get indeces and coms of first half
             gmats1 =  [(cur_pdb.model.get_gmat(args.cutoff,index)).reshape(-1) for index in all_idx1]
@@ -110,13 +109,7 @@ def ds_motif(args):
                 string = '%8.5f %s %i - %s \n' % (distsf[0,ss],files[i],idx,seq)
                 fh.write(string)
 
-            idx += 1
-            
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
-
+            idx = cur_pdb.read()
 
 
     fh.close()

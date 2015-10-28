@@ -136,17 +136,36 @@ class Pdb:
 
         assert self.model != None, "# Model uninitialized. call parse before read!"
 
-        data = []
-        for line in self.fh:
-            at = line[0:6].strip()
-            if(at =="ATOM" or at == "HETATM"):
-                vv = [float(line[30:38]),float(line[38:46]) ,float(line[46:54])]
-                data.append(vv)
-            if(at=="ENDMDL"):
-                self.model.set_coords(np.array(data))
-                return 1
-        self.fh.close()
-        return 0
+        # read pdb
+        if(self.xtc==None):
+            data = []
+            for line in self.fh:
+                at = line[0:6].strip()
+                if(at =="ATOM" or at == "HETATM"):
+                    vv = [float(line[30:38]),float(line[38:46]) ,float(line[46:54])]
+                    data.append(vv)
+                if(at=="ENDMDL"):
+                    self.model.set_coords(np.array(data))
+                    self.time += 1
+                    # return step
+                    return self.time
+            self.fh.close()
+            return -1
+
+        # read xtc
+        else:
+            coords = np.zeros((self.natoms,3), dtype=np.float32)
+            box = np.zeros((3, 3), dtype=np.float32)
+            
+            status,step,time,prec = libxdrfile2.read_xtc(self.xtc, box, coords)
+            self.model.set_coords(10.0*coords)
+            if(status):
+                libxdrfile2.xdrfile_close(self.xtc)
+                return -1
+            else:
+                return time
+            
+
 
     def set_xtc(self,xtcfile):
         if(xtcfile!=None):
@@ -154,17 +173,4 @@ class Pdb:
             assert natoms==self.natoms
             self.xtc = libxdrfile2.xdrfile_open(xtcfile, 'r')
         
-    def read_xtc(self):
-            
-        assert self.model != None, "# Model uninitialized. call parse before read!"
 
-        coords = np.zeros((self.natoms,3), dtype=np.float32)
-        box = np.zeros((3, 3), dtype=np.float32)
-        
-        status,step,time,prec = libxdrfile2.read_xtc(self.xtc, box, coords)
-        self.model.set_coords(10.0*coords)
-        if(status):
-            libxdrfile2.xdrfile_close(self.xtc)
-            return 0
-        else:
-            return 1

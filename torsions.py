@@ -60,8 +60,7 @@ def torsions(args):
             cur_pdb.model.set_j3_index()
             
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
 
             ################################
             ### calculate backbone angles ##
@@ -163,11 +162,7 @@ def torsions(args):
                 
                         
             
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
 
     if(args.bb):
         fh_bb.close()
