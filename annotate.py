@@ -232,9 +232,11 @@ def annotate(args):
             pairs,annotation,dotbracket = calculate(mat,m_idx,cur_pdb.model.sequence)
 
             string = "# " + dotbracket + "\n"
+
             if(args.hread):
                 
                 # print interactions
+                string += "# time %8i \n" % (idx)
                 
                 for j in xrange(len(pairs)):
                     string += "%10s %10s %2s \n" % (seq_id[pairs[j][0]],seq_id[pairs[j][1]],annotation[j])
@@ -242,6 +244,7 @@ def annotate(args):
             else:
                 # very expensive - use only for short sequences...
                 merged = [str(el[0]) + "_" + str(el[1]) for el in pairs]
+                string += "%8i " % (idx)
                 for i1 in xrange(len(seq_id)):
                     for i2 in xrange(i1+1,len(seq_id)):
                         symbol = ".."
