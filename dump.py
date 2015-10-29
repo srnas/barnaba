@@ -53,13 +53,12 @@ def dump(args):
         
         cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
         cur_len = len(cur_pdb.model.sequence)
-        assert cur_len>2, "# Fatal error: less than 2 nucleotides %d \n" %(cur_len)
+        assert cur_len>1, "# Fatal error: less than 2 nucleotides %d \n" %(cur_len)
         if(args.xtc!=None):
             cur_pdb.set_xtc(args.xtc)
             
         idx = 0
-        eof = True
-        while(eof):
+        while(idx>=0):
             if(args.dumpG==True):
                 mat = cur_pdb.model.get_gmat(args.cutoff)
                 s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
@@ -73,11 +72,7 @@ def dump(args):
                 s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
                 fh_dumpP.write(s)
                 
-            idx += 1
-            if(args.xtc==None):
-                eof = cur_pdb.read()
-            else:
-                eof = cur_pdb.read_xtc()
+            idx = cur_pdb.read()
                                 
     if(args.dumpG==True):
         fh_dumpG.close()
