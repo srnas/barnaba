@@ -102,10 +102,9 @@ rna = ["U","rU","RU","RU5","RU3","U3","U5",\
        "C","rC","RC","RC5","RC3","C3","C5",\
        "G","rG","RG","RG5","RG3","G3","G5",\
        "A","rA","RA","RA5","RA3","A3","A5",\
-       "1MA"
-       "OMC","5MC"\
-       "2MG","M2G","OMG","YG",\
-       "PSU","H2U","5MU"]
+       "\"1MA\"","OMC","\"5MC\"","\"2MG\"","M2G","OMG","YG",\
+       "PSU","H2U","\"5MU\""]
+
 
 complementary = {'A':'U','C':'G','U':'A','G':'C'}
 
