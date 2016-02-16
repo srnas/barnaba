@@ -7,7 +7,9 @@ import re
 
 def get_rna(topology):
 
-    return [atom.index for atom in topology.atoms if ((atom.residue.name == 'U') or (atom.residue.name == 'rU') or (atom.residue.name == 'RU') or (atom.residue.name == 'RU5') or (atom.residue.name == 'RU3') or (atom.residue.name == 'U3') or (atom.residue.name == 'U5') or (atom.residue.name == 'C') or (atom.residue.name == 'rC') or (atom.residue.name == 'RC') or (atom.residue.name == 'RC5') or (atom.residue.name == 'RC3') or (atom.residue.name == 'C3') or (atom.residue.name == 'C5') or (atom.residue.name == 'G') or (atom.residue.name == 'rG') or (atom.residue.name == 'RG') or (atom.residue.name == 'RG5') or (atom.residue.name == 'RG3') or (atom.residue.name == 'G3') or (atom.residue.name == 'G5') or (atom.residue.name == 'A') or (atom.residue.name == 'rA') or (atom.residue.name == 'RA') or (atom.residue.name == 'RA5') or (atom.residue.name == 'RA3') or (atom.residue.name == 'A3') or (atom.residue.name == 'A5'))]
+    #return [atom.index for atom in topology.atoms if ((atom.residue.name == 'U') or (atom.residue.name == 'rU') or (atom.residue.name == 'RU') or (atom.residue.name == 'RU5') or (atom.residue.name == 'RU3') or (atom.residue.name == 'U3') or (atom.residue.name == 'U5') or (atom.residue.name == 'C') or (atom.residue.name == 'rC') or (atom.residue.name == 'RC') or (atom.residue.name == 'RC5') or (atom.residue.name == 'RC3') or (atom.residue.name == 'C3') or (atom.residue.name == 'C5') or (atom.residue.name == 'G') or (atom.residue.name == 'rG') or (atom.residue.name == 'RG') or (atom.residue.name == 'RG5') or (atom.residue.name == 'RG3') or (atom.residue.name == 'G3') or (atom.residue.name == 'G5') or (atom.residue.name == 'A') or (atom.residue.name == 'rA') or (atom.residue.name == 'RA') or (atom.residue.name == 'RA5') or (atom.residue.name == 'RA3') or (atom.residue.name == 'A3') or (atom.residue.name == 'A5'))]
+
+    return [atom.index for atom in topology.atoms if (atom.residue.name in definitions.rna)]
 
 def get_lcs_idx(topology):
 
