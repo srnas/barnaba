@@ -1,0 +1,155 @@
+load ../../DATA/1tra.pdb, tutto 
+bg_color white
+hide everything 
+show cartoon 
+set orthoscopic, on 
+set cartoon_color, gray60 
+set cartoon_nucleic_acid_color, gray60 
+cartoon oval 
+set cartoon_ring_mode, 1 
+set cartoon_ring_finder, 2 
+set cartoon_ring_width, 0.3 
+set cartoon_ring_transparency, 0.2 
+set cartoon_oval_length, 0.4 
+set cartoon_oval_width, 0.2 
+set cartoon_nucleic_acid_mode 
+set cartoon_ring_color, firebrick , resi 1 
+set cartoon_ladder_color, firebrick , resi 1 
+set cartoon_ring_color, firebrick , resi 2 
+set cartoon_ladder_color, firebrick , resi 2 
+set cartoon_ring_color, firebrick , resi 3 
+set cartoon_ladder_color, firebrick , resi 3 
+set cartoon_ring_color, firebrick , resi 4 
+set cartoon_ladder_color, firebrick , resi 4 
+set cartoon_ring_color, firebrick , resi 5 
+set cartoon_ladder_color, firebrick , resi 5 
+set cartoon_ring_color, firebrick , resi 6 
+set cartoon_ladder_color, firebrick , resi 6 
+set cartoon_ring_color, firebrick , resi 7 
+set cartoon_ladder_color, firebrick , resi 7 
+set cartoon_ring_color, yelloworange , resi 8 
+set cartoon_ladder_color, yelloworange , resi 8 
+set cartoon_ring_color, yelloworange , resi 9 
+set cartoon_ladder_color, yelloworange , resi 9 
+set cartoon_ring_color, firebrick , resi 11 
+set cartoon_ladder_color, firebrick , resi 11 
+set cartoon_ring_color, firebrick , resi 12 
+set cartoon_ladder_color, firebrick , resi 12 
+set cartoon_ring_color, firebrick , resi 13 
+set cartoon_ladder_color, firebrick , resi 13 
+set cartoon_ring_color, yelloworange , resi 14 
+set cartoon_ladder_color, yelloworange , resi 14 
+set cartoon_ring_color, yelloworange , resi 15 
+set cartoon_ladder_color, yelloworange , resi 15 
+set cartoon_ring_color, yelloworange , resi 16 
+set cartoon_ladder_color, yelloworange , resi 16 
+set cartoon_ring_color, blue , resi 17 
+set cartoon_ladder_color, blue , resi 17 
+set cartoon_ring_color, forest , resi 18 
+set cartoon_ladder_color, forest , resi 18 
+set cartoon_ring_color, yelloworange , resi 19 
+set cartoon_ladder_color, yelloworange , resi 19 
+set cartoon_ring_color, blue , resi 20 
+set cartoon_ladder_color, blue , resi 20 
+set cartoon_ring_color, yelloworange , resi 21 
+set cartoon_ladder_color, yelloworange , resi 21 
+set cartoon_ring_color, firebrick , resi 22 
+set cartoon_ladder_color, firebrick , resi 22 
+set cartoon_ring_color, firebrick , resi 23 
+set cartoon_ladder_color, firebrick , resi 23 
+set cartoon_ring_color, firebrick , resi 24 
+set cartoon_ladder_color, firebrick , resi 24 
+set cartoon_ring_color, forest , resi 25 
+set cartoon_ladder_color, forest , resi 25 
+set cartoon_ring_color, forest , resi 26 
+set cartoon_ladder_color, forest , resi 26 
+set cartoon_ring_color, firebrick , resi 27 
+set cartoon_ladder_color, firebrick , resi 27 
+set cartoon_ring_color, firebrick , resi 28 
+set cartoon_ladder_color, firebrick , resi 28 
+set cartoon_ring_color, firebrick , resi 29 
+set cartoon_ladder_color, firebrick , resi 29 
+set cartoon_ring_color, forest , resi 30 
+set cartoon_ladder_color, forest , resi 30 
+set cartoon_ring_color, yelloworange , resi 31 
+set cartoon_ladder_color, yelloworange , resi 31 
+set cartoon_ring_color, blue , resi 33 
+set cartoon_ladder_color, blue , resi 33 
+set cartoon_ring_color, forest , resi 34 
+set cartoon_ladder_color, forest , resi 34 
+set cartoon_ring_color, forest , resi 35 
+set cartoon_ladder_color, forest , resi 35 
+set cartoon_ring_color, forest , resi 36 
+set cartoon_ladder_color, forest , resi 36 
+set cartoon_ring_color, forest , resi 37 
+set cartoon_ladder_color, forest , resi 37 
+set cartoon_ring_color, forest , resi 38 
+set cartoon_ladder_color, forest , resi 38 
+set cartoon_ring_color, yelloworange , resi 39 
+set cartoon_ladder_color, yelloworange , resi 39 
+set cartoon_ring_color, firebrick , resi 41 
+set cartoon_ladder_color, firebrick , resi 41 
+set cartoon_ring_color, firebrick , resi 42 
+set cartoon_ladder_color, firebrick , resi 42 
+set cartoon_ring_color, firebrick , resi 43 
+set cartoon_ladder_color, firebrick , resi 43 
+set cartoon_ring_color, forest , resi 44 
+set cartoon_ladder_color, forest , resi 44 
+set cartoon_ring_color, forest , resi 45 
+set cartoon_ladder_color, forest , resi 45 
+set cartoon_ring_color, blue , resi 47 
+set cartoon_ladder_color, blue , resi 47 
+set cartoon_ring_color, yelloworange , resi 48 
+set cartoon_ladder_color, yelloworange , resi 48 
+set cartoon_ring_color, firebrick , resi 50 
+set cartoon_ladder_color, firebrick , resi 50 
+set cartoon_ring_color, firebrick , resi 51 
+set cartoon_ladder_color, firebrick , resi 51 
+set cartoon_ring_color, firebrick , resi 52 
+set cartoon_ladder_color, firebrick , resi 52 
+set cartoon_ring_color, firebrick , resi 53 
+set cartoon_ladder_color, firebrick , resi 53 
+set cartoon_ring_color, forest , resi 54 
+set cartoon_ladder_color, forest , resi 54 
+set cartoon_ring_color, forest , resi 55 
+set cartoon_ladder_color, forest , resi 55 
+set cartoon_ring_color, yelloworange , resi 56 
+set cartoon_ladder_color, yelloworange , resi 56 
+set cartoon_ring_color, forest , resi 57 
+set cartoon_ladder_color, forest , resi 57 
+set cartoon_ring_color, forest , resi 59 
+set cartoon_ladder_color, forest , resi 59 
+set cartoon_ring_color, yelloworange , resi 60 
+set cartoon_ladder_color, yelloworange , resi 60 
+set cartoon_ring_color, firebrick , resi 61 
+set cartoon_ladder_color, firebrick , resi 61 
+set cartoon_ring_color, firebrick , resi 62 
+set cartoon_ladder_color, firebrick , resi 62 
+set cartoon_ring_color, firebrick , resi 63 
+set cartoon_ladder_color, firebrick , resi 63 
+set cartoon_ring_color, firebrick , resi 64 
+set cartoon_ladder_color, firebrick , resi 64 
+set cartoon_ring_color, forest , resi 65 
+set cartoon_ladder_color, forest , resi 65 
+set cartoon_ring_color, firebrick , resi 66 
+set cartoon_ladder_color, firebrick , resi 66 
+set cartoon_ring_color, firebrick , resi 67 
+set cartoon_ladder_color, firebrick , resi 67 
+set cartoon_ring_color, firebrick , resi 68 
+set cartoon_ladder_color, firebrick , resi 68 
+set cartoon_ring_color, firebrick , resi 69 
+set cartoon_ladder_color, firebrick , resi 69 
+set cartoon_ring_color, firebrick , resi 70 
+set cartoon_ladder_color, firebrick , resi 70 
+set cartoon_ring_color, firebrick , resi 71 
+set cartoon_ladder_color, firebrick , resi 71 
+set cartoon_ring_color, firebrick , resi 72 
+set cartoon_ladder_color, firebrick , resi 72 
+set cartoon_ring_color, forest , resi 73 
+set cartoon_ladder_color, forest , resi 73 
+set cartoon_ring_color, forest , resi 74 
+set cartoon_ladder_color, forest , resi 74 
+set cartoon_ring_color, blue , resi 75 
+set cartoon_ladder_color, blue , resi 75 
+set cartoon_ring_color, blue , resi 76 
+set cartoon_ladder_color, blue , resi 76 

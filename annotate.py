@@ -141,16 +141,19 @@ def calculate(mat,angles,sequence):
 
         id1 = idx1,idx2
         id2 = idx2,idx1
-
         # stacking
         int_type = "XX"
-        # criteria on |z| > 0.2 
+        # criteria on |z| > 0.2
+
         if(z1[i]> 0.04 and z2[i] > 0.04):
             # criteria on angles (40 < x < 140)
+
             if(np.abs(angles[id1])>0.76):
+        
+                
                 # criteria on rho < 2.5 AA 
                 #print q1,q2
-                if(rho1[i] > 0.0625 or rho2[i] > 0.0625): 
+                if(rho1[i] < 0.0625 or rho2[i] < 0.0625): 
                     
                     if(mat[id1][2] > 0.02):
                         if(mat[id2][2] < -0.02):
@@ -224,6 +227,7 @@ def annotate(args):
         else:
             top=args.top
             cur_pdb = md.load_frame(files[i],0,top=args.top)
+            
         cur_idx = bt.get_lcs_idx(cur_pdb.topology)
 
         # get list of residues
@@ -232,7 +236,6 @@ def annotate(args):
         # get sequence
         rna_seq = [definitions.residue_dict[rr.name]  for rr in rna_residues]
         rna_seq_id = ["%s_%d_%d" % (rr.name,rr.resSeq,rr.chain.index)  for rr in rna_residues]
-
 
         if(args.pdbs!=None):
             
@@ -250,6 +253,7 @@ def annotate(args):
             if(args.pymol == True):
                 res_idxs_full = [rr.index  for rr in rna_residues]
                 pymol_script(files[i],res_idxs_full, pairs,annotation)
+                
         else:
             
             # analyze trajectory in chunks of 100

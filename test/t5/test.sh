@@ -3,6 +3,8 @@
 set -e
 
 # Annotate structures using the Leontis-Westhof classification. 
-# results are similar (but not identical) to MC annotate. 
+# The annotation is not accurate because  - especially for stacking - it is not well defined.
+# if you want to get accurate annotation with hydrogen bonds, etc. I highly reccommend to use X3DNA.
 
-$BARNABA --name 5_EXAMPLE ANNOTATE -f $DATA/1S72.pdb --hread
+$BARNABA ANNOTATE --pdb $DATA/1S72.pdb --hread -o ANNO_1
+$BARNABA ANNOTATE --pdb $DATA/1tra.pdb --hread -o ANNO_2 --pymol

@@ -96,6 +96,8 @@ align_atoms_pyr = ["\"O5'\"","\"C5'\"","\"C4'\"","\"O4'\"","\"C3'\"","\"O3'\"","
 
 pyr = ["C","U","rU","RU","RU5","RU3","U3","U5","rC","RC","RC5","RC3","C3","C5"]
 pur = ["A","G","rG","RG","RG5","RG3","G3","G5","rA","RA","RA5","RA3","A3","A5"]
+
+# if you add here, add also to pypu_dict and residue_dict
 rna = ["U","rU","RU","RU5","RU3","U3","U5",\
        "C","rC","RC","RC5","RC3","C3","C5",\
        "G","rG","RG","RG5","RG3","G3","G5",\
@@ -123,7 +125,7 @@ residue_dict = {'U': 'U', 'rU':'U','RU':'U','RU5':'U','RU3':'U','U3':'U','U5':'U
                 'C': 'C', 'rC':'C','RC':'C','RC5':'C','RC3':'C','C3':'C','C5':'C',\
                 'OMC':'C','5MC':'C',\
                 'G': 'G', 'rG':'G','RG':'G','RG5':'G','RG3':'G','G3':'G','G5':'G',\
-                '2MG':'G','YG':'G','7MG':'G','OMG':'G','1MG':'G',\
+                '2MG':'G','YG':'G','7MG':'G','OMG':'G','1MG':'G','M2G':'G',\
                 'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
                 'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
                 'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
