@@ -5,7 +5,7 @@
 date
 echo "Running regtest in $(pwd)"
 export BARNABA=../../../baRNAba
-export DATA=../../../examples/DATA
+export DATA=../../DATA
 
 rm -fr tmp
 mkdir tmp
