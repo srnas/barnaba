@@ -47,7 +47,8 @@ def noe(args):
         idxs = [ii for ii in rna_idxs if ((re.match('[1-2]H', cur_pdb.topology.atom(ii).name) is not None) or (re.match('H', cur_pdb.topology.atom(ii).name) is not None))]
 
         assert len(idxs)>1, "# Fatal error. No Hydrogen atoms in file %s" % files[i]
-        
+
+        # find pairs
         pairs = []
         pairs_lab = []
         for i1 in range(len(idxs)):
