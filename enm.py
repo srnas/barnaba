@@ -12,169 +12,138 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import reader as reader
 import numpy as np
 from scipy.linalg import eigh
 from scipy.spatial import distance
+import mdtraj as md
 import definitions
 
 
 
 def enm(args):
 
-    files = args.files
 
+    # define atoms
     if(args.type=="S"):
-        atoms_req = ["C1'"]
+        atoms_req = "(name \"C1'\" and (resname " + " or resname ".join(definitions.rna) + "))"
     if(args.type=="B"):
-        atoms_req = ["C2"]
+        atoms_req = "(name C2 and (resname " + " or resname ".join(definitions.rna) + "))"
     if(args.type=="P"):
-        atoms_req = ["P"]
+        atoms_req = "(name P and (resname " + " or resname ".join(definitions.rna) + "))"
     if(args.type=="SBP"):
-        atoms_req = ["P","C1'","C2"]
+        atoms_req = "(( name P or name \"C1'\" or name C2 ) and (resname " + " or resname ".join(definitions.rna) + " ))"
     if(args.type=="AA"):
-        atoms_req = definitions.heavy_atoms
-
-    # loop over files
-    if(len(files)>1):
-        print "# WARNING: ENM will be calculated only for the first PDB "
+        atoms_req = "( (name " + " or name ".join(definitions.heavy_atoms) + ") and (resname " + " or resname ".join(definitions.rna) + " ))"
         
-    for i in xrange(0,1):
+    if(args.protein):
+        atoms_req += "or name CA"
+    cur_pdb = md.load_pdb(args.pdbs)
+    idxs = cur_pdb.topology.select(atoms_req)
+
+    coords = cur_pdb.xyz[0,idxs]
+
+
+    print "# Read ", coords.shape, "coordinates"
+    # build distance matrix
+    dmat = distance.pdist(coords)
+    ll = len(coords)
+
+    # find where distance is shorter than cutoff
+    c_idx = (dmat<args.cutoff).nonzero()[0]
+    m_idx = np.array(np.triu_indices(ll,1)).T[c_idx]
+    # k = gamma/d^2
+    k_elast=1./dmat[c_idx]**2
+
+    # difference
+    diff = [coords[ii]-coords[jj] for ii,jj in m_idx]
+
+    # construct matrix
+    mat = np.zeros((ll,ll,3,3))
+    for kk in xrange(len(c_idx)):
+        ii = m_idx[kk][0]
+        jj = m_idx[kk][1]
+        mat[ii,jj] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
+
+    # now fill the 3n x 3n matrix (there might be a more pythonic way. but this works)
+    mat1 = np.zeros((3*ll,3*ll))
+    for k1 in range(ll):
+        # diagonal elements
+        diag = np.sum(mat[k1,:],axis=0) + np.sum(mat[:,k1],axis=0)
+        for i1 in range(3):
+            for i2 in range(i1,3):
+                mat1[3*k1+i1,3*k1+i2] =  -diag[i1,i2]
+        # off diagonal
+        for k2 in range(k1+1,ll):
+            for i1 in range(3):
+                for i2 in range(3):
+                    mat1[3*k1+i1,3*k2+i2] =  mat[k1,k2,i1,i2]
+                
+    # diagonalise
+    e_val,e_vec=eigh(mat1.T,lower=True)
+
+    # write to file - eigenvalues
+    fh = open(args.name,'a')
+    fh.write("# Eigenvalues \n")
+    for i in xrange(len(e_val)):
+        vv = e_val[i]
+        if(vv<definitions.tol): vv = 0.0
+        stri = "%5d %.6e \n" % (i,vv)
+        fh.write(stri)
+    fh.close()
+    
+    # write eigenvectors (skip first 6)
+    for i in xrange(6,args.ntop+6):
+        # check eigenvalue to be nonzero
+        assert(e_val[i] > definitions.tol)
+        fh= open(args.name + "." + str(i).zfill(2),'w')
+        fh.write("# eigenvector " + str(i) + "\n")
+        fh.write("# beads index & x-component & y-component & z-component \n")
+        stri = ""
+        ee = e_vec[:,i]
+        # check phase (this makes tests reproducible)
+        if(ee[0]<definitions.tol): ee*= -1.0
+        for k in xrange(ll):                    
+            stri += "%5d %10.6f %10.6f %10.6f \n" % (k,ee[3*k],ee[3*k+1],ee[3*k+2])
+        fh.write(stri) 
+        fh.close()
+
+    
+    if(args.type == "P" or args.type == "S"):
+        return 0
+    
+    # C2-C2 fluctuations
+    C2_indeces = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
+
+    # assume that C2 are all consecutive - maybe a check on the chain would be useful?
+    if(len(C2_indeces)==0):
+        print "# no C2 atoms in PDB"
+        return 0
+
+    # get coordinates
+    fh = open(args.name + ".SHAPE","w")
+    
+    for n in range(len(C2_indeces)-1):
+        i = 3*C2_indeces[n]
+        j = 3*(C2_indeces[n+1])
+        diff = coords[C2_indeces[n]]-coords[C2_indeces[n+1]] 
+        diff /= np.sqrt(np.sum(diff**2))
         
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        eof = 0
-        while(eof>=0):
-                        
-            coords = []
-            C2_indeces = []
-            #find beads
-            
-            for k in xrange(len(cur_pdb.model.sequence)):
-                resi = cur_pdb.model.residues[k]
-                for atom_type in atoms_req:
-                    idx = resi.get_idx(atom_type) 
-                    if(idx!=None):
-                        coords.append(cur_pdb.model.coords[idx])
-                        if(atom_type=="C2"):
-                            C2_indeces.append(len(coords)-1)
-            print "# Read ", len(coords), "coordinates"
-            coords = np.array(coords)
+        v_i = [e_vec[i:i+3,k] for k in xrange(6,len(e_val))]
+        v_j = [e_vec[j:j+3,k] for k in xrange(6,len(e_val))]
 
-            # build distance matrix
-            dmat = distance.pdist(coords)
-            ll = len(coords)
-            c_idx = (dmat<args.cutoff).nonzero()[0]
-            m_idx = np.array(np.triu_indices(ll,1)).T[c_idx] 
+        top = len(e_val)-6
+        
+        c_ii = np.array([np.outer(v_i[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+        c_jj = np.array([np.outer(v_j[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+        c_ij = np.array([np.outer(v_i[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+        c_ji = np.array([np.outer(v_j[k],v_i[k])/e_val[k+6] for k in xrange(top)])
 
-            # Build Interaction Matrix
-            mat = np.zeros((3*ll,3*ll))
-            k_elast=1.
-            roba_i=[0,0,0,1,1,2]
-            roba_j=[0,1,2,1,2,2]
-            for kk in xrange(len(c_idx)):
-                ii = m_idx[kk][0]
-                jj = m_idx[kk][1]
-                d=[]
-                for mu in range(0,3):
-                    d.append(coords[ii,mu]-coords[jj,mu])
-                cacca=k_elast/dmat[c_idx[kk]]**2
-                iii=3*ii
-                jjj=3*jj
-                for mu in [0,1,2]:                                        
-                    temp=(d[mu]**2)*cacca
-                    mat[iii+mu,iii+mu]+=temp # diagonale
-                    mat[jjj+mu,iii+mu]+=-temp
-                    mat[jjj+mu,jjj+mu]+=temp  # diagonale                
-                for k in [1,2,4]:                                        
-                    mu=roba_i[k]
-                    nu=roba_j[k]
-                    temp=d[mu]*d[nu]*cacca
-                    mat[jjj+mu,iii+nu]+=-temp
-                    mat[iii+nu,iii+mu]+=temp # diagonal
-                    mat[jjj+nu,iii+mu]+=-temp
-                    mat[jjj+nu,jjj+mu]+=temp  # diagonal               
-
-            print '# Diagonalization'
-            
-            eigens=eigh(mat,lower=True)
-
-            # fix phase to make tests reproducible
-            for i in xrange(len(eigens[0])):
-                m=0.0
-                for k in xrange(len(eigens[1][:,i])):
-                    if(eigens[1][k,i]>definitions.tol):
-                        m=1.0
-                        break
-                    if(eigens[1][k,i]<-definitions.tol):
-                        m=-1.0
-                        break
-                eigens[1][:,i]*=m
-
-            print '# Writing to files'
-            feval=open(args.name+".eval.dat",'w')
-            for i in xrange(len(eigens[0])):
-                if (not args.zmodes) and eigens[0][i]<definitions.tol:
-                    stri = "%5d %.6e \n" % (i,0.0)
-                else:
-                    stri = "%5d %.6e \n" % (i,eigens[0][i])
-                feval.write(stri)
-            feval.close()
-            
-            MAXVEC=args.ntop
-            nvec=0
-            for k in xrange(len(eigens[0])):
-                if nvec>MAXVEC:
-                    break
-                if (not args.zmodes) and eigens[0][k]<definitions.tol:
-                    continue
-                fevec=open(args.name+".evec"+str(k).zfill(len(str(args.ntop+6)))+".dat",'w')
-                fevec.write("# Eigenvector number "+str(k)+"\n")
-                fevec.write("# beads index & x-component & y-component & z-component \n")
-                stri = ""
-                for i in xrange(len(eigens[1][:,k])/3):                    
-                    stri += "%5d %10.6f %10.6f %10.6f \n" % (i,eigens[1][3*i+0,k],eigens[1][3*i+1,k],eigens[1][3*i+2,k])
-                fevec.write(stri) 
-                fevec.close()
-                nvec+=1
-
-            # Print distance fluctuations between consecutive C2 atoms
-            print "# Computing distance fluctuations between consecutive C2 atoms"
-            print "# There are",len(C2_indeces),"C2 atoms"
-            fC2=open(args.name+".distC2.dat",'w')
-            fC2.write("# fluctuations of the distances between consecutive C2 atoms in the ENM model \n")
-            fC2.write("# bead index i & bead index j & sigma^2 i--i+1 \n")
-            for n in xrange(len(C2_indeces)-1):
-                i=C2_indeces[n]
-                j=C2_indeces[n+1]
-
-                d=[]
-                for mu in range(0,3):
-                    d.append(coords[i,mu]-coords[j,mu])
-                d=np.array(d)
-                d/=np.sqrt(np.sum(d*d))
-                sigma=0.0
-                for  mu in range(0,3):
-                    for  nu in range(0,3):
-                        C_ii_munu=0
-                        C_jj_munu=0
-                        C_ij_munu=0
-                        C_ji_munu=0
-                        for k in xrange(len(eigens[0])):
-                            if eigens[0][k]>definitions.tol:
-                                lambd=1./eigens[0][k]
-                                v_i_mu=eigens[1][3*i+mu,k]
-                                v_i_nu=eigens[1][3*i+nu,k]
-                                v_j_mu=eigens[1][3*j+mu,k]
-                                v_j_nu=eigens[1][3*j+nu,k]
-                                C_ii_munu+=lambd*v_i_mu*v_i_nu
-                                C_jj_munu+=lambd*v_j_mu*v_j_nu
-                                C_ij_munu+=lambd*v_i_mu*v_j_nu
-                                C_ji_munu+=lambd*v_j_mu*v_i_nu
-                        sigma+=d[mu]*d[nu]*(C_ii_munu+C_jj_munu-C_ij_munu-C_ji_munu)
-                    
-                stri = "%5d %5d %10.6f \n" % (i,j,sigma)
-                fC2.write(stri)
-            fC2.close()
-            eof = cur_pdb.read()
-
+        # sum contributions from all eigenvectors
+        tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
+        sigma = np.dot(diff,np.dot(tensor,diff))
+                                        
+        fh.write("%5i %5d %10.6f \n" % (i,j,sigma))
+        
+    fh.close()
+    
     return 0

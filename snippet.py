@@ -11,73 +11,101 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import reader as reader
-import definitions
-import tools 
+import mdtraj as md
+import btools as bt
+import definitions as definitions
+
 from scipy.spatial import distance
 
 
 def snippet(args):
+
     
-    files = args.files
+    print "# Annotating RNA structures..."
+
     # check query sequence
     for item in args.seq:
-        if(item not in reader.Names.known_abbrev):
+        if(item not in definitions.known_abbrev):
             print "# FATAL Error. Symbol ", item, " not known. Use ACGU NYR"
             return 1
+        if(item == "%"):
+            print "# Fatal error. Single strand only"
+            return 1
+        
+    fh = open(args.name,'a')
 
-    query = args.seq.split("%")
-    assert len(args.seq.split("%")) < 2 , "# Fatal error: max 1 strand"
+    if(args.pdbs!=None):
+        files = args.pdbs
+    else:
+        files = [args.trj]
 
 
-    fh = open(args.name,'w')
-    print "# SPLIT..."
-    fh.write("# This is a baRNAba run.\n")
-    for k in sorted(args.__dict__):
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
-
-    ll = [len(el) for el in query]
-    
     for i in xrange(0,len(files)):
+        print "#",files[i]
 
-        try:
-            cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode,permissive=True)
-        except:
-            print "# SKIPPING", files[i]
-            continue
-        cur_len = len(cur_pdb.model.sequence)
-        if(cur_len<sum(ll)): continue
+        ii = 0
+        name_pref = files[i][0:-4].split("/")[-1]
+        
+        if(args.pdbs!=None):
+            top= files[i]
+            cur_pdb = md.load_frame(files[i],0,top=files[i])
+        else:
+            top=args.top
+            cur_pdb = md.load_frame(files[i],0,top=args.top)
 
-        # single strand
-        indeces = tools.get_idx(cur_pdb.model.sequence,query[0],bulges=0)
+        cur_idx = bt.get_lcs_idx(cur_pdb.topology)
 
-        # check chain consistency - remove 
-        tools.chain_consistency(indeces,cur_pdb.model.sequence_id)
+        residues = [cur_pdb.topology.atom(at).residue  for at in cur_idx[0]]
+        seq_id = [definitions.residue_dict[rr.name] + str(rr.resSeq) + "_" + str(rr.chain.index)  for rr in residues]
+        seq = [definitions.residue_dict[rr.name]  for rr in residues]
+        res_idxs_full = [rr.index  for rr in residues]
+        res_idxs = bt.get_idx(seq,args.seq,bulges=0)
+        
+        if(len(residues)<len(args.seq)): continue
+        if(len(res_idxs)==0): continue
+        
+        
 
-        if(len(query)==2):
-            indeces2 = tools.get_idx(cur_pdb.model.sequence,query[1],bulges=0)
-            tools.chain_consistency(indeces2,cur_pdb.model.sequence_id)
-            # to be done....
-            
-            
-        idx = 0
-        new_pdb_r = files[i].split("/")[-1].split(".pdb")[0] + "_"
-        while(idx>=0):
-            
-            for index in indeces:
+        # duplicate code - it would be horribly slow otherwise
+        if(args.pdbs!=None):
+            for el in res_idxs:
 
-                seq_out = "".join([cur_pdb.model.sequence[res] for res in index])
-                f_res = cur_pdb.model.sequence_id[index[0]]
-                l_res = cur_pdb.model.sequence_id[index[-1]]
+                seqs = "".join([seq[p] for p in el ])
+                seqs_id = " ".join([seq_id[p] for p in el ])
+                resi_full = [res_idxs_full[y] for y in el]
+                # skip non-consecutive residues
+                if(resi_full[-1]!=resi_full[0]+len(resi_full)-1):
+                    continue
+                
+                tmp_atoms = [atom.index for atom in cur_pdb.topology.atoms if (atom.residue.index in resi_full)]
+                trj_slice = cur_pdb[0].atom_slice(tmp_atoms)
+                trj_slice.center_coordinates()
 
-                new_pdb = new_pdb_r + seq_out + "_" + f_res + "_" + l_res + ".pdb"
-                fh_pdb = open(new_pdb,'w')
-                fh_pdb.write(cur_pdb.model.string_pdb(index,noP=True))
-                fh_pdb.close()
+                name = name_pref + "_" + seqs + "_" + str(ii).zfill(4) + ".pdb"
+                trj_slice.save(name)
+                fh.write("%30s %10.4f %d %s \n" % (files[i],0,ii,seqs_id) )
+                ii += 1
 
-            idx = cur_pdb.read()
+        else:
+            # analyze trajectory in chunks of 100            
+            for chunk in md.iterload(files[i], chunk=100,top=top):
+                for j in range(len(chunk)):
+                    
+                    for el in res_idxs:
+                        seqs = "".join([seq[p] for p in el ])
+                        seqs_id = " ".join([seq_id[p] for p in el ])
+                        resi_full = [res_idxs_full[y] for y in el]
+                        # skip non-consecutive residues
+                        if(resi_full[-1]!=resi_full[0]+len(resi_full)-1):
+                            continue
+                        tmp_atoms = [atom.index for atom in cur_pdb.topology.atoms if (atom.residue.index in resi_full)]
+                        trj_slice = chunk[i].atom_slice(tmp_atoms)
+                        trj_slice.center_coordinates()
 
+                        name = name_pref + "_" + seqs + "_" + str(ii).zfill(4) + ".pdb"
+                        trj_slice.save(name)
+                        fh.write("%30s %10.4f %d %s \n" % (files[i],chunk.time[j],ii,seqs_id) )
+                        ii += 1
 
     fh.close()
     return 0

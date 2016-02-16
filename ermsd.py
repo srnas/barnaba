@@ -11,55 +11,80 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import reader as reader
+#import reader as reader
 import numpy as np
+import mdtraj as md
+import btools as bt
 
+def calc_diff(ref,cur,pp):
+    diff = (ref-cur)**2
+    ll = ref.shape[0]
+    val = np.sqrt(np.sum(diff)/ll)
+    string  = "%10.6f " % (val)
+    # calculate per-residue 
+    if(pp):
+        string += ";"
+        per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ll)
+        for k in xrange(len(per_res)):
+            string += " %10.6f " % (per_res[k])
+    return string
+
+def do_pdb(ref_mat,pdbs,cutoff,perres=False):
+    
+    string = "#%29s %s \n " % ("Filename","ERMSD")
+    
+    for pdb in pdbs:
+        cur_pdb = md.load_pdb(pdb)
+        assert(cur_pdb.n_residues==ref_mat.shape[0])
+        # get indeces
+        cur_idx = bt.get_lcs_idx(cur_pdb.topology)
+        
+        c1 = cur_pdb.xyz[0,cur_idx[0]]
+        c2 = cur_pdb.xyz[0,cur_idx[1]]
+        c3 = cur_pdb.xyz[0,cur_idx[2]]
+        cur_mat = bt.get_gmat(c1,c2,c3,cutoff)
+        ss = calc_diff(cur_mat,ref_mat,perres)
+        string += "%30s %s \n" % (pdb,ss)
+        
+    return string
+
+
+        
+def do_traj(ref_mat,top,trj,cutoff,perres=False):
+
+    string = "#%9s %s \n " % ("time (ps)","ERMSD")
+    cur_pdb = md.load_frame(trj,0,top=top)
+    assert(cur_pdb.n_residues==ref_mat.shape[0])
+
+    # get indeces
+    cur_idx = bt.get_lcs_idx(cur_pdb.topology)
+
+    for chunk in md.iterload(trj, chunk=100,top=top):
+        for j in range(len(chunk)):
+            c1 = chunk.xyz[j,cur_idx[0]]
+            c2 = chunk.xyz[j,cur_idx[1]]
+            c3 = chunk.xyz[j,cur_idx[2]]
+            cur_mat = bt.get_gmat(c1,c2,c3,cutoff)
+            ss = calc_diff(cur_mat,ref_mat,perres)
+            string += "%10.3f %s \n" % (chunk.time[j],ss)
+    return string
 
 def ermsd(args):
     
-    files = args.files
     print "# Calculating ERMSD..."
 
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba run.\n")
-    for k in sorted(args.__dict__):
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
-        
     # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode)
-    ref_len = len(ref_pdb.model.sequence)
-    ref_mat = ref_pdb.model.get_gmat(args.cutoff)
+    
+    ref_pdb = md.load(args.reference)
+    ref_mat = bt.pdb2gmat(ref_pdb,args.cutoff)
 
-    if(args.xtc!=None):
-        assert len(files)==1, "# Error: when providing XTC trajectories, specify a single reference PDB file with -f"
-        
-    #all the rest and calculate ERMSD on-the-fly
-    for i in xrange(0,len(files)):
-        
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        cur_pdb.set_xtc(args.xtc)
-        cur_len = len(cur_pdb.model.sequence)
-        assert cur_len==ref_len, "# Fatal error: sequence lengths mismatch %d %d \n" %(cur_len,ref_len)
+    fh = open(args.name,'a')
 
-            
-        idx = 0
-        while(idx>=0):
-            cur_mat = cur_pdb.model.get_gmat(args.cutoff)
-            diff = (ref_mat-cur_mat)**2
-            val = np.sqrt(np.sum(diff)/ref_len)
-
-            string = "%10i %10.6f  " % (idx,val)
-            if(args.perres):
-                string += ";"
-                per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ref_len)
-                for k in xrange(len(per_res)):
-                    string += " %10.6f " % (per_res[k])
-            string += "%s \n" % (files[i])
-            fh.write(string)
-            
-            idx = cur_pdb.read()
-                                
+    if(args.trj==None):
+        fh.write(do_pdb(ref_mat,args.pdbs,args.cutoff,args.perres))
+    else:
+        fh.write(do_traj(ref_mat,args.top,args.trj,args.cutoff,args.perres))
+    
     fh.close()
     return 0
 

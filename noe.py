@@ -12,7 +12,10 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import reader as reader
+import definitions
+import mdtraj as md
+import btools as bt
+import re
 
 ####################### MOTIF #########################
 
@@ -20,42 +23,64 @@ import reader as reader
 
 def noe(args):
 
-    # sanity checks
-    files = args.files
-    print "# Calculating NOES"
-    
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba run.\n")
-    for k in sorted(args.__dict__):
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
+    print "# Calculating NOE distances..."
+    fh = open(args.name,'a')
 
-    for i in xrange(0,len(files)):
-
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        cur_pdb.set_xtc(args.xtc)
-        cur_pdb.model.set_h_idx()
+    if(args.pdbs!=None):
+        files = args.pdbs
+    else:
+        files = [args.trj]
         
-        idx = 0
-        data = []
-        while(idx>=0):
-            data.append(cur_pdb.model.calc_pairwise_h())
-            idx = cur_pdb.read()
+    for i in xrange(0,len(files)):
+        print "#",files[i]
 
-        data = np.array(data)
-        bins = 5
-        if(len(data)<10):
-            bins = 1
+        if(args.pdbs!=None):
+            top= files[i]
+            cur_pdb = md.load_frame(files[i],0,top=files[i])
+        else:
+            top=args.top
+            cur_pdb = md.load_frame(files[i],0,top=args.top)
+
+        # indexes of all hydrogens
+        rna_idxs = bt.get_rna(cur_pdb.topology)
+
+        idxs = [ii for ii in rna_idxs if ((re.match('[1-2]H', cur_pdb.topology.atom(ii).name) is not None) or (re.match('H', cur_pdb.topology.atom(ii).name) is not None))]
+
+        assert len(idxs)>1, "# Fatal error. No Hydrogen atoms in file %s" % files[i]
+        
+        pairs = []
+        pairs_lab = []
+        for i1 in range(len(idxs)):
+            for i2 in range(i1+1,len(idxs)):
+                pairs.append([idxs[i1],idxs[i2]])
+                pairs_lab.append([cur_pdb.topology.atom(idxs[i1]),cur_pdb.topology.atom(idxs[i2])])
+
+        if(args.pdbs!=None):
+            data = md.compute_distances(cur_pdb,np.array(pairs),periodic=False)
+            
+        else:
+            data = []
+            for chunk in md.iterload(files[i], chunk=100,top=top):
+                dd = md.compute_distances(chunk,np.array(pairs),periodic=False)
+                data.extend(dd)
+            data = np.array(data)
+
+        
+        data6 = np.power(data,-6)
+        avg = np.power(np.average(data6,axis=0),-1./6.)
+        idx_m = np.where(avg<args.cutoff)
+        
+        bins = args.nbins
+
         blocks = np.linspace(0,len(data),bins)
         blocks = [int(el) for el in blocks]
-        triu = np.triu_indices(len(cur_pdb.model.h_labels), 1)
+
         string = ""
-        for j in range(len(data[0])):
-            avg = np.power(np.average(data[:,j]),-1./6.)
-            block_avg = [np.power(np.average(data[blocks[k]:blocks[k+1],j]),-1./6.) for k in range(len(blocks)-1)]
+        for i1 in idx_m[0]:
+
+            block_avg = [np.power(np.average(data6[blocks[k]:blocks[k+1],i1]),-1./6.) for k in range(len(blocks)-1)]
             block_error = np.std(block_avg)/np.sqrt(bins-1)
-            if(avg<args.cutoff):
-                string += "%12s %12s %8.4f %8.4f \n" % (cur_pdb.model.h_labels[triu[0][j]],cur_pdb.model.h_labels[triu[1][j]], avg ,block_error)
+            string += "%12s %12s %10.6f %10.6f \n" % (pairs_lab[i1][0],pairs_lab[i1][1], avg[i1] ,block_error)
         fh.write(string)
 
     fh.close()
