@@ -3,12 +3,12 @@
 set -e
 
 # calculate backbone and pucker angles
+$BARNABA  TORSION  --pdb $DATA/1S72.pdb --hread -o T1
+$BARNABA  TORSION  --top $DATA/sample1.pdb --trj $DATA/samples.xtc --hread -o T2
 
-$BARNABA --name 7_EXAMPLE_TOR TORSION  -f $DATA/1S72.pdb --pucker --hread
-$BARNABA --name 7_EXAMPLE_TOR TORSION  -f $DATA/1S72.pdb --backbone --hread
+# calculate j couplings
+$BARNABA  JCOUPLING --top $DATA/sample1.pdb --trj $DATA/samples.xtc --hread -o T3
 
-# calculate j couplings 
-$BARNABA --name 7_EXAMPLE_TOR TORSION -f $DATA/samples.pdb --jcoupling --hread
 
 
 
