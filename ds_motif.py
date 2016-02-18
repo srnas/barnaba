@@ -88,7 +88,10 @@ def ds_motif(args):
         name_pref = files[i][0:-4].split("/")[-1]
                 
         if(args.pdbs!=None):
-            cur_pdb = md.load_pdb(files[i])
+            try:
+                cur_pdb = md.load_pdb(files[i])
+            except:
+                print "# WARNING: could not load file %s " % files[i] 
         else:
             top=args.top
             cur_pdb = md.load_frame(files[i],0,top=top)
@@ -142,16 +145,21 @@ def ds_motif(args):
             com2 = [np.sum(all_com[k],axis=0)/ref_len2 for k in idx2]
             if(len(com2) == 0): continue                
 
+            
             # calculate distance between centers of mass 
             dmat = distance.cdist(com1,com2)
             c_idx = (dmat<1.5*dcom).nonzero()
+            
             if(len(c_idx) == 0): continue
                     
             # get comboi indeces
             idx_combo_tmp = [idx1[c_idx[0][ii]] + idx2[c_idx[1][ii]] for ii in range(len(c_idx[0]))]
+
             # remove overlaps
             idx_combo = [el for el in idx_combo_tmp if(len(set(el)) == len(el))]
-                    
+            
+            if(len(idx_combo)==0): continue
+
             gmatsf = [bt.get_gmat(coords1[idx],coords2[idx],coords3[idx],args.cutoff).reshape(-1) for idx in idx_combo]
             distsf = distance.cdist([ref_mat],gmatsf)/np.sqrt(ref_len)
             below_tf = (distsf<args.treshold).nonzero()[1]
