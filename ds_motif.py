@@ -176,7 +176,7 @@ def ds_motif(args):
                 tmp_atoms0 = [[atom.index for atom in resi.atoms] for resi in resi_full]
                 # flatten
                 tmp_atoms = [val for sublist in tmp_atoms0 for val in sublist]
-                trj_slice = cur_pdb.atom_slice(tmp_atoms)
+                trj_slice = cur_pdb[0].atom_slice(tmp_atoms)
                     
                 # get atoms for alignment
                 cur_sup_idx = bt.get_sup_idx(trj_slice.topology)

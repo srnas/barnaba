@@ -84,7 +84,9 @@ class SMM:
         for line in fh:
             if("#" not in line):
                 vv = [float(x) for x in line.split()[1:]]
-                assert(len(vv)==len(data[0]))
+                if(len(vv)!=len(data[0])):
+                    print "# skipping", line.split()[0]
+                    continue
                 data.append(vv)
                 ll = line.split()[0]
                 self.labels.append(ll)
