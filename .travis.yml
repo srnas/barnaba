@@ -1,5 +1,19 @@
+sudo: false
+
+env:
+  global:
+    - PATH=$HOME/miniconda/bin:$PATH
+  matrix:
+    # minimum possible numpy version = 1.8, because of mdtraj
+    - python=2.7  CONDA_PY=27  CONDA_NPY=19
+    - python=2.7  CONDA_PY=27  CONDA_NPY=110
+
 before_install:
- - sudo apt-get install -qq python-numpy python-scipy
- - sudo apt-get install -qq mdtraj
+    - tools/ci/travis/install_miniconda.sh
+    - conda config --set always_yes true 
+    - conda config --add channels omnia 
+    - conda install -c omnia mdtraj
+    - conda install -c omnia pyemma
+
 script:
   - cd test && make 
