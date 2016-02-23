@@ -3,8 +3,6 @@ python:
   # We don't actually use the Travis Python, but this keeps it organized.
   - "2.6"
   - "2.7"
-  - "3.3"
-  - "3.4"
 
 install:
   - sudo apt-get update
@@ -24,9 +22,9 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION dep1 dep2 ...
-  - source activate test-environment
-  - python setup.py install
+  # - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION dep1 dep2 ...
+  #- source activate test-environment
+  #- python setup.py install
   - conda install -c omnia mdtraj
   - conda install -c omnia pyemma
 
