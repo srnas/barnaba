@@ -1,21 +1,34 @@
 language: python
+python:
+  # We don't actually use the Travis Python, but this keeps it organized.
+  - "2.6"
+  - "2.7"
+  - "3.3"
+  - "3.4"
 
-sudo: false
+install:
+  - sudo apt-get update
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
 
-env:
-  global:
-    - PATH=$HOME/miniconda/bin:$PATH
-  matrix:
-    # minimum possible numpy version = 1.8, because of mdtraj
-    - python=2.7  CONDA_PY=27  CONDA_NPY=19
-    - python=2.7  CONDA_PY=27  CONDA_NPY=110
-
-before_install:
-    - tools/install_miniconda.sh
-    - conda config --set always_yes true 
-    - conda config --add channels omnia 
-    - conda install -c omnia mdtraj
-    - conda install -c omnia pyemma
+  # Replace dep1 dep2 ... with your dependencies
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION dep1 dep2 ...
+  - source activate test-environment
+  - python setup.py install
+  - conda install -c omnia mdtraj
+  - conda install -c omnia pyemma
 
 script:
   - cd test && make 
