@@ -1,4 +1,4 @@
 # This is a baRNAba run.
 # ../../../baRNAba ESCORE --ff ../../DATA/1S72.pdb --pdb ../../DATA/sample1.pdb -o ESCORE_2 
 #                     Filename ESCORE 
-         ../../DATA/sample1.pdb  1.35704 
+         ../../DATA/sample1.pdb  1.35580 
