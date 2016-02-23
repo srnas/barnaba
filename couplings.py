@@ -111,10 +111,11 @@ def couplings(args):
             cur_pdb = md.load_frame(files[i],0,top=args.top)
             idxs,seq,miss = dihedral_idx(cur_pdb.topology)
 
-            for chunk in md.iterload(files[i], chunk=100,top=top):
+            for chunk in md.iterload(files[i], chunk=100,top=args.top):
                 
                 angles = md.compute_dihedrals(chunk,idxs,periodic=False)
-                
+                string = stringify(angles,miss,seq,args.hread,args.raw)
+            
                 for t in range(len(string)):
                     if(args.hread):
                         fh.write("# file %s time=%10f \n" % (files[i], chunk[t].time))
