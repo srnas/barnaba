@@ -163,10 +163,41 @@ def ds_motif(args):
             gmatsf = [bt.get_gmat(coords1[idx],coords2[idx],coords3[idx],args.cutoff).reshape(-1) for idx in idx_combo]
             distsf = distance.cdist([ref_mat],gmatsf)/np.sqrt(ref_len)
             below_tf = (distsf<args.treshold).nonzero()[1]
-                    
-            for it in below_tf:
+            
+
+            skipme = [None]*len(below_tf)
+
+            for i1 in xrange(len(below_tf)):
+                
+                if(skipme[i1] != None):
+                    continue
+
+                ss1 = idx_combo[below_tf[i1]]
+                common_idx = [below_tf[i1]]
+                common_idx1 = [i1]
+                for i2 in xrange(i1+1,len(below_tf)):
+                    ss2 = idx_combo[below_tf[i2]]
+                    if(float(len(ss2))/len(set(ss2+ss1)))>0.6:
+                        common_idx.append(below_tf[i2])
+                        common_idx1.append(i2)
+
+                sort = np.argsort(distsf[0,common_idx])
+                skipme[common_idx1[sort[0]]] =  False
+                for i3 in sort[1:]:
+                    skipme[common_idx1[i3]] = True
+
+                #print i1,skipme[i1]
+            #exit()
+
+            for id1, it in enumerate(below_tf):
+                
                 idxs = idx_combo[it]
+                       
                 seq = " ".join([rna_seq_id[p] for p in idxs ])
+                if(skipme[id1] == True): 
+                    #print "SKIPPING...",distsf[0,it],seq
+                    continue
+
                 fh.write("%4d %8.5f %80s %50s \n" % (kk,distsf[0,it],seq,files[i]))
                 kk += 1
 
