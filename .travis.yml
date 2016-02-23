@@ -1,4 +1,5 @@
 before_install:
  - sudo apt-get install -qq python-numpy python-scipy
+ - sudo apt-get install -qq mdtraj
 script:
   - cd test && make 
