@@ -265,7 +265,7 @@ def torsions(args):
             idxs,seq,miss = dihedral_idx(cur_pdb.topology)
             
             for chunk in md.iterload(files[i], chunk=100,top=args.top):
-                angles = md.compute_dihedrals(cur_pdb,idxs,periodic=False)
+                angles = md.compute_dihedrals(chunk,idxs,periodic=False)
                 string = stringify(angles,miss,seq,args.hread)
                 
                 for t in range(len(string)):
