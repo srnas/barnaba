@@ -101,6 +101,7 @@ def parse():
     parser_06.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
     parser_06.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_06.add_argument("--top", dest="top",help="Topology file",required=False)
+    parser_06.add_argument("--stride", dest="stride",help="Stride",required=False,default=1,type=int)
 
     parser_06.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
     parser_06.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
@@ -177,18 +178,16 @@ def parse():
     # CLUSTERING
     parser_13 = subparsers.add_parser('CLUSTER', help="Stop motion modeling")
     parser_13.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-    parser_13.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
-    parser_13.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
-    parser_13.add_argument("--top", dest="top",help="Topology file",required=False)
-    
-    parser_13.add_argument("--eps", dest="eps",help="eps",default=0.2,type=float)
-    parser_13.add_argument("--epsc", dest="epsc",help="eps",default=0.7,type=float)
+    parser_13.add_argument("--gvec", dest="gvec",help="GVEC",required=True)
+   
     parser_13.add_argument("--ncluster", dest="ncluster",required=False,default=20,type=int)
-    parser_13.add_argument("--projection", dest="mode",required=False,default="kernel",choices=["kernel","PCA"])
+    parser_13.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
+    parser_13.add_argument("--proj", dest="mode",required=False,default="kernel",choices=["kernel","PCA"])
+    parser_13.add_argument("--eps_p", dest="eps_p",help="eps for projection (used in kernel only)",default=0.8,type=float)
+    parser_13.add_argument("--alg", dest="alg",required=False,default="kernel",choices=["kernel","DBSCAN"])
+    parser_13.add_argument("--eps", dest="eps",help="epsilon used for clustering",default=0.7,type=float)
     
     args = parser.parse_args()
-
-    # TODO
 
     # CLUSTER
     
@@ -282,9 +281,10 @@ def smm(args):
     import smm
     smm.smm(args)
 
+
 def cluster(args):
     import cluster
-    cluster(args)
+    cluster.cluster(args)
 
 ####################### MAIN #########################
 
@@ -328,7 +328,8 @@ def main():
     outfile = filename(args)
 
     # check
-    if(args.subparser_name!="SMM"):
+    if(args.subparser_name!="SMM" and args.subparser_name!="CLUSTER"):
+
         if(args.pdbs==None):
             assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file"
             assert args.top != None, "# Please provide a topology file"

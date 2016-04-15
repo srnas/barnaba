@@ -108,7 +108,7 @@ def dump(args):
         else:
 
             # analyze trajectory in chunks of 100
-            for chunk in md.iterload(files[i], chunk=100,top=top):
+            for chunk in md.iterload(files[i], chunk=100,top=top,stride=args.stride):
                 
                 for j in range(len(chunk)):
                     
