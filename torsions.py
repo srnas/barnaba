@@ -132,7 +132,7 @@ def stringify(angles,miss,seq,hread):
         for ii in xrange(len(seq)):
 
             i1 = dd*ii
-            stri = "".join(["%10.6f "  % angles[t,i1+jj] if ([jj,ii] not in miss) else "%10s " % ("NaN") for jj in range(dd) ]) 
+            stri = "".join(["%10.5f "  % angles[t,i1+jj] if ([jj,ii] not in miss) else "%10s " % ("NaN") for jj in range(dd) ]) 
 
             # calculate pucker angles
             x1 = angles[t,i1+11] + angles[t,i1+8] - angles[t,i1+10] - angles[t,i1+7]
@@ -141,7 +141,7 @@ def stringify(angles,miss,seq,hread):
             if(p0<0.0): p0+=2.0*np.pi
             tm = angles[t,i1+9]/np.cos(p0)
 
-            stri += "%10.6f %10.6f" % (p0,tm)
+            stri += "%10.5f %10.5f" % (p0,tm)
             if(hread):
                 stri = "%10s %s \n " % (seq[ii], stri)
             string += stri
