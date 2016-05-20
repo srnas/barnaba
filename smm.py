@@ -42,7 +42,7 @@ class SMM:
         tolerance = 1.0E-10
         it = 1
         while tol > tolerance:
-            degree_s = np.sum(kmat,axis=1)
+            degree_s = self.ww*np.sum(kmat,axis=1)
             diff1 = np.abs(1.0 - np.max(degree_s))
             diff2 = np.abs(1.0 - np.min(degree_s))
             tol = max(diff1,diff2)
@@ -51,11 +51,14 @@ class SMM:
             kmat *= sqmat
             it += 1
         print "# Done", it , "iterations"
+        
+        for i in range(kmat.shape[0]):
+            print np.sum(kmat[i,:]), self.ww[i], np.sum(kmat[:,i])
         return kmat
 
     
 
-    def __init__(self,gvec_file,ref_file,eps,name):
+    def __init__(self,gvec_file,ref_file,eps,name,weight):
 
         # initalize variables
         data = []
@@ -73,8 +76,8 @@ class SMM:
                 ll = line.split()[0]
                 self.labels.append(ll)
                 if(len(data)==3):
-                    print "# Fatal. Only two GVEC in reference file."
-                    sys.exit()
+                    print "# Fatal. I want only two GVEC in reference file."
+                    sys.exit(1)
         fh.close()
         self.idx_source = 0
         self.idx_sink = 1
@@ -95,6 +98,22 @@ class SMM:
         self.gvecs = data
         print "# Read ", data.shape[0], "g-vectors (",data.shape,")"
 
+        # read weigts
+        
+        self.ww = np.ones(data.shape[0])
+        if(weight!=None):
+            fh = open(weight)
+            jj = 0
+            for line in fh:
+                if("#" not in line):
+                    self.ww[jj] = float(line.split()[0])
+                    jj += 1
+            fh.close()
+            print "# Read ", jj, "weights"
+            assert(jj==data.shape[0])
+        # normalize to one
+        self.ww /= np.sum(self.ww)
+            
         # infer lenght        
         slen = np.sqrt(data.shape[1]/4)
         if((slen).is_integer()):
@@ -117,8 +136,8 @@ class SMM:
         
         inA = self.dmat[self.idx_source]<distance
         inB = self.dmat[self.idx_sink]<distance
-        print "# Number of samples in A-form:", (len(inA.nonzero()[0]))
-        print "# Number of samples in Tloop-form:", (len(inB.nonzero()[0]))
+        print "# Number of samples in start cluster:", (len(inA.nonzero()[0]))
+        print "# Number of samples in end cluster:", (len(inB.nonzero()[0]))
         
         # calculate cumulative
         cumsum = np.cumsum(self.kmat,axis=1)
@@ -328,7 +347,7 @@ class SMM:
 
 def smm(args):
     
-    smm = SMM(args.gvec,args.ref,args.eps,args.name)
+    smm = SMM(args.gvec,args.ref,args.eps,args.name,args.weight)
     
     smm.calc_kmeans(args.ncluster)
     smm.calc_flux()

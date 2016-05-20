@@ -77,13 +77,16 @@ def get_3dmat_square(coords1,coords2,coords3,cutoff):
     
 
     dotp,m_idx = get_3dmat(coords1,coords2,coords3,cutoff)
+    ll = len(coords1)    
+    mat = np.zeros((ll,ll,3))        
+
     if(dotp.shape[0]==0): return mat
 
     dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
     dotp_norm = np.sqrt(np.sum(dotp_scale**2,axis=1))
     dotp[dotp_norm>cutoff] = 0.0
-    ll = len(coords1)    
-    mat = np.zeros((ll,ll,3))        
+
+
     mat[m_idx[:,0],m_idx[:,1]] = dotp
     # the matrix is not rescaled!
     return mat

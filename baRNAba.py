@@ -167,7 +167,9 @@ def parse():
     parser_12.add_argument("-o", dest="name",help="output_name",default=None,required=False)
 
     parser_12.add_argument("--gvec", dest="gvec",help="GVEC",required=True)
+    parser_12.add_argument("--weight", dest="weight",help="optional weights for GVEC",required=False,default=None)
     parser_12.add_argument("--ref", dest="ref",help="GVEC of source and sink reference structure",required=True)
+
     parser_12.add_argument("--eps", dest="eps",help="eps",default=0.2,type=float)
     parser_12.add_argument("--epsc", dest="epsc",help="eps",default=0.7,type=float)
     parser_12.add_argument("--ncluster", dest="ncluster",required=False,default=20,type=int)
