@@ -38,10 +38,10 @@ def stringify(angles,miss,seq,hread,raw):
             i1 = dd*ii
             aa =[angles[t,i1+jj] if ([jj,ii] not in miss) else float('nan') for jj in range(dd)]
             if(raw):
-                stri = "".join(["%10.6f " %el for el in aa])
+                stri = "".join(["%10.4f " %el for el in aa])
             else:
                 aa1 = [calc_j(aa[jj],definitions.j3[jj][2]) for jj in range(dd)]
-                stri = "".join(["%10.6f " %el for el in aa1])
+                stri = "".join(["%10.4f " %el for el in aa1])
 
                 
             if(hread):
