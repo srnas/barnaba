@@ -14,6 +14,11 @@
 import mdtraj as md
 import btools as bt
 import definitions as definitions
+import os
+import string
+import random
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 from scipy.spatial import distance
 
@@ -48,7 +53,15 @@ def snippet(args):
         
         if(args.pdbs!=None):
             top= files[i]
-            cur_pdb = md.load_frame(files[i],0,top=files[i])
+            # remove aminoacids and heteroatoms from list
+            ss = id_generator() + ".pdb"
+            cmd = "grep -v \"" + " \| ".join(definitions.aa)+ "\| HETATM \" " +top+" > " + ss
+            os.system(cmd)
+            try:
+                cur_pdb = md.load_pdb(ss)
+            except:
+                print "# ERROR: could not load ",top, "... skipping"
+            os.system("rm " + ss)
         else:
             top=args.top
             cur_pdb = md.load_frame(files[i],0,top=args.top)

@@ -142,7 +142,7 @@ annotation = ["..","XX","WWt","WHt","WSt","HHt","HWt","HSt","SHt","SWt","SSt","W
               "WWc","WHc","WSc","HHc","HWc","HSc","SHc","SWc","SSc","WCc",\
               ">>","<<","><","<>"]
 
-
+aa = ["ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HSD","HSE","HSP","ILE","HIS","LEU","LYS","LSN","MET","PHE","PRO","SER","THR","TRP","TYR","VAL"]
 
 
 #"HOH":"HOH","MG":"MG","K":"K","NA":"NA","CL":"CL","CD":"CD","CA":"CA",\

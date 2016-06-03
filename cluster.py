@@ -56,6 +56,7 @@ def cluster(args):
         # adjacency matrix
         print "# done"
         kmat= np.exp(-0.5*(dmat*dmat)/(args.eps*args.eps))
+
         # set diagonal to zero
         kmat[np.arange(ll),np.arange(ll)] = 0.0
         # inverse degree matrix

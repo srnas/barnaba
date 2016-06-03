@@ -115,7 +115,6 @@ def dump(args):
                     c1 = chunk.xyz[j,cur_idx[0]]
                     c2 = chunk.xyz[j,cur_idx[1]]
                     c3 = chunk.xyz[j,cur_idx[2]]
-                    
                     label = str(chunk.time[j])
                     
                     if(args.dumpG==True):
