@@ -19,8 +19,8 @@ set cartoon_ring_color, firebrick , resi 2
 set cartoon_ladder_color, firebrick , resi 2 
 set cartoon_ring_color, firebrick , resi 3 
 set cartoon_ladder_color, firebrick , resi 3 
-set cartoon_ring_color, firebrick , resi 4 
-set cartoon_ladder_color, firebrick , resi 4 
+set cartoon_ring_color, forest , resi 4 
+set cartoon_ladder_color, forest , resi 4 
 set cartoon_ring_color, firebrick , resi 5 
 set cartoon_ladder_color, firebrick , resi 5 
 set cartoon_ring_color, firebrick , resi 6 
@@ -137,8 +137,8 @@ set cartoon_ring_color, firebrick , resi 67
 set cartoon_ladder_color, firebrick , resi 67 
 set cartoon_ring_color, firebrick , resi 68 
 set cartoon_ladder_color, firebrick , resi 68 
-set cartoon_ring_color, firebrick , resi 69 
-set cartoon_ladder_color, firebrick , resi 69 
+set cartoon_ring_color, forest , resi 69 
+set cartoon_ladder_color, forest , resi 69 
 set cartoon_ring_color, firebrick , resi 70 
 set cartoon_ladder_color, firebrick , resi 70 
 set cartoon_ring_color, firebrick , resi 71 
