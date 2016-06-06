@@ -47,7 +47,7 @@ def pymol_script(pdbname,seq,pairs,interactions):
         
         join = "".join(itype)
 
-        if("WCt" in itype):
+        if("WCc" in itype):
             return "firebrick"
         if("GUt" in itype):
             return "firebrick"
@@ -190,13 +190,13 @@ def calculate(mat,angles,sequence):
                         int_type = "GU"
 
             # cis/trans
-            if(angles[id1]>0):
+            if(angles[id1]<0):
                 int_type += "c"
             else:
                 int_type += "t"
 
             # for generating dot-bracket
-            if(int_type == "WCt"):
+            if(int_type == "WCc"):
                 assert (idx1 not in openings)
                 assert (idx1 not in openings)
                 assert (idx2 not in closings)
