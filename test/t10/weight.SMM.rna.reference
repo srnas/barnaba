@@ -1,0 +1,2 @@
+# This is a baRNAba run.
+# ../../../baRNAba SMM --gvec no_repetition.gvec --weight weights.dat --ref ref.gvec --ncluster 100 -o weight 

@@ -168,6 +168,7 @@ def parse():
 
     parser_12.add_argument("--gvec", dest="gvec",help="GVEC",required=True)
     parser_12.add_argument("--weight", dest="weight",help="optional weights for GVEC",required=False,default=None)
+    parser_12.add_argument("--temp", dest="temp",help="Set temperature. This will interpret weights as free energies",required=False,default=0.0,type=float)
     parser_12.add_argument("--ref", dest="ref",help="GVEC of source and sink reference structure",required=True)
 
     parser_12.add_argument("--eps", dest="eps",help="eps",default=0.2,type=float)

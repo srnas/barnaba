@@ -30,7 +30,7 @@ class SMM:
 
         self.dmat = cdist(self.gvecs,self.gvecs)/np.sqrt(self.slen)
         ww = (self.dmat<0.001).nonzero()
-        print "# Number of identical elements...",len(ww[0])/2
+        print "# Number of identical elements...",len(ww[0])/2-self.slen
 
     def calc_kmat(self,eps):
 
@@ -41,8 +41,11 @@ class SMM:
         tol = 1000
         tolerance = 1.0E-10
         it = 1
+        rang = range(kmat.shape[0])
         while tol > tolerance:
-            degree_s = self.ww*np.sum(kmat,axis=1)
+
+            degree_s = np.asarray([np.sum(self.weight*kmat[i,:]) for i in rang])
+            #print degree_s
             diff1 = np.abs(1.0 - np.max(degree_s))
             diff2 = np.abs(1.0 - np.min(degree_s))
             tol = max(diff1,diff2)
@@ -51,14 +54,22 @@ class SMM:
             kmat *= sqmat
             it += 1
         print "# Done", it , "iterations"
+
+        tmat = np.multiply(kmat,self.weight[:,np.newaxis])
         
-        for i in range(kmat.shape[0]):
-            print np.sum(kmat[i,:]), self.ww[i], np.sum(kmat[:,i])
-        return kmat
+        # symmetrize
+        #for j in range(kmat.shape[0]):
+        #    print np.sum(tmat[:,j]),self.weight[j],np.sum(self.weight*tmat[j,:])
+        #for el in tmat:
+        #    for el2 in el:
+        #        print el2,
+        #    print ""
+        #exit()
+        return tmat
 
     
 
-    def __init__(self,gvec_file,ref_file,eps,name,weight):
+    def __init__(self,gvec_file,ref_file,eps,name,weight,temp):
 
         # initalize variables
         data = []
@@ -67,7 +78,12 @@ class SMM:
         self.evec = None
         self.eval = None
         self.cluster_members = None
-        
+        self.kbt = temp*0.008314462
+        self.weigth = None
+
+        if(temp!=0.0):
+            print "# You set the temperature to %f. Your weights will be interpreted as free energies in kj/mol. "% temp 
+            print "# Kbt is set to %4.2f" % self.kbt
         # read reference file with source and sink
         fh = open(ref_file)
         for line in fh:
@@ -100,20 +116,24 @@ class SMM:
 
         # read weigts
         
-        self.ww = np.ones(data.shape[0])
+        we = np.ones(data.shape[0])
         if(weight!=None):
             fh = open(weight)
             jj = 0
             for line in fh:
                 if("#" not in line):
-                    self.ww[jj] = float(line.split()[0])
+                    we[jj] = float(line.split()[0])
                     jj += 1
             fh.close()
-            print "# Read ", jj, "weights"
+            print "# Read ", jj, "weights", data.shape
             assert(jj==data.shape[0])
-        # normalize to one
-        self.ww /= np.sum(self.ww)
-            
+            if(self.kbt!=0.0):
+                we = np.exp(-we/self.kbt)
+                we *= (jj/np.sum(we))
+            # normalize
+            #self.weight /= np.sum(self.weight)
+        self.weight = np.copy(we)
+        #print self.weight
         # infer lenght        
         slen = np.sqrt(data.shape[1]/4)
         if((slen).is_integer()):
@@ -171,11 +191,19 @@ class SMM:
     def calc_evecs(self):
 
         if(self.eval==None):
-            v,w = np.linalg.eigh(self.kmat)
+            
+            weight_s = np.sqrt(self.weight) 
+            weight_s1 = 1.0/weight_s
+            mmat = np.outer(weight_s1,weight_s)
+            tmat = mmat*self.kmat 
+
+            v,w = np.linalg.eigh(tmat)
             idx2 = (np.abs(v)).argsort()[::-1]
             self.eval = v[idx2]
-            self.evec = w[:,idx2]
-
+            #print w[:,idx2].shape, weight_s1.shape
+            self.evec = (weight_s1*w[:,idx2].T).T
+            #self.evec = w[:,idx2]*weight_s1
+            
         
     def calc_kmeans(self,nc):
 
@@ -260,7 +288,7 @@ class SMM:
         # import pyemma
         import pyemma.msm as msm      
 
-        M = msm.MSM(self.kmat)
+        M = msm.MSM(self.kmat.T,pi=self.weight)
         fluxAB = msm.tpt(M,A,B)
         cg, cgflux =  fluxAB.coarse_grain(self.cluster_members)
         paths, path_fluxes = cgflux.pathways(fraction=0.99)
@@ -292,11 +320,17 @@ class SMM:
         if(mode=="kernel"):
             # calculate kmat with large eps
             kmat_large = self.calc_kmat(large_eps)
+
+            weight_s = np.sqrt(self.weight) 
+            weight_s1 = 1.0/weight_s
+            mmat = np.outer(weight_s1,weight_s)
+            tmat_large = mmat*kmat_large 
+
             # diagonalize
-            v,w = np.linalg.eigh(kmat_large)
+            v,w = np.linalg.eigh(tmat_large)
             idx2 = (np.abs(v)).argsort()[::-1]
             v = v[idx2]
-            w = w[:,idx2]
+            w = (weight_s1*w[:,idx2].T).T
 
         if(mode=="PCA"):
             data =np.copy(self.gvecs)
@@ -347,14 +381,13 @@ class SMM:
 
 def smm(args):
     
-    smm = SMM(args.gvec,args.ref,args.eps,args.name,args.weight)
+    smm = SMM(args.gvec,args.ref,args.eps,args.name,args.weight,args.temp)
     
     smm.calc_kmeans(args.ncluster)
     smm.calc_flux()
 
     if(args.ntraj>0):
         smm.do_trajectory(args.ntraj,args.dist)
-
 
 
 

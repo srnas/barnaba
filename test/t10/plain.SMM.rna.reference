@@ -1,0 +1,2 @@
+# This is a baRNAba run.
+# ../../../baRNAba SMM --gvec w_repetition.gvec --ref ref.gvec --ncluster 100 -o plain 
