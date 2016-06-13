@@ -13,7 +13,10 @@ def print_kmat(labels,v,w,nevec,filename,plus=[]):
     fh = open(filename,'w')
     for j in range(len(v)):
         # eigenvalues
-        stri = "%14.5e " % (float(v[j]))
+        ev = float(v[j])
+        if(ev < 1.0e-15):
+            ev = 0.0
+        stri = "%14.5e " % (ev)
         for k in range(nevec):
             stri += "%14.5e " % (float(w[j,k]))
         if(len(plus)==len(v)):
@@ -367,7 +370,9 @@ class SMM:
         fh.write(header + "\n")
         for j in range(len(v)):
             # eigenvalues
-            stri = "%70s %14.5e " % (self.labels[j],float(v[j]))
+            ev = float(v[j])
+            if(ev < 1.0e-15): ev = 0.0
+            stri = "%70s %14.5e " % (self.labels[j],ev)
             for k in range(nn):
                 stri += "%14.5e " % (float(w[j,k]))
             # add cluster 
