@@ -7,26 +7,6 @@ import bisect
 
 
 
-def print_kmat(labels,v,w,nevec,filename,plus=[]):
-
-    # Print to file
-    fh = open(filename,'w')
-    for j in range(len(v)):
-        # eigenvalues
-        ev = float(v[j])
-        if(ev < 1.0e-15):
-            ev = 0.0
-        stri = "%14.5e " % (ev)
-        for k in range(nevec):
-            stri += "%14.5e " % (float(w[j,k]))
-        if(len(plus)==len(v)):
-            stri += "%3d " % (plus[j])
-        stri += "%s \n" % labels[j]
-        fh.write(stri)
-    fh.close()  
-
-        
-
 class SMM:
     
     def gvec2dmat(self):
@@ -87,28 +67,29 @@ class SMM:
         if(temp!=0.0):
             print "# You set the temperature to %f. Your weights will be interpreted as free energies in kj/mol. "% temp 
             print "# Kbt is set to %4.2f" % self.kbt
+
         # read reference file with source and sink
+        self.idx_source = None
+        self.idx_sink = None
         fh = open(ref_file)
         for line in fh:
-            if("#" not in line):
-                data.append([float(x) for x in line.split()[1:]])
-                ll = line.split()[0]
-                self.labels.append(ll)
-                if(len(data)==3):
-                    print "# Fatal. I want only two GVEC in reference file."
-                    sys.exit(1)
+            if("source" in line):
+                self.idx_source = int(line.split()[1])                
+            if("sink" in line):
+                self.idx_sink = int(line.split()[1])                
         fh.close()
-        self.idx_source = 0
-        self.idx_sink = 1
+        if(self.idx_source == None or  self.idx_sink==None):
+            print "# Fatal error. ref file should contain the indeces of source and sink"
+            print "# as listed in gvec (starting from 0). Example of ref file:"
+            print "# source 15"
+            print "# sink 35"
+            sys.exit(1)
 
         # read GVECTOR
         fh = open(gvec_file)
         for line in fh:
             if("#" not in line):
                 vv = [float(x) for x in line.split()[1:]]
-                if(len(vv)!=len(data[0])):
-                    print "# skipping", line.split()[0]
-                    continue
                 data.append(vv)
                 ll = line.split()[0]
                 self.labels.append(ll)
@@ -116,9 +97,10 @@ class SMM:
         data = np.array(data)
         self.gvecs = data
         print "# Read ", data.shape[0], "g-vectors (",data.shape,")"
+        assert(self.idx_source < data.shape[0])
+        assert(self.idx_sink < data.shape[0])
 
         # read weigts
-        
         we = np.ones(data.shape[0])
         if(weight!=None):
             fh = open(weight)
@@ -133,10 +115,8 @@ class SMM:
             if(self.kbt!=0.0):
                 we = np.exp(-we/self.kbt)
                 we *= (jj/np.sum(we))
-            # normalize
-            #self.weight /= np.sum(self.weight)
         self.weight = np.copy(we)
-        #print self.weight
+
         # infer lenght        
         slen = np.sqrt(data.shape[1]/4)
         if((slen).is_integer()):
