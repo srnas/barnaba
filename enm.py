@@ -14,6 +14,7 @@
 
 import numpy as np
 from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
 from scipy.spatial import distance
 import mdtraj as md
 import definitions
@@ -47,7 +48,7 @@ def enm(args):
     # build distance matrix
     dmat = distance.pdist(coords)
     ll = len(coords)
-
+    print 'dim',ll,3*ll ###
     # find where distance is shorter than cutoff
     c_idx = (dmat<args.cutoff).nonzero()[0]
     m_idx = np.array(np.triu_indices(ll,1)).T[c_idx]
@@ -57,29 +58,62 @@ def enm(args):
     # difference
     diff = [coords[ii]-coords[jj] for ii,jj in m_idx]
 
-    # construct matrix
-    mat = np.zeros((ll,ll,3,3))
-    for kk in xrange(len(c_idx)):
-        ii = m_idx[kk][0]
-        jj = m_idx[kk][1]
-        mat[ii,jj] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
+    MAXVEC=args.ntop+6
+    import time
+    t=time.time()
 
-    # now fill the 3n x 3n matrix (there might be a more pythonic way. but this works)
-    mat1 = np.zeros((3*ll,3*ll))
-    for k1 in range(ll):
-        # diagonal elements
-        diag = np.sum(mat[k1,:],axis=0) + np.sum(mat[:,k1],axis=0)
-        for i1 in range(3):
-            for i2 in range(i1,3):
-                mat1[3*k1+i1,3*k1+i2] =  -diag[i1,i2]
-        # off diagonal
-        for k2 in range(k1+1,ll):
-            for i1 in range(3):
-                for i2 in range(3):
-                    mat1[3*k1+i1,3*k2+i2] =  mat[k1,k2,i1,i2]
-                
-    # diagonalise
-    e_val,e_vec=eigh(mat1.T,lower=True)
+    if args.sparse:
+        from scipy.sparse import *
+        # construct matrix
+        mat = lil_matrix((ll*3,ll*3))
+        #mat = dok_matrix((ll*3,ll*3)) ### slower
+        for kk in xrange(len(c_idx)):
+            ii = m_idx[kk][0]
+            jj = m_idx[kk][1]
+            ### this seems to be slower
+            #            temp=-k_elast[kk]*np.outer(diff[kk],diff[kk])
+            #            mat[3*ii:3*ii+3,3*jj:3*jj+3] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
+            #            mat[3*jj:3*jj+3,3*ii:3*ii+3] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
+            #            mat[3*ii:3*ii+3,3*ii:3*ii+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])
+            #            mat[3*jj:3*jj+3,3*jj:3*jj+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])            
+            ###
+            for mu in range(3):
+                for nu in range(3):
+                    temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
+                    mat[3*ii+mu,3*jj+nu]+=-temp
+                    mat[3*jj+mu,3*ii+nu]+=-temp
+                    mat[3*ii+mu,3*ii+nu]+=temp
+                    mat[3*jj+mu,3*jj+nu]+=temp
+                    ### from C. M. program
+                    ###                    intmat[3*i+mu][3*i+nu] += temp;
+                    ###                    intmat[3*i+mu][3*j+nu] += -temp;
+                    ###                    intmat[3*j+mu][3*i+nu] += -temp;
+                    ###                    intmat[3*j+mu][3*j+nu] += temp;
+
+        print '# Using sparse matrix diagonalization'
+        e_val,e_vec=eigsh(mat, k=MAXVEC,sigma=definitions.tol)
+    else:
+        mat = np.zeros((3*ll,3*ll))
+        for kk in xrange(len(c_idx)):
+            ii = m_idx[kk][0]
+            jj = m_idx[kk][1]
+            for mu in range(3):
+                for nu in range(3):
+                    temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
+                    mat[3*ii+mu,3*jj+nu]+=-temp
+                    #mat[3*jj+mu,3*ii+nu]+=-temp ### no need to fill the lower triangle
+                    mat[3*ii+mu,3*ii+nu]+=temp
+                    mat[3*jj+mu,3*jj+nu]+=temp
+
+        e_val,e_vec=eigh(mat.T,lower=True) ### TODO: add if sparse   
+    print 'time',time.time()-t ###
+### check here:
+### 2) MAXVEC has to be obtained from args.ntop
+###    Done. Do I want to print the 0 modes or not?
+### 4) EIGSH IS GIVIN EXTRA ZERO-MODES!
+###    Sigma has to be >zero to avoid extra null modes to pop out
+###    if sigma > 10x smallest eval => wrong results
+###    I set sigma=tol. This should work if tol makes sense
 
     # write to file - eigenvalues
     fh = open(args.name,'a')
@@ -91,10 +125,13 @@ def enm(args):
         fh.write(stri)
     fh.close()
     
+    return ###############################################
+
     # write eigenvectors (skip first 6)
     for i in xrange(6,args.ntop+6):
         # check eigenvalue to be nonzero
         assert(e_val[i] > definitions.tol)
+        ### we should put some message that explain what happens and tells to increase the cutoff here
         fh= open(args.name + "." + str(i).zfill(2),'w')
         fh.write("# eigenvector " + str(i) + "\n")
         fh.write("# beads index & x-component & y-component & z-component \n")
@@ -122,28 +159,52 @@ def enm(args):
     # get coordinates
     fh = open(args.name + ".SHAPE","w")
     
-    for n in range(len(C2_indeces)-1):
-        i = 3*C2_indeces[n]
-        j = 3*(C2_indeces[n+1])
-        diff = coords[C2_indeces[n]]-coords[C2_indeces[n+1]] 
-        diff /= np.sqrt(np.sum(diff**2))
+    if args.sparse:
+        for n in range(len(C2_indeces)-1):
+            i = 3*C2_indeces[n]
+            j = 3*(C2_indeces[n+1])
+            diff = coords[C2_indeces[n]]-coords[C2_indeces[n+1]] 
+            diff /= np.sqrt(np.sum(diff**2))
         
-        v_i = [e_vec[i:i+3,k] for k in xrange(6,len(e_val))]
-        v_j = [e_vec[j:j+3,k] for k in xrange(6,len(e_val))]
+            v_i = [e_vec[i:i+3,k] for k in xrange(6,len(e_val))]
+            v_j = [e_vec[j:j+3,k] for k in xrange(6,len(e_val))]
 
-        top = len(e_val)-6
+            top = len(e_val)-6
         
-        c_ii = np.array([np.outer(v_i[k],v_i[k])/e_val[k+6] for k in xrange(top)])
-        c_jj = np.array([np.outer(v_j[k],v_j[k])/e_val[k+6] for k in xrange(top)])
-        c_ij = np.array([np.outer(v_i[k],v_j[k])/e_val[k+6] for k in xrange(top)])
-        c_ji = np.array([np.outer(v_j[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+            c_ii = np.array([np.outer(v_i[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+            c_jj = np.array([np.outer(v_j[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+            c_ij = np.array([np.outer(v_i[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+            c_ji = np.array([np.outer(v_j[k],v_i[k])/e_val[k+6] for k in xrange(top)])
 
-        # sum contributions from all eigenvectors
-        tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
-        sigma = np.dot(diff,np.dot(tensor,diff))
+            # sum contributions from all eigenvectors
+            tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
+            sigma = np.dot(diff,np.dot(tensor,diff))
                                         
-        fh.write("%5i %5d %10.6f \n" % (i,j,sigma))
+            fh.write("%5i %5d %10.6f \n" % (i,j,sigma))
+    
+    else:
+        for n in range(len(C2_indeces)-1):
+            i = 3*C2_indeces[n]
+            j = 3*(C2_indeces[n+1])
+            diff = coords[C2_indeces[n]]-coords[C2_indeces[n+1]] 
+            diff /= np.sqrt(np.sum(diff**2))
         
+            v_i = [e_vec[i:i+3,k] for k in xrange(6,len(e_val))]
+            v_j = [e_vec[j:j+3,k] for k in xrange(6,len(e_val))]
+
+            top = len(e_val)-6
+        
+            c_ii = np.array([np.outer(v_i[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+            c_jj = np.array([np.outer(v_j[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+            c_ij = np.array([np.outer(v_i[k],v_j[k])/e_val[k+6] for k in xrange(top)])
+            c_ji = np.array([np.outer(v_j[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+
+            # sum contributions from all eigenvectors
+            tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
+            sigma = np.dot(diff,np.dot(tensor,diff))
+                                        
+            fh.write("%5i %5d %10.6f \n" % (i,j,sigma))
+    
     fh.close()
     
     return 0

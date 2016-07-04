@@ -150,6 +150,7 @@ def parse():
     parser_10.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
     parser_10.add_argument("--zmodes", dest="zmodes",help="Write modes corresponding to zero eigenvalues",action='store_true',default=False)
     parser_10.add_argument("--protein", dest="protein",help="Consider Proteins as well",action='store_true',default=False)
+    parser_10.add_argument("--sparse", dest="sparse",help="Use sparse matrix diagonalization algorithm",action='store_true',default=False)
 
     # CALCULATE NOE DISTANCES
     parser_11 = subparsers.add_parser('NOE', help='Calculate NOE')
