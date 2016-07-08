@@ -14,6 +14,8 @@
 
 import numpy as np
 from scipy.linalg import eigh
+import scipy.sparse as sp
+from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import eigsh
 from scipy.spatial import distance
 import mdtraj as md
@@ -63,19 +65,12 @@ def enm(args):
     t=time.time()
 
     if args.sparse:
-        from scipy.sparse import *
         # construct matrix
-        mat = lil_matrix((ll*3,ll*3))
+        mat = sp.lil_matrix((ll*3,ll*3))
         #mat = dok_matrix((ll*3,ll*3)) ### slower
         for kk in xrange(len(c_idx)):
             ii = m_idx[kk][0]
             jj = m_idx[kk][1]
-            ### this seems to be slower
-            #            temp=-k_elast[kk]*np.outer(diff[kk],diff[kk])
-            #            mat[3*ii:3*ii+3,3*jj:3*jj+3] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
-            #            mat[3*jj:3*jj+3,3*ii:3*ii+3] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
-            #            mat[3*ii:3*ii+3,3*ii:3*ii+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])
-            #            mat[3*jj:3*jj+3,3*jj:3*jj+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])            
             ###
             for mu in range(3):
                 for nu in range(3):
@@ -84,11 +79,6 @@ def enm(args):
                     mat[3*jj+mu,3*ii+nu]+=-temp
                     mat[3*ii+mu,3*ii+nu]+=temp
                     mat[3*jj+mu,3*jj+nu]+=temp
-                    ### from C. M. program
-                    ###                    intmat[3*i+mu][3*i+nu] += temp;
-                    ###                    intmat[3*i+mu][3*j+nu] += -temp;
-                    ###                    intmat[3*j+mu][3*i+nu] += -temp;
-                    ###                    intmat[3*j+mu][3*j+nu] += temp;
 
         print '# Using sparse matrix diagonalization'
         e_val,e_vec=eigsh(mat, k=MAXVEC,sigma=definitions.tol)
@@ -105,7 +95,7 @@ def enm(args):
                     mat[3*ii+mu,3*ii+nu]+=temp
                     mat[3*jj+mu,3*jj+nu]+=temp
 
-        e_val,e_vec=eigh(mat.T,lower=True) ### TODO: add if sparse   
+        e_val,e_vec=eigh(mat.T,lower=True)
     print 'time',time.time()-t ###
 ### check here:
 ### 2) MAXVEC has to be obtained from args.ntop
@@ -124,8 +114,6 @@ def enm(args):
         stri = "%5d %.6e \n" % (i,vv)
         fh.write(stri)
     fh.close()
-    
-    return ###############################################
 
     # write eigenvectors (skip first 6)
     for i in xrange(6,args.ntop+6):
@@ -144,37 +132,61 @@ def enm(args):
         fh.write(stri) 
         fh.close()
 
-    
+    if not args.comp_shape:
+        return 0
     if(args.type == "P" or args.type == "S"):
         return 0
-    
+
+    print '# computing C2-C2 fluctuations'
     # C2-C2 fluctuations
-    C2_indeces = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
+    C2_indeces = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
 
     # assume that C2 are all consecutive - maybe a check on the chain would be useful?
     if(len(C2_indeces)==0):
         print "# no C2 atoms in PDB"
         return 0
 
+    tshape=time.time()
     # get coordinates
     fh = open(args.name + ".SHAPE","w")
-    
     if args.sparse:
+        if args.type== "C2" :
+            #skip effective interaction computation if there are only C2 beads
+            ### maybe should test whether there are beads different from C2 or not
+            M_new=mat
+        else:
+            # submatrices
+            idx_a=np.sort(np.concatenate([3*C2_indeces+i for i in range(3)]))        
+            M_a=mat[np.ix_(idx_a,idx_a)]
+            idx_b=np.delete(np.arange(3*ll),idx_a)
+            M_b=mat[np.ix_(idx_b,idx_b)]
+            W=mat[np.ix_(idx_a,idx_b)]
+            t=time.time()
+            
+            X=spsolve(M_b.tocsc(),W.T.tocsc())
+            print '### time to spsolve =',time.time()-t
+            ### X is not a sparse matrix... Damn...
+            # effective interaction matrix between C2 beads
+            M_new=(M_a-sp.csc_matrix.dot(W.tocsc(),X)).toarray()
+            t=time.time()
+            eval_new,evec_new=eigh(M_new)
+            print '### time to eigh(M_new) =',time.time()-t
+
         for n in range(len(C2_indeces)-1):
-            i = 3*C2_indeces[n]
-            j = 3*(C2_indeces[n+1])
+            i = 3*n
+            j = 3*(n+1)
             diff = coords[C2_indeces[n]]-coords[C2_indeces[n+1]] 
             diff /= np.sqrt(np.sum(diff**2))
-        
-            v_i = [e_vec[i:i+3,k] for k in xrange(6,len(e_val))]
-            v_j = [e_vec[j:j+3,k] for k in xrange(6,len(e_val))]
+            
+            v_i = [evec_new[i:i+3,k] for k in xrange(6,len(eval_new))]
+            v_j = [evec_new[j:j+3,k] for k in xrange(6,len(eval_new))]
 
-            top = len(e_val)-6
+            top = len(eval_new)-6
         
-            c_ii = np.array([np.outer(v_i[k],v_i[k])/e_val[k+6] for k in xrange(top)])
-            c_jj = np.array([np.outer(v_j[k],v_j[k])/e_val[k+6] for k in xrange(top)])
-            c_ij = np.array([np.outer(v_i[k],v_j[k])/e_val[k+6] for k in xrange(top)])
-            c_ji = np.array([np.outer(v_j[k],v_i[k])/e_val[k+6] for k in xrange(top)])
+            c_ii = np.array([np.outer(v_i[k],v_i[k])/eval_new[k+6] for k in xrange(top)])
+            c_jj = np.array([np.outer(v_j[k],v_j[k])/eval_new[k+6] for k in xrange(top)])
+            c_ij = np.array([np.outer(v_i[k],v_j[k])/eval_new[k+6] for k in xrange(top)])
+            c_ji = np.array([np.outer(v_j[k],v_i[k])/eval_new[k+6] for k in xrange(top)])
 
             # sum contributions from all eigenvectors
             tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
@@ -206,5 +218,6 @@ def enm(args):
             fh.write("%5i %5d %10.6f \n" % (i,j,sigma))
     
     fh.close()
-    
+    print 'shape',time.time()-tshape
+
     return 0
