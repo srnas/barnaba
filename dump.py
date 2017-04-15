@@ -1,87 +1,44 @@
-#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
-#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
+#import sys
+import nucleic
+import numpy as np
 
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License V3 as published by
-#   the Free Software Foundation, 
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+def get_string(seq,data,hread=True):
 
-import reader as reader
-
-def stringify(fname,jj,data,seq,hread=True):
-
+    s = ""
     if(hread==False):
         data = data.reshape(-1)
-        s = ''
-        for el in data:
-            s += '%10.6f ' % el
-        s += '%s.%i \n' % (fname,jj)
-        return s
+        #s = "%10s " % (fname)
+        s += "".join([("%15e " % el) for el in data])
+        return s + "\n"
     else:
-        s = '# %s %i \n' % (fname,jj)
         for j in range(data.shape[0]):
-            for k in range(data.shape[0]):
-                #if(all(data[j,k]) != 0.0):
-                s += '%10s %10s ' % (seq[j],seq[k])
-                for l in range(len(data[j,k])):
-                    s += '%10.6f ' % data[j,k,l]
-                s+= "\n"
+            for k in range(data.shape[1]):
+                if(np.sum((data[j,k])**2) > 0.0):
+                    s += '%15s %15s ' % (seq[j],seq[k])
+                    s += "".join(['%15e ' % data[j,k,l] for l in range(len(data[j,k]))])
+                    s+= "\n"
         return s
-    
-def dump(args):
-    
 
-    files = args.files
-    print "# Calculating DUMP ... (ahah)"
 
-    if(args.dumpG==True):
-        fh_dumpG = open(args.name+ ".gvec",'w')
 
-    if(args.dumpR==True):
-        fh_dumpR = open(args.name+ ".rvec",'w')
+def dump_rvec(traj,cutoff=2.4):
         
-    if(args.dumpP==True):
-        fh_dumpP = open(args.name+ ".pvec",'w')
+    top = traj.topology
+    nn = nucleic.Nucleic(top)
+    rvecs = []
+    for i in xrange(traj.n_frames):
+        coords_lcs = traj.xyz[i,nn.indeces_lcs]
+        rvecs.append(nn.get_rmat(coords_lcs,cutoff))
+
+    return nn.rna_seq,np.asarray(rvecs)
 
 
-    for i in xrange(0,len(files)):
+def dump_gvec(traj,cutoff=2.4):
         
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        cur_len = len(cur_pdb.model.sequence)
-        assert cur_len>1, "# Fatal error: less than 2 nucleotides %d \n" %(cur_len)
-        if(args.xtc!=None):
-            cur_pdb.set_xtc(args.xtc)
-            
-        idx = 0
-        while(idx>=0):
-            if(args.dumpG==True):
-                mat = cur_pdb.model.get_gmat(args.cutoff)
-                s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
-                fh_dumpG.write(s)
-            if(args.dumpR==True):
-                mat = cur_pdb.model.get_3dmat_square(args.cutoff)
-                s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
-                fh_dumpR.write(s)
-            if(args.dumpP==True):
-                mat = cur_pdb.model.get_other_mat(args.cutoff,args.atomtype)
-                s = stringify(files[i],idx,mat,cur_pdb.model.sequence_id,hread=args.read)
-                fh_dumpP.write(s)
-                
-            idx = cur_pdb.read()
-                                
-    if(args.dumpG==True):
-        fh_dumpG.close()
-    if(args.dumpR==True):
-        fh_dumpR.close()
-    if(args.dumpP==True):
-        fh_dumpP.close()
-
-
-    return 0
-
-
+    top = traj.topology
+    nn = nucleic.Nucleic(top)
+    gvecs = []
+    for i in xrange(traj.n_frames):
+        coords_lcs = traj.xyz[i,nn.indeces_lcs]
+        gvecs.append(nn.get_gmat(coords_lcs,cutoff))
+    return nn.rna_seq,np.asarray(gvecs)

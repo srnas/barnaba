@@ -1,66 +1,42 @@
-#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
-#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
-
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License V3 as published by
-#   the Free Software Foundation, 
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import reader as reader
+import mdtraj as md
 import numpy as np
+from scipy.spatial.distance import cdist
+import sys
+import nucleic
+import definitions
 
+def ermsd_traj(ref,traj,cutoff=2.4):
+    top_traj = traj.topology
+    # initialize nucleic class
+    nn_traj = nucleic.Nucleic(top_traj)
 
-def ermsd(args):
+    top_ref = ref.topology
+    # initialize nucleic class
+    nn_ref = nucleic.Nucleic(top_ref)
+
+    assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))
     
-    files = args.files
-    print "# Calculating ERMSD..."
-
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba run.\n")
-    for k in sorted(args.__dict__):
-        s = "# " + str(k) + " " + str(args.__dict__[k]) + "\n"
-        fh.write(s)
+    coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
+    ref_mat = nn_ref.get_gmat(coords_ref,cutoff).reshape(-1)
+    #rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
+    gmats = []
+    for i in xrange(traj.n_frames):
+        coords_lcs = traj.xyz[i,nn_traj.indeces_lcs]
+        gmats.append(nn_ref.get_gmat(coords_lcs,cutoff).reshape(-1))
+    dd = cdist([ref_mat],gmats)/np.sqrt(len(nn_traj.ok_residues))
+    return dd[0]
         
-    # calculate interaction matrix of the reference structure
-    ref_pdb = reader.Pdb(args.reference,res_mode=args.res_mode)
-    ref_len = len(ref_pdb.model.sequence)
-    ref_mat = ref_pdb.model.get_gmat(args.cutoff)
 
-    if(args.xtc!=None):
-        assert len(files)==1, "# Error: when providing XTC trajectories, specify a single reference PDB file with -f"
+def ermsd(reference,target,cutoff=2.4,topology=None):
+
+    ref = md.load(reference)
+    warn =  "# Loaded reference %s \n" % reference
         
-    #all the rest and calculate ERMSD on-the-fly
-    for i in xrange(0,len(files)):
-        
-        cur_pdb = reader.Pdb(files[i],res_mode=args.res_mode)
-        cur_pdb.set_xtc(args.xtc)
-        cur_len = len(cur_pdb.model.sequence)
-        assert cur_len==ref_len, "# Fatal error: sequence lengths mismatch %d %d \n" %(cur_len,ref_len)
+    if(topology==None):
+        traj = md.load(target)
+    else:
+        traj = md.load(target,top=topology)
+    warn += "# Loaded target %s \n" % target
+    sys.stderr.write(warn)
 
-            
-        idx = 0
-        while(idx>=0):
-            cur_mat = cur_pdb.model.get_gmat(args.cutoff)
-            diff = (ref_mat-cur_mat)**2
-            val = np.sqrt(np.sum(diff)/ref_len)
-
-            string = "%10i %10.6f  " % (idx,val)
-            if(args.perres):
-                string += ";"
-                per_res = np.sqrt(np.sum(np.sum(diff,axis=2),axis=1)/ref_len)
-                for k in xrange(len(per_res)):
-                    string += " %10.6f " % (per_res[k])
-            string += "%s \n" % (files[i])
-            fh.write(string)
-            
-            idx = cur_pdb.read()
-                                
-    fh.close()
-    return 0
-
-
+    return ermsd_traj(ref,traj)

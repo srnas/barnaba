@@ -1,4 +1,29 @@
-f_factors = [5.,5.,3.]
+
+
+
+purines = ["A","G"]
+pyrimidines = ["C","U","T"]
+
+residue_dict = {'A': 'A', 'rA':'A','RA':'A','RA5':'A','RA3':'A','A3':'A','A5':'A',\
+                'C': 'C', 'rC':'C','RC':'C','RC5':'C','RC3':'C','C3':'C','C5':'C',\
+                'G': 'G', 'rG':'G','RG':'G','RG5':'G','RG3':'G','G3':'G','G5':'G',\
+                'U': 'U', 'rU':'U','RU':'U','RU5':'U','RU3':'U','U3':'U','U5':'U',\
+                'T': 'dT', 'dT':'dT','DT':'dT','DT5':'dT','DT3':'dT',\
+                'dA':'dA','DA':'dA','DA5':'dA','DA3':'dA',\
+                'dC':'dC','DC':'dC','DC5':'dC','DC3':'dC',\
+                'dG':'dG','DG':'dG','DG5':'dG','DG3':'dG'}
+
+modified_dict = {'1MA':'A','5AA':'A','P5P':'A','2MA':'A',\
+                'OMC':'C','5MC':'C','CBV':'C',\
+                '2MG':'G','YG':'G','7MG':'G','OMG':'G','1MG':'G','M2G':'G',\
+                'H2U':'U','PSU':'U','OMU':'U','UR3':'U','5MU':'U','5BU':'U','4SU':'U'}
+
+
+others = ["ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HSD","HSE","HSP","ILE","HIS","LEU","LYS","LSN","MET","PHE","PRO","SER","THR","TRP","TYR","VAL","HOH","MG","K","NA","CL","CD","CA"]
+
+
+# geometric definitions
+f_factors = [0.5,0.5,0.3]
 scale = [1./f_factors[0],1./f_factors[1],1./f_factors[2]]
 
 # mean values and covariance matrix for wc-pair calculation
@@ -20,76 +45,8 @@ theta2 = 2.0
 theta3 = -2.0
 
 
-
 pairings = ['WC','WW','WS','WH','HH','HS','HW','SS','SH','SW',"GU"]
 op = ['(','[','{','<']
 cl = [')',']','}','>']          
-
-known_abbrev = ["A","C","G","U","N","Y","R","%"]
-
-#Tolerance to identify zero-eigenvalues modes, 
-#corresponding to translational and rotational degrees of freedom.
-#Set it to zero or a negative value to print all the eigenvalues/eigenvectors
-
-tol=0.000001 
-
-
-# list of all RNA atoms for lcs
-rna_lcs = ["C2","C4","C6"]
-rna_pucker = ["C4'","O4'","C1'","C2'","C3'"]
-rna_torsion = ["P","O5'","C5'","C4'","C3'","O3'","O4'","C1'","N9","C4","N1","C2"]
-rna_backbone = ["P","O5'","C5'","C4'","C3'","O3'"]
-rna_chi_pur = ["O4'","C1'","N9","C4"]
-rna_chi_pyr = ["O4'","C1'","N1","C2"]
-term_5prime = ["OP1","OP2","P","OP3"]
-
-# electronegativity                                                                                                 
-chi_O = 1.3
-chi_C = 0.4
-chi_N = 0.85
-chi_P = -0.05
-
-# first index is label, second atoms, third karplus parameters
-# you can add more to this list if you wish
-td_pi = 2.094395
-                                             # nu from Davies, BD Conformations of nucleosides and nucleotides
-                                             # Progress in NMR spectroscopy, 1977
-j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0,0.0,0.0]],\
-      ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0,0.0,0.0]],\
-      ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0,0.0,0.0]],\
-      # Generalised Karplus equation from Hasnoot, Altona. Thetraedron, 1980
-      # P1    P2    --   P3    P4   P5   (P6 = 0 with 3 substituents)
-      #["H4H5'",  ["H4'","C4'","C5'","1H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,0.0,chi_O,chi_O]],\
-      #["H4H5''", ["H4'","C4'","C5'","2H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,chi_O,chi_O,0.0]],\
-
-      # simiplification of altona hasnoot - in the form  A*cos*cos + B*cos + C + D*sin*cos
-      ["H4H5'",  ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,0.269906,-td_pi]],\
-      ["H4H5''", ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,-4.752290,0.0]],\
-        #  HCOP from Lankhorst, Altona, 1984 
-      #["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      #["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      #  HCOP from Lee, Sarma 1976 
-      ["1H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,-td_pi]],\
-      ["2H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,td_pi]],\
-      # Marino and Scwhalbe
-      ["C4Pb",    ["C4'","C5'","O5'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
-      ["C4Pe",    ["C4'","C3'","O3'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
-      #  HCOP from Lankhorst, Altona, 1984 
-      ["H3P",    ["C4'","C3'","O3'","P"],   [15.3,-6.1,1.6,0.0,td_pi]]]
-
-# Rna only for the moment being
-heavy_atoms = ["P","OP1","OP2","O1P","O2P",\
-                   "O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'",\
-                   "N9","C8","N7","C6","N6","O6","C5",\
-                   "C4","N4","O4","N3",\
-                   "O2","N2","C2","N1" ]
-
-crazy_vec = [-9999.,-9999.-9999.]
-# max bond lenght squared (1.8^2)
-maxbond_sq = 3.24
-# min bond lenght squared (1.1^2)
-minbond_sq = 1.21
-
-pyr = ["C","U","dC","dU","dT"]
-pur = ["A","G","dA","dG"]
-rna = ["A","U","C","G"]
+complementary = {'A':'U','C':'G','U':'A','G':'C'}
+bb_atoms = ["O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'","P"]

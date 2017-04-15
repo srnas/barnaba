@@ -1,7 +1,0 @@
-test:
-	../make/run
-reset:
-	../make/reset
-clean:
-	rm -fr tmp/ report.txt
-
