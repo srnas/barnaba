@@ -178,7 +178,6 @@ def annotate_traj(traj):
     rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
     pairs = []
     annotations = []
-    
     for i in xrange(traj.n_frames):
 
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
@@ -189,9 +188,8 @@ def annotate_traj(traj):
         pp, aa, dotbracket = calculate(mat,angles,glyco,nn.rna_seq_id)
         pairs.append(pp)
         annotations.append(aa)
-        #stri = get_string(traj.time[i],pp,aa,rna_seq)
-        #print stri
-    return pairs, annotations
+
+    return rna_seq, pairs, annotations
 
 def annotate(filename,topology=None):
 
@@ -201,5 +199,7 @@ def annotate(filename,topology=None):
         traj = md.load(filename,top=topology)
     warn = "# Loading %s \n" % filename
     sys.stderr.write(warn)
-    pairs, annotations = annotate_traj(traj)
-    return pairs, annotations
+    
+    rna_seq, pairs, annotations = annotate_traj(traj)
+    
+    return rna_seq, pairs, annotations

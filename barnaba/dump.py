@@ -1,6 +1,7 @@
-#import sys
+import sys
 import nucleic
 import numpy as np
+import mdtraj as md
 
 def get_string(seq,data,hread=True):
 
@@ -21,7 +22,7 @@ def get_string(seq,data,hread=True):
 
 
 
-def dump_rvec(traj,cutoff=2.4):
+def dump_rvec_traj(traj,cutoff=2.4):
         
     top = traj.topology
     nn = nucleic.Nucleic(top)
@@ -32,8 +33,19 @@ def dump_rvec(traj,cutoff=2.4):
 
     return nn.rna_seq,np.asarray(rvecs)
 
+def dump_rvec(filename,topology=None,cutoff=2.4):
 
-def dump_gvec(traj,cutoff=2.4):
+    if(topology==None):
+        traj = md.load(filename)
+    else:
+        traj = md.load(filename,top=topology)
+    warn = "# Loading %s \n" % filename
+    sys.stderr.write(warn)
+    rna_seq,rvec  = dump_rvec_traj(traj,cutoff)
+    return rna_seq,rvec
+
+
+def dump_gvec_traj(traj,cutoff=2.4):
         
     top = traj.topology
     nn = nucleic.Nucleic(top)
@@ -42,3 +54,14 @@ def dump_gvec(traj,cutoff=2.4):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
         gvecs.append(nn.get_gmat(coords_lcs,cutoff))
     return nn.rna_seq,np.asarray(gvecs)
+
+def dump_gvec(filename,topology=None,cutoff=2.4):
+
+    if(topology==None):
+        traj = md.load(filename)
+    else:
+        traj = md.load(filename,top=topology)
+    warn = "# Loading %s \n" % filename
+    sys.stderr.write(warn)
+    rna_seq,gvec  = dump_gvec_traj(traj,cutoff)
+    return rna_seq,gvec
