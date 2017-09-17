@@ -1,6 +1,7 @@
 import sys
 import nucleic
 import numpy as np
+import tools as tools
 import mdtraj as md
 
 def get_string(seq,data,hread=True):
@@ -29,7 +30,7 @@ def dump_rvec_traj(traj,cutoff=2.4):
     rvecs = []
     for i in xrange(traj.n_frames):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
-        rvecs.append(nn.get_rmat(coords_lcs,cutoff))
+        rvecs.append(tools.calc_rmat(coords_lcs,cutoff))
 
     return nn.rna_seq,np.asarray(rvecs)
 
@@ -52,7 +53,7 @@ def dump_gvec_traj(traj,cutoff=2.4):
     gvecs = []
     for i in xrange(traj.n_frames):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
-        gvecs.append(nn.get_gmat(coords_lcs,cutoff))
+        gvecs.append(tools.calc_gmat(coords_lcs,cutoff))
     return nn.rna_seq,np.asarray(gvecs)
 
 def dump_gvec(filename,topology=None,cutoff=2.4):

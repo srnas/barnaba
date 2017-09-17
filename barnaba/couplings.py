@@ -55,14 +55,6 @@ def couplings(filename,topology=None,raw_angles=False):
 
 def which_couplings():
     labels = [s[0] for s in definitions.j3]
-    #for kk in definitions.j3:
-    #    a0 = kk[2][0]
-    #    a1 = kk[2][1]
-    #    a2 = kk[2][2]
-    #    a3 = kk[2][3]
-    #    pp = kk[2][4]
-    #    print kk[0], "%4.2f cos2(x+ %4.2f ) + %4.2f cos(x+ %4.2f ) + %4.2f  + %4.2f cos(x+%4.2f)sin(x+%4.2f)" % (a0,pp,a1,pp,a2,a3,pp,pp)
-    #    print kk[1]
     return labels
     
     

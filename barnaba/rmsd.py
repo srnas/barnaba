@@ -19,14 +19,29 @@ def rmsd_traj(ref,traj,out=None):
     idx_ref = []
     idx_target = []
     for res1,res2 in zip(nn_ref.ok_residues,nn_traj.ok_residues):
-        name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
-        #print res2, name2
-        for at in res1.atoms:
-            if at.name in definitions.bb_atoms:
-                if(at.name in name2):
-                    idx_ref.append(at.index)
-                    idx_target.append(((res2.atom(at.name)).index))
-    #print "# found ",len(idx_ref), "atoms in common"
+        
+        # if the nucleotide is the same, use all atoms
+        if(res1.name == res2.name):
+            name2 = [at.name for at in res2.atoms if  at.name in definitions.nt_atoms[res2.name]]
+            #name1 = [at.name for at in res1.atoms if  at.name in definitions.nb_atoms[res1.name]]
+            #print name2,name1
+            for at in res1.atoms:
+                if at.name in definitions.nt_atoms[res1.name]:
+                    if(at.name in name2):
+                        #print at.name
+                        idx_ref.append(at.index)
+                        idx_target.append(((res2.atom(at.name)).index))
+        # else, use bb only
+        else:
+            name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
+            for at in res1.atoms:
+                if at.name in definitions.bb_atoms:
+                    if(at.name in name2):
+                        idx_ref.append(at.index)
+                        idx_target.append(((res2.atom(at.name)).index))
+            
+    print "# found ",len(idx_ref), "atoms in common"
+    
     if(len(idx_ref)<3):
         warn =  "# Only  %d atoms in common. abort.\n" % len(idx_ref)
         sys.stderr.write(warn)

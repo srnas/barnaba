@@ -22,6 +22,7 @@ modified_dict = {'1MA':'A','5AA':'A','P5P':'A','2MA':'A',\
 others = ["ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HSD","HSE","HSP","ILE","HIS","LEU","LYS","LSN","MET","PHE","PRO","SER","THR","TRP","TYR","VAL","HOH","MG","K","NA","CL","CD","CA"]
 
 known_abbrev = ["A","C","G","U","N","Y","R","%"]
+term_5prime = ["OP1","OP2","P","OP3"]
 
 # geometric definitions
 f_factors = [0.5,0.5,0.3]
@@ -50,7 +51,11 @@ pairings = ['WC','WW','WS','WH','HH','HS','HW','SS','SH','SW',"GU"]
 op = ['(','[','{','<']
 cl = [')',']','}','>']          
 complementary = {'A':'U','C':'G','U':'A','G':'C'}
-bb_atoms = ["O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'","P"]
+bb_atoms = ["O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'","P","OP1","OP2"]
+nt_atoms = {"A":bb_atoms + ["N1","C2","N3","C4","C5","C6","N6","N7","C8","N9"],\
+            "G":bb_atoms + ["N1","C2","N2","N3","C4","C5","C6","O6","N7","C8","N9"],\
+            "C":bb_atoms + ["N1","C2","O2","N3","C4","N4","C5","C6"],\
+            "U":bb_atoms + ["N1","C2","O2","N3","C4","O4","C5","C6"]}
 rna = ["A","C","G","U","T"]
 
 # Scalar couplitg

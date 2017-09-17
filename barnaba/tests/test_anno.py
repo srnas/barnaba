@@ -1,5 +1,5 @@
 
-import barnaba.ermsd as bb
+import barnaba.annotate as bb
 
 fname = "data/1S72.pdb"
 

@@ -1,6 +1,7 @@
 import mdtraj as md
 import numpy as np
 from scipy.spatial.distance import cdist
+import tools
 import sys
 import nucleic
 import definitions
@@ -23,7 +24,7 @@ def ssmotif_traj(ref,traj,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,write=N
         assert(len(sequence)==ll)
         
     coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
-    ref_mat = nn_ref.get_gmat(coords_ref,cutoff).reshape(-1)
+    ref_mat = tools.calc_gmat(coords_ref,cutoff).reshape(-1)
     
     rna_seq = nn_traj.rna_seq_id
     res_idxs = definitions.get_idx(rna_seq,sequence,bulges)
@@ -38,7 +39,7 @@ def ssmotif_traj(ref,traj,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,write=N
         gmats = []
         for j in res_idxs:
             coords_lcs = traj.xyz[i,lcs_idx[:,j]]
-            gmats.append(nn_ref.get_gmat(coords_lcs,cutoff).reshape(-1))
+            gmats.append(tools.calc_gmat(coords_lcs,cutoff).reshape(-1))
         dd = cdist([ref_mat],gmats)/np.sqrt(ll)
         low = np.where(dd[0]<treshold)
         for k in low[0]:

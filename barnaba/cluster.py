@@ -69,8 +69,6 @@ def dbscan(gvecs,labels,eps,min_samples):
         print "# %02d %04d %20.3f %20.3f %20.3f %20.3f %02d %s" % (o,len(cluster_members[ii1]), np.max(dists), np.median(dists),np.max(dists[min_idx]),np.median(dists[min_idx]),ii1,labels_tmp[min_idx])
         labels_map[ii1] = o+1
         center_idx.append(labels.index(labels_tmp[min_idx]))
-    #print labels_map
-    #exit()
     new_labels = [labels_map[cluster_labels[k]] for k in range(len(cluster_labels))]
     return new_labels, center_idx
         #nc = n_clusters_

@@ -1,4 +1,5 @@
 import mdtraj as md
+import tools
 import numpy as np
 import sys
 import nucleic
@@ -171,6 +172,7 @@ def calculate(mat,angles,glyco,sequence):
     dotbracket = dotbr(openings,closings,ll)
     return pairs,anno, dotbracket
 
+
 def annotate_traj(traj):
     top = traj.topology
     # initialize nucleic class
@@ -181,7 +183,7 @@ def annotate_traj(traj):
     for i in xrange(traj.n_frames):
 
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
-        mat,angles = nn.get_mat_annotation(coords_lcs)
+        mat,angles = tools.calc_mat_annotation(coords_lcs)
         if(len(mat)==0): continue
         
         glyco = traj.xyz[i,nn.indeces_glyco]

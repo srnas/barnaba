@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import sys
 import nucleic
-import definitions
+import tools
 
 def ermsd_traj(ref,traj,cutoff=2.4):
     top_traj = traj.topology
@@ -17,12 +17,12 @@ def ermsd_traj(ref,traj,cutoff=2.4):
     assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))
     
     coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
-    ref_mat = nn_ref.get_gmat(coords_ref,cutoff).reshape(-1)
+    ref_mat = tools.calc_gmat(coords_ref,cutoff).reshape(-1)
     #rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
     gmats = []
     for i in xrange(traj.n_frames):
         coords_lcs = traj.xyz[i,nn_traj.indeces_lcs]
-        gmats.append(nn_ref.get_gmat(coords_lcs,cutoff).reshape(-1))
+        gmats.append(tools.calc_gmat(coords_lcs,cutoff).reshape(-1))
     dd = cdist([ref_mat],gmats)/np.sqrt(len(nn_traj.ok_residues))
     return dd[0]
         

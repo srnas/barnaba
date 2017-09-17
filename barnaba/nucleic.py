@@ -1,6 +1,4 @@
 import definitions
-from scipy.spatial import distance
-
 import numpy as np
 import sys
 
@@ -16,6 +14,7 @@ class Nucleic:
         self.bonds = list(topology.bonds)
         self.rna_seq_id = []
         self.rna_seq = []
+        
         for res in topology.residues:
             if(res.name in definitions.residue_dict):
                 res_type = definitions.residue_dict[res.name]
@@ -73,128 +72,6 @@ class Nucleic:
         #    sys.stderr.write(warn)
             
 
-    def get_lcs(self,coords):
-
-        #coords = np.array(xyz[self.indeces[:,0:3]])
-        # calculate center of mass
-        origo = np.sum(coords,axis=0)/3.0
-        
-        # CoM-C2 (x axis)
-        x = coords[0]-origo
-        x_norm = np.sqrt(np.sum(x*x,axis=1))
-        x = x/x_norm[:,np.newaxis]
-        # CoM-C4/C6 
-        c = coords[1]-origo
-        # z/y axis
-        z = np.cross(x,c,axis=1)
-        z_norm = np.sqrt(np.sum(z*z,axis=1))
-        z = z/z_norm[:,np.newaxis]
-        
-        y = np.cross(z,x,axis=1)
-        self.lcs = np.array([x.T,y.T,z.T]).T
-        self.origo = np.copy(origo)
-
-
-        
-    def get_mat_annotation(self,coords):
-        
-        # get lcs
-        self.get_lcs(coords)
-        cutoff=1.58  # hardcoded 
-        # prune search first
-        max_r  = np.max(definitions.f_factors)*cutoff
-        dmat = distance.squareform(distance.pdist(self.origo))
-        m_idx = np.array(np.where((dmat<max_r) & (dmat>0.001))).T
-        
-        if(len(m_idx)==0):
-            return [],[]
-    
-        # calculate scaled distances
-        diff = [self.origo[y]-self.origo[x] for x,y in m_idx]
-        dotp = np.array([np.dot(diff[i],self.lcs[j]) for i,j in zip(range(len(diff)),m_idx[:,0])])
-        dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
-        dotp_scale_norm = np.sqrt(np.sum(dotp_scale**2,axis=1))
-        angle = np.array([np.dot(self.lcs[i][:,2],self.lcs[j][:,2]) for i,j in  m_idx])
-        
-        ll = len(self.ok_residues)
-        
-        # create ll by ll matrix where ellipsoidal distance is less than cutoff
-        cutoff_mat = np.zeros((ll,ll))
-        cutoff_mat[m_idx[:,0],m_idx[:,1]] = dotp_scale_norm<cutoff
-        
-        #cutoff_mat[dotp_scale_norm<cutoff] = 1
-        # symmetrize
-        cutoff_mat *=cutoff_mat.T
-        mat = np.zeros((ll,ll,3))
-        mat[m_idx[:,0],m_idx[:,1]] = dotp
-        
-        mat *= cutoff_mat[:,:,np.newaxis]
-        angles = np.zeros((ll,ll))
-        angles[m_idx[:,0],m_idx[:,1]] = angle
-        angles *= cutoff_mat
-        return mat,angles
-
-    def get_3dmat(self,coords,cutoff):
-    
-        # get lcs
-        self.get_lcs(coords)
-        
-        # prune search first
-        max_r  = np.max(definitions.f_factors)*cutoff
-        dmat = distance.squareform(distance.pdist(self.origo))
-        m_idx = np.array(np.where((dmat<max_r) & (dmat>0.01))).T
-        
-        # calculate scaled distances
-        diff = [self.origo[y]-self.origo[x] for x,y in m_idx]
-        dotp = np.array([np.dot(diff[i],self.lcs[j]) for i,j in zip(range(len(diff)),m_idx[:,0])])
-        
-        return dotp,m_idx
-
-    def get_rmat(self,coords,cutoff):
-        
-        dotp,m_idx = self.get_3dmat(coords,cutoff)
-        ll = len(self.ok_residues)
-        
-        mat = np.zeros((ll,ll,3))        
-        
-        if(dotp.shape[0]==0): return mat
-
-        dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
-        dotp_norm = np.sqrt(np.sum(dotp_scale**2,axis=1))
-        dotp[dotp_norm>cutoff] = 0.0
-        
-
-        mat[m_idx[:,0],m_idx[:,1]] = dotp
-        # the matrix is not rescaled!
-        return mat
-
-    def get_gmat(self,coords,cutoff):
-
-        ll = len(self.ok_residues)
-        mat = np.zeros((ll,ll,4))
-        
-        dotp,m_idx = self.get_3dmat(coords,cutoff)
-        
-        # return zero matrix when there are no contacts
-        if(dotp.shape[0]==0): return mat
-
-        dotp *= np.array(definitions.scale)[np.newaxis,:]
-        dotp_norm = np.sqrt(np.sum(dotp**2,axis=1))
-        
-        # calculate 4D g-vector
-        ff = (np.pi*dotp_norm)/cutoff
-        factor13 = np.sin(ff)/ff
-        factor4= ((1.0+np.cos(ff))*cutoff)/np.pi
-        gmat = dotp*factor13[:,np.newaxis]
-        gmat = np.concatenate((gmat,factor4[:,np.newaxis]),axis=1)
-    
-        # set to zero when norm is larger than cutoff
-        gmat[dotp_norm>cutoff] = 0.0
-        
-        
-        mat[m_idx[:,0],m_idx[:,1]] = gmat
-    
-        return mat
 
     def get_couplings_torsion_idx(self):
 

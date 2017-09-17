@@ -1,10 +1,11 @@
 import mdtraj as md
 import numpy as np
 from scipy.spatial.distance import cdist
+import tools
 import sys
 import nucleic
 import definitions
-
+import itertools 
 
 def dsmotif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,write=None):
     
@@ -29,14 +30,13 @@ def dsmotif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,w
 
         
     coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
-    ref_mat = nn_ref.get_gmat(coords_ref,cutoff).reshape(-1)
+    ref_mat = tools.calc_gmat(coords_ref,cutoff).reshape(-1)
 
     coords_ref1 = ref.xyz[0,nn_ref.indeces_lcs[:,0:l1]]
 
-    ref_mat1 = nn_ref.get_gmat(coords_ref1,cutoff).reshape(-1)
+    ref_mat1 = tools.calc_gmat(coords_ref1,cutoff).reshape(-1)
     coords_ref2 = ref.xyz[0,nn_ref.indeces_lcs[:,l1:]]
-    ref_mat2 = nn_ref.get_gmat(coords_ref2,cutoff).reshape(-1)
-
+    ref_mat2 = tools.calc_gmat(coords_ref2,cutoff).reshape(-1)
    
     # calculate center of mass distances
     # this will be used to prune the search!
@@ -46,44 +46,68 @@ def dsmotif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,w
     
     # find indeces of residues according to sequence
     rna_seq = nn_traj.rna_seq_id
+
     all_idx1 = definitions.get_idx(rna_seq,sequence1,bulges)
     if(len(all_idx1)==0): return []
     all_idx2 = definitions.get_idx(rna_seq,sequence2,bulges)
     if(len(all_idx2)==0): return []
 
-    # skip overlapping
-    print all_idx1
-    print all_idx2
-    exit()
-    #res_idxs = definitions.get_idx(rna_seq,sequence,bulges)
-    #resname_idxs = [[nn_traj.rna_seq[l] for l in rr]  for rr  in res_idxs]
-    #if(len(res_idxs)==0):
-    #    return []
 
     lcs_idx = nn_traj.indeces_lcs
-    
+    idxs_combo = []
     results = []
     count = 1
     for i in xrange(traj.n_frames):
 
-        # calculate center of mass distance
+        # calculate eRMSD for strand1 
+        gmats1 = [tools.calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1) for j in all_idx1]
+        dd1 = cdist([ref_mat1],gmats1)
+        low1 = np.where(dd1[0]<treshold*np.sqrt(l1))
         
-        gmats = []
-        for j in res_idxs:
-            coords_lcs = traj.xyz[i,lcs_idx[:,j]]
-            gmats.append(nn_ref.get_gmat(coords_lcs,cutoff).reshape(-1))
-        dd = cdist([ref_mat],gmats)/np.sqrt(ll)
-        low = np.where(dd[0]<treshold)
-        for k in low[0]:
-            results.append([i,dd[0,k],resname_idxs[k]])
+        # calculate eRMSD for strand2 
+        gmats2 = [tools.calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1) for j in all_idx2]
+        dd2 = cdist([ref_mat2],gmats2)
+        low2 = np.where(dd2[0]<treshold*np.sqrt(l2))
 
+        # do combination
+        combo_list = list(itertools.product(low1[0],low2[0]))
+        
+        gmats_combo = []
+        
+        for cc in combo_list:
+            llc = len(set(all_idx1[cc[0]] + all_idx2[cc[1]]))
+            # skip overlapping
+            if(llc != l1 + l2): continue
+            
+            # skip distant
+            com1 = np.average(np.average(traj.xyz[i,lcs_idx[:,all_idx1[cc[0]]]],axis=0),axis=0)
+            com2 = np.average(np.average(traj.xyz[i,lcs_idx[:,all_idx2[cc[1]]]],axis=0),axis=0)
+            dcoms = np.sqrt(np.sum((com1-com2)**2))
+            if(dcoms > 2.5*dcom): continue
+
+            idx_combo = all_idx1[cc[0]] + all_idx2[cc[1]]
+            idxs_combo.append(idx_combo)
+            gmats_combo.append(tools.calc_gmat(traj.xyz[i,lcs_idx[:,idx_combo]],cutoff).reshape(-1))
+
+        # calculate distances
+        dd_combo = cdist([ref_mat],gmats_combo)
+        low_combo = np.where(dd_combo[0]<treshold*np.sqrt(l1 + l2))
+
+        for k in low_combo[0]:
+            
+            #print idxs_combo[k]
+            resname_idxs = [nn_traj.rna_seq[l] for l  in idxs_combo[k]]
+            
+            results.append([i,dd_combo[0,k]/np.sqrt(l1 + l2),resname_idxs])
+
+            #print results[-1]
             # Write aligned PDB 
             if(write != None):
                 pdb_out = "%s_%05d_%s_%d.pdb" % (write,count,resname_idxs[k][0],i)
                 # slice trajectory
                 tmp_atoms = []
                 tmp_res =[]
-                for r1 in res_idxs[k]:
+                for r1 in idxs_combo[k]:
                     tmp_atoms.extend([at.index for at in nn_traj.ok_residues[r1].atoms])
                     tmp_res.append([at for at in nn_traj.ok_residues[r1].atoms])
                 traj_slice = traj[i].atom_slice(tmp_atoms)
