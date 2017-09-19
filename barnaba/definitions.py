@@ -1,6 +1,8 @@
 import re
 import itertools as its
 
+
+tol=1.0e-06 
 purines = ["A","G"]
 pyrimidines = ["C","U","T"]
 

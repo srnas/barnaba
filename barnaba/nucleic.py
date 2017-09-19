@@ -11,7 +11,7 @@ class Nucleic:
         ok_residues = []
         indeces_lcs = []
         indeces_glyco = []
-        self.bonds = list(topology.bonds)
+        #self.bonds = list(topology.bonds)
         self.rna_seq_id = []
         self.rna_seq = []
         
