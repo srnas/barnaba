@@ -170,37 +170,22 @@ class Nucleic:
 
         return idxs, rr
 
-    def get_sugar_torsion_idx(self,residues=None):
-
-        ll = len(self.ok_residues)
-        # if nothing is specified, all residues are considered
-        idx_residues = np.arange(ll)
-        
-        if(residues!=None):
-            idx_residues = [i for i in np.arange(ll) if(self.rna_seq[i] in residues)]
-            assert(len(idx_residues)!=0)
-
-        idxs = np.zeros((len(idx_residues),5,4),dtype=int)
-        rr = []
-
-        for j,i in enumerate(idx_residues):
-
-            res = self.ok_residues[i]
-            rr.append(self.rna_seq[i])
-
-            try: idxs[j,0]  = [res.atom("C4'").index, res.atom("O4'").index, res.atom("C1'").index, res.atom("C2'").index]
+    def get_sugar_torsion_idx(self):
+            
+        idxs = np.zeros((len(self.ok_residues),5,4),dtype=int)
+        for i,rr in enumerate(self.ok_residues):
+            try: idxs[i,0]  = [rr.atom("C4'").index, rr.atom("O4'").index, rr.atom("C1'").index, rr.atom("C2'").index]
             except: pass
             
-            try: idxs[j,1]  = [res.atom("O4'").index, res.atom("C1'").index, res.atom("C2'").index, res.atom("C3'").index]
+            try: idxs[i,1]  = [rr.atom("O4'").index, rr.atom("C1'").index, rr.atom("C2'").index, rr.atom("C3'").index]
             except: pass
             
-            try: idxs[j,2]  = [res.atom("C1'").index, res.atom("C2'").index, res.atom("C3'").index, res.atom("C4'").index]
+            try: idxs[i,2]  = [rr.atom("C1'").index, rr.atom("C2'").index, rr.atom("C3'").index, rr.atom("C4'").index]
             except: pass
             
-            try: idxs[j,3]  = [res.atom("C2'").index, res.atom("C3'").index, res.atom("C4'").index, res.atom("O4'").index]
+            try: idxs[i,3]  = [rr.atom("C2'").index, rr.atom("C3'").index, rr.atom("C4'").index, rr.atom("O4'").index]
             except: pass
             
-            try: idxs[j,4]  = [res.atom("C3'").index, res.atom("C4'").index, res.atom("O4'").index, res.atom("C1'").index]
+            try: idxs[i,4]  = [rr.atom("C3'").index, rr.atom("C4'").index, rr.atom("O4'").index, rr.atom("C1'").index]
             except: pass
-            
-        return idxs, rr
+        return idxs

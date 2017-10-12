@@ -1,5 +1,5 @@
 
-import barnaba.rmsd as bb
+import barnaba.barnaba as bb
 
 fname = "data/sample1.pdb"
 fname1 = "data/samples.xtc"
