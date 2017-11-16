@@ -1,4 +1,5 @@
 from scipy.spatial import distance
+import sys
 import definitions
 import nucleic
 import numpy as np
@@ -155,6 +156,8 @@ def ermsd_traj(reference,traj,cutoff=2.4):
     dd = distance.cdist([ref_mat],gmats)/np.sqrt(len(nn_traj.ok_residues))
     return dd[0]
 
+###########################################
+###########  DUMP ########################
         
 def dump_rvec_traj(traj,cutoff=2.4):
         
@@ -179,6 +182,8 @@ def dump_gvec_traj(traj,cutoff=2.4):
     return np.asarray(gvecs), nn.ok_residues
 
 
+########### BACKBONE ANGLES ##############
+
 def backbone_angles_traj(traj,residues=None,angles=None):
     
     top = traj.topology
@@ -189,8 +194,17 @@ def backbone_angles_traj(traj,residues=None,angles=None):
     if(angles==None):
         idx_angles = np.arange(all_idx.shape[1])
     else:
-        idx_angles = [i for i in np.arange(all_idx.shape[1]) if(definitions.bb_angles[i]) in angles]
-        assert(len(idx_angles)!=0)
+  
+        idx_angles = []
+        for i in range(len(angles)):
+            if(angles[i] in definitions.bb_angles):
+                idx_angles.append(definitions.bb_angles.index(angles[i]))
+            else:
+                msg = "# Fatal error. requested angle \"%s\" not available.\n" % angles[i]
+                msg += "# Choose from: %s \n" % definitions.bb_angles
+                sys.stderr.write(msg)
+                sys.exit(1)
+   
 
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
@@ -205,31 +219,126 @@ def backbone_angles_traj(traj,residues=None,angles=None):
     return torsions, rr
 
 
-def sugar_angles_traj(traj,residue=None):
+############## couplings ##############
+
+def jcouplings_traj(traj,residues=None,couplings=None,raw=False):
     
     top = traj.topology
     # initialize nucleic class
     nn = nucleic.Nucleic(top)
-    idxs = (nn.get_sugar_torsion_idx()).reshape(-1,4)
-    missing = np.where(np.sum(idxs,axis=1)==0)
-    rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
-    angles = md.compute_dihedrals(traj,idxs,opt=False)
-    # set to NaN where atoms are missing
-    angles[:,missing[0]] = np.nan
-    angles = angles.reshape((traj.n_frames,len(rna_seq),5))
+    all_idx,rr =nn.get_coupling_idx(residues)
 
-    # sugar puckers
-    x1 = angles[:,:,4] +  angles[:,:,1] -  angles[:,:,3] -   angles[:,:,0]
-    x2 = 3.0776835*angles[:,:,2]
+    # if not provided, calculate all couplings
+    if(couplings==None):
+        idx_angles = np.arange(all_idx.shape[1])
+        couplings = [str(el) for el in definitions.couplings_idx.keys()]
+        idx_angles1 = [el for el in definitions.couplings_idx.values()]
+    else:
+        idx_angles = []
+        idx_angles1 = []
+        for i in range(len(couplings)):
+            if(couplings[i] in definitions.couplings_idx.keys()):
+                idx_angles.append(definitions.couplings_idx[couplings[i]])
+                idx_angles1.append(i)
+            else:
+                msg = "# Fatal error. requested coupling \"%s\" not available.\n" % couplings[i]
+                msg += "# Choose from: %s \n" % couplings_idx
+                sys.stderr.write(msg)
+                sys.exit(1)
+   
+    idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
+    missing = np.where(np.sum(idxs,axis=1)==0)
+    
+    torsions = md.compute_dihedrals(traj,idxs,opt=False)
+    
+    # set to NaN where atoms are missing
+    torsions[:,np.where(np.sum(idxs,axis=1)==0)[0]] = np.nan
+    
+    torsions = torsions.reshape((traj.n_frames,all_idx.shape[0],len(idx_angles)))
+
+    #jcouplings = np.zeros((torsions.shape[0],torsions.shape[1],len(couplings)))
+    # now calculate couplings
+    if(raw):
+        return torsions,rr
+
+    jcouplings = np.empty((traj.n_frames,all_idx.shape[0],len(couplings)))*np.nan
+
+    for i in range(len(couplings)):
+        # get karplus coefficients
+        
+        coef = definitions.couplings_karplus[couplings[i]]
+        #ii = definitions.couplings_idx[couplings[i]]
+        ii =  idx_angles1[i]
+
+        #print ii, couplings[i],
+        angles = np.copy(torsions[:,:,ii])
+        
+        # add phase
+        if(coef[4] != 0.0):
+            angles += coef[4]
+        cos = np.cos(angles)
+        val = coef[0]*cos*cos + coef[1]*cos
+        # add shift
+        if(coef[2] != 0.0):
+            val += coef[2]
+        # add generalized karplus term
+        if(coef[3] != 0.0):
+            sin = np.sin(angles)
+            val += coef[3]*cos*sin
+        jcouplings[:,:,i] = val
+    
+    return jcouplings,rr
+
+####################################################
+############  SUGAR TORSION ########################
+
+def sugar_angles_traj(traj,residues=None,angles=None):
+    
+    top = traj.topology
+    # initialize nucleic class
+    nn = nucleic.Nucleic(top)
+    all_idx,rr =  nn.get_sugar_torsion_idx(residues)
+    if(angles==None):
+        idx_angles = np.arange(all_idx.shape[1])
+    else:
+        # find indeces corresponding to angles
+        idx_angles = []
+        for i in range(len(angles)):
+            if(angles[i] in definitions.sugar_angles):
+                idx_angles.append(definitions.sugar_angles.index(angles[i]))
+            else:
+                msg = "# Fatal error. requested angle \"%s\" not available.\n" % angles[i]
+                msg += "# Choose from: %s \n" % (definitions.sugar_angles)
+                sys.stderr.write(msg)
+                sys.exit(1)
+
+    idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
+    missing = np.where(np.sum(idxs,axis=1)==0)
+
+    torsions = md.compute_dihedrals(traj,idxs,opt=False)
+    # set to NaN where atoms are missing
+    torsions[:,missing[0]] = np.nan
+    torsions = torsions.reshape((traj.n_frames,all_idx.shape[0],len(idx_angles)))
+
+    return torsions, rr
+
+
+########### PUCKER ANGLES ##############
+def pucker_traj(traj,residues=None):
+
+    torsions,rr = sugar_angles_traj(traj,residues=residues)
+    x1 = torsions[:,:,4] +  torsions[:,:,1] -  torsions[:,:,3] -   torsions[:,:,0]
+    x2 = 3.0776835*torsions[:,:,2]
     phase = np.arctan2(x1,x2)
     phase[np.where(phase<0.0)] += 2.0*np.pi
-    tm = angles[:,:,2]/np.cos(phase)
-    angles2 = np.dstack((angles,phase,tm))
+    tm = torsions[:,:,2]/np.cos(phase)
+    angles = np.dstack((phase,tm))
+    return angles, rr
 
-    return angles2,nn.ok_residues
+######### scalar couplings #########
 
 
-
+########### RMSD TRAJ  ##############
 def rmsd_traj(reference,traj,out=None):
     
     top_traj = traj.topology
@@ -286,3 +395,82 @@ def rmsd_traj(reference,traj,out=None):
         traj.save(out)
     rmsd = np.sqrt(3*np.mean((traj.xyz[:, idx_target, :] - reference.xyz[0,idx_ref, :])**2, axis=(1,2)))
     return rmsd
+
+
+
+############### annotation  ##########
+######## TODO ##############
+
+def annotate_traj(traj):
+    
+    top = traj.topology
+    # initialize nucleic class
+    nn = nucleic.Nucleic(top)
+
+    max_r  = np.max(definitions.f_factors)*1.58
+
+    condensed_idx =  np.triu_indices(len(nn.ok_residues), 1)
+    pairs = []
+    annotations = []
+    for i in xrange(traj.n_frames):
+
+        # calculate LCS
+        coords = traj.xyz[i,nn.indeces_lcs]
+        lcs,origo= calc_lcs(coords)
+
+        # normal distance
+        dmat = distance.pdist(origo)
+        # prune search
+        m_idx = np.where(dmat<max_r)
+
+        i1 = condensed_idx[0][m_idx]
+        i2 = condensed_idx[1][m_idx]
+
+        # calculate coordinates in LCS for short-ranged residues
+        diff = origo[i1]-origo[i2]
+        
+        dotp_12 = np.asarray([np.dot(diff[i],lcs[j]) for i,j in zip(range(len(diff)),i1)])
+        dotp_21 = np.asarray([np.dot(-diff[i],lcs[j]) for i,j in zip(range(len(diff)),i2)])
+        angle = np.asarray([np.dot(lcs[i][:,2],lcs[j][:,2]) for i,j in zip(i1,i2)])
+        
+        # zeta and rho 
+        z_12 = dotp_12[:,2]**2
+        z_21 = dotp_21[:,2]**2
+        rho_12 = dotp_12[:,0]**2 + dotp_12[:,1]**2
+        rho_21 = dotp_21[:,0]**2 + dotp_21[:,1]**2
+
+        # find stacking here
+        stackz_12 = np.where((z_12>0.04) & (z_12 <=0.225))
+        stackz_21 = np.where((z_21>0.04) & (z_21 <=0.225))
+        rhoz_12 =  np.where(rho_12<0.0625)
+        rhoz_21 =  np.where(rho_21<0.0625)
+        anglez = np.where(np.abs(angle) >0.76)
+        #stackz_21, rhoz_12 , rhoz_21,anglez  
+        # find pairing
+        pairz_12 = np.where((z_12<=0.04))
+        pairz_21 = np.where((z_21<=0.04))
+        #print stackz_12
+        #print stackz_21
+        inter_zeta = np.intersect1d(stackz_12,stackz_21)
+        union_rho = np.union1d(rhoz_12[0],rhoz_21[0])
+        inter_stack = np.intersect1d(union_rho,inter_zeta)
+        inter_stack = np.intersect1d(inter_stack,anglez)
+        #print inter_stack
+        #print anglez
+        for p in inter_stack:
+            print nn.rna_seq[i1[p]],
+            print nn.rna_seq[i2[p]]
+            
+        #for ii in range(len(i1)):
+        #    print nn.rna_seq[i1[ii]],
+        #    print nn.rna_seq[i2[ii]],
+
+        #    print dotp_12[ii],
+        #    print dotp_21[ii],
+        #    print np.sqrt(rho_12[ii]), np.sqrt(rho_21[ii]),
+        #    print np.sqrt(z_12[ii]), np.sqrt(z_21[ii])
+            #print i1[stackz_21],i2[stackz_21]
+        exit()
+        
+
+############# cluster #############

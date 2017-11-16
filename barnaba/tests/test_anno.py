@@ -1,7 +1,7 @@
 
-import barnaba.annotate as bb
+import barnaba.barnaba as bb
 
-fname = "data/1S72.pdb"
+fname = "data/SARCIN.pdb"
 
 aa,rr, anno = bb.annotate(fname)
 

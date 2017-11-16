@@ -173,25 +173,6 @@ def calculate(mat,angles,glyco,sequence):
     return pairs,anno, dotbracket
 
 
-def annotate_traj(traj):
-    top = traj.topology
-    # initialize nucleic class
-    nn = nucleic.Nucleic(top)
-    rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
-    pairs = []
-    annotations = []
-    for i in xrange(traj.n_frames):
-
-        coords_lcs = traj.xyz[i,nn.indeces_lcs]
-        mat,angles = tools.calc_mat_annotation(coords_lcs)
-        if(len(mat)==0): continue
-        
-        glyco = traj.xyz[i,nn.indeces_glyco]
-        pp, aa, dotbracket = calculate(mat,angles,glyco,nn.rna_seq_id)
-        pairs.append(pp)
-        annotations.append(aa)
-
-    return rna_seq, pairs, annotations
 
 def annotate(filename,topology=None):
 

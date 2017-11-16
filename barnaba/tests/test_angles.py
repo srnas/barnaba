@@ -1,4 +1,3 @@
-
 import barnaba.barnaba as bb
 import barnaba.definitions as dd
 
@@ -26,7 +25,7 @@ fh.close()
 
 resi = ["RC5_1_0","RG_69_0"]
 angles = ["alpha","beta","chi"]
-angles_b,rr = bb.backbone_angles(fname,residue=resi,angle=angles)
+angles_b,rr = bb.backbone_angles(fname,residues=resi,angles=angles)
 stri = "%20s " % "#"
 for pp in angles:
     stri += " %10s " % pp
@@ -45,7 +44,7 @@ fh.close()
 
 resi = ["RG_69_0","RU_37_0"]
 angles = ["gamma"]
-angles_b,rr = bb.backbone_angles(traj,topology=fname,residue=resi,angle=angles)
+angles_b,rr = bb.backbone_angles(traj,topology=fname,residues=resi,angles=angles)
 stri = ""
 for p in range(angles_b.shape[0]):
     for k in range(angles_b.shape[2]):

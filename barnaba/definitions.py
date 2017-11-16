@@ -1,6 +1,6 @@
 import re
 import itertools as its
-
+import collections
 
 tol=1.0e-06 
 purines = ["A","G"]
@@ -64,34 +64,65 @@ rna = ["A","C","G","U","T"]
 # first index is label, second atoms, third karplus parameters
 # you can add more to this list if you wish
 td_pi = 2.094395
-# nu from Davies, BD Conformations of nucleosides and nucleotides
-# Progress in NMR spectroscopy, 1977
-j3 = [["H1H2",   ["H1'","C1'","C2'","1H2'"], [10.2,-0.8,0.0,0.0,0.0]],\
-      ["H2H3",   ["1H2'","C2'","C3'","H3'"], [10.2,-0.8,0.0,0.0,0.0]],\
-      ["H3H4",   ["H3'","C3'","C4'","H4'" ], [10.2,-0.8,0.0,0.0,0.0]],\
-      # Generalised Karplus equation from Hasnoot, Altona. Thetraedron, 1980
-      # P1    P2    --   P3    P4   P5   (P6 = 0 with 3 substituents)
-      #["H4H5'",  ["H4'","C4'","C5'","1H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,0.0,chi_O,chi_O]],\
-      #["H4H5''", ["H4'","C4'","C5'","2H5'"], [13.22,-0.99,0.0,0.87,-2.46,19.9] ,[chi_C,chi_O,chi_O,0.0]],\
-
-      # simiplification of altona hasnoot - in the form  A*cos*cos + B*cos + C + D*sin*cos
-      ["H4H5'",  ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,0.269906,-td_pi]],\
-      ["H4H5''", ["C3'","C4'","C5'","O5'"], [8.313139, -0.99, 1.373430,-4.752290,0.0]],\
-        #  HCOP from Lankhorst, Altona, 1984 
-      #["1H5P",   ["1H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      #["2H5P",   ["2H5'","C5'","O5'","P"],  [15.3,-6.1,1.6]],\
-      #  HCOP from Lee, Sarma 1976 
-      ["1H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,-td_pi]],\
-      ["2H5P",   ["C4'","C5'","O5'","P"],  [18.1,-4.8,1.5,0.0,td_pi]],\
-      # Marino and Scwhalbe
-      ["C4Pb",    ["C4'","C5'","O5'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
-      ["C4Pe",    ["C4'","C3'","O3'","P"],  [6.9,-3.4,0.7,0.0,0.0]],\
-      #  HCOP from Lankhorst, Altona, 1984 
-      ["H3P",    ["C4'","C3'","O3'","P"],   [15.3,-6.1,1.6,0.0,td_pi]]]
-
 
 bb_angles = ["alpha","beta","gamma","delta","eps","zeta","chi"]
-sugar_angles = ["nu1","nu2","nu3","nu4","nu5","phi","amp"]
+sugar_angles = ["nu1","nu2","nu3","nu4","nu5"]
+pucker = ["phi","amp"]
+# this mapping serves to get the correct index 
+couplings_idx = collections.OrderedDict([("H1H2",0),("H2H3",1),("H3H4",2),\
+                             ("1H5P",3),("2H5P",3),("C4Pb",3),\
+                             ("1H5H4",4),("2H5H4",4),\
+                             ("H3P",5),("C4Pe",5),\
+                             ("H1C2/4",6),("H1C6/8",6)])
+couplings_karplus = {\
+                     
+                     ####### SUGAR  ###########
+                     # Davies, BD Conformations of nucleosides and nucleotides  Progress in NMR spectroscopy, 1977
+                     #"H1H2": [10.2,-0.8,0.0,0.0,0.0],\
+                     #"H2H3": [10.2,-0.8,0.0,0.0,0.0],\
+                     #"H3H4": [10.2,-0.8,0.0,0.0,0.0],\
+                     # Generalised Karplus equation from Hasnoot, Altona. Thetraedron, 1980
+                     #"H1H2": [6.96462,-0.91,1.02629,1.27009,0.0],\  
+                     #"H2H3": [8.28926,-0.91,0.66772,0.00193297,0.0],\
+                     #"H3H4": [7.96446,-0.91,0.77241,-0.262475,0.0],\
+                     ## Condon, Stacking in rna: Nmr of four tetramers benchmark molecular dynamics. Journal of Chemical Theory and Computation, 2015.
+                     "H1H2": [9.67,-2.03,0.0,0.0,0.0],\
+                     "H2H3": [9.67,-2.03,0.0,0.0,0.0],\
+                     "H3H4": [9.67,-2.03,0.0,0.0,0.0],\
+                     ######### BETA #####
+                     #  HCOP from Lee, Sarma 1976 
+                     #"1H5P":[18.1,-4.8,1.5,0.0,-td_pi],\
+                     #"2H5P":[18.1,-4.8,1.5,0.0,td_pi],\
+                     # HCOP from Lankhorst, Journal of Biomolecular Structure and Dynamics, 1(6):1387–1405, 1984.
+                     "1H5P":[15.3,-6.1,1.6,0.0,-td_pi],\
+                     "2H5P":[15.3,-6.1,1.6,0.0,td_pi],\
+                     # HCOP from Mooren Nucleic acids research, 22(13):2658–2666, 1994
+                     #"1H5P":[15.3,-6.2,1.5,0.0,-td_pi],\
+                     #"2H5P":[15.3,-6.2,1.5,0.0,td_pi],\
+                     #HCOP from Marino, Accounts of chemical research, 32(7):614–623, 1999.
+                     "C4Pb":[6.9,-3.4,0.7,0.0,0.0],\
+                     #HCOP from wijmenga, Progress in nuclear magnetic resonance spectroscopy, 32(4):287–387, 1998
+                     #"C4Pb":[8.0,-3.4,0.5,0.0,0.0], \
+                     ##### GAMMA  #########
+                     # from Davies, BD Conformations of nucleosides and nucleotides  Progress in NMR spectroscopy, 1977
+                     "1H5H4":[9.7,-1.8,0.0,0.0,-td_pi],\
+                     "2H5H4":[9.7,-1.8,0.0,0.0,0.0],\
+                     # from Altona, Hasnoot 
+                     #"1H5H4":[8.313139, -0.99, 1.373430,0.269906,-td_pi],\
+                     #"2H5H4":[8.313139, -0.99, 1.373430,-4.752290,0.0],\
+                     ##### EPSILON ########
+                     # From Lankhorst, Altona, 1984
+                     "H3P":[15.3,-6.1,1.6,0.0,td_pi],\
+                     # Marino and Scwhalbe  Accounts of chemical research, 32(7):614–623, 1999
+                     "C4Pe":[6.9,-3.4,0.7,0.0,0.0],\
+                     ######  CHI #########
+                     # Ippel Magnetic resonance in chemistry, 34(13):S156–S176, 1996.
+                     "H1C2/4":[4.7,2.3,0.1,0.0,-0.5*td_pi],\
+                     "H1C6/8":[4.5,-0.6,0.1,0.0,-0.5*td_pi],
+                     
+}
+
+             
 
 def get_pattern(query):
     # build pattern for regular expression

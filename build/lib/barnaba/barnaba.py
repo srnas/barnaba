@@ -41,6 +41,17 @@ def dump_gvec(filename,topology=None,cutoff=2.4):
     sys.stderr.write(warn)
     return functions.dump_gvec_traj(traj,cutoff)
 
+def annotate(filename,topology=None):
+    
+    if(topology==None):
+        traj = md.load(filename)
+    else:
+        traj = md.load(filename,top=topology)
+
+    warn = "# Loading %s \n" % filename
+    sys.stderr.write(warn)
+    return functions.annotate_traj(traj)
+
 
 def rmsd(reference,target,topology=None,out=None):
 
@@ -56,7 +67,7 @@ def rmsd(reference,target,topology=None,out=None):
     return functions.rmsd_traj(ref,traj,out)
 
 
-def backbone_angles(filename,topology=None,residue=None,angle=None):
+def backbone_angles(filename,topology=None,residues=None,angles=None):
 
     if(topology==None):
         traj = md.load(filename)
@@ -64,11 +75,11 @@ def backbone_angles(filename,topology=None,residue=None,angle=None):
         traj = md.load(filename,top=topology)
     warn = "# Loading %s \n" % filename
     sys.stderr.write(warn)
-    return functions.backbone_angles_traj(traj,residue,angle)
+    return functions.backbone_angles_traj(traj,residues,angles)
 
 
     
-def sugar_angles(filename,topology=None,residues=None):
+def sugar_angles(filename,topology=None,residues=None,angles=None):
 
     if(topology==None):
         traj = md.load(filename)
@@ -76,4 +87,15 @@ def sugar_angles(filename,topology=None,residues=None):
         traj = md.load(filename,top=topology)
     warn = "# Loading %s \n" % filename
     sys.stderr.write(warn)
-    return functions.sugar_angles_traj(traj,residues)
+    return functions.sugar_angles_traj(traj,residues,angles)
+
+
+def jcouplings(filename,topology=None,residues=None,couplings=None,raw=False):
+
+    if(topology==None):
+        traj = md.load(filename)
+    else:
+        traj = md.load(filename,top=topology)
+    warn = "# Loading %s \n" % filename
+    sys.stderr.write(warn)
+    return functions.jcouplings_traj(traj,residues,couplings,raw)
