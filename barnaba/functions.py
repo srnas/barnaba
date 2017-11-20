@@ -4,6 +4,8 @@ import definitions
 import nucleic
 import numpy as np
 import mdtraj as md
+import itertools 
+
 
 ###########################  functions #################
 
@@ -66,9 +68,10 @@ def calc_mat_annotation(coords):
     
     lcs,origo= calc_lcs(coords)
 
-    cutoff=1.58  # hardcoded 
+
+    cutoff_sq=2.5  # hardcoded cutoff squared  ()
     # prune search first
-    max_r  = np.max(definitions.f_factors)*cutoff
+    max_r  = np.max(definitions.f_factors)*np.sqrt(cutoff_sq)
     dmat = distance.squareform(distance.pdist(origo))
     m_idx = np.array(np.where((dmat<max_r) & (dmat>0.001))).T
     
@@ -76,32 +79,30 @@ def calc_mat_annotation(coords):
         return [],[]
     
     # calculate scaled distances
-    #diff = [origo[y]-origo[x] for x,y in m_idx]
     diff = origo[m_idx[:,1]]-origo[m_idx[:,0]]
         
     dotp = np.array([np.dot(diff[i],lcs[j]) for i,j in zip(range(len(diff)),m_idx[:,0])])
     dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
-    dotp_scale_norm = np.sqrt(np.sum(dotp_scale**2,axis=1))
-    angle = np.array([np.dot(lcs[i][:,2],lcs[j][:,2]) for i,j in  m_idx])
+    dotp_scale_norm_square = np.sum(dotp_scale**2,axis=1)
 
-    ll = coords.shape[1]
-        
-    # create ll by ll matrix where ellipsoidal distance is less than cutoff
-    cutoff_mat = np.zeros((ll,ll))
-    cutoff_mat[m_idx[:,0],m_idx[:,1]] = dotp_scale_norm<cutoff
-    
-    #cutoff_mat[dotp_scale_norm<cutoff] = 1
-    # symmetrize
-    cutoff_mat *=cutoff_mat.T
-    mat = np.zeros((ll,ll,3))
-    mat[m_idx[:,0],m_idx[:,1]] = dotp
-    
-    mat *= cutoff_mat[:,:,np.newaxis]
-    angles = np.zeros((ll,ll))
-    angles[m_idx[:,0],m_idx[:,1]] = angle
-    angles *= cutoff_mat
-    return mat,angles
+    # find pairs with low ellipsoidal distance
+    low_idx = np.where(dotp_scale_norm_square<cutoff_sq)
+    pairs_tmp = m_idx[low_idx]
+    pairs_labs = ["%d_%d" % (aa[0],aa[1]) for aa in pairs_tmp]
+    # remove cases in which r_ij < cutoff, r_ja > cutoff
+    pairs = []
+    vectors = []
+    angles = []
+    for i,aa in enumerate(pairs_tmp):
+        rev = "%d_%d" % (aa[1],aa[0])
+        if( (rev in pairs_labs) and (aa[1]>aa[0]) ):
+            pairs.append([aa[0],aa[1]])
+            other_idx = pairs_labs.index(rev)
+            vectors.append([dotp[low_idx[0][i]], dotp[low_idx[0][other_idx]]])
+            angles.append(np.dot(lcs[aa[0]][:,2],lcs[aa[1]][:,2]))
 
+    return np.array(pairs), np.array(vectors), np.array(angles)
+    
 def calc_gmat(coords,cutoff):
 
  
@@ -324,7 +325,7 @@ def sugar_angles_traj(traj,residues=None,angles=None):
 
 
 ########### PUCKER ANGLES ##############
-def pucker_traj(traj,residues=None):
+def pucker_angles_traj(traj,residues=None):
 
     torsions,rr = sugar_angles_traj(traj,residues=residues)
     x1 = torsions[:,:,4] +  torsions[:,:,1] -  torsions[:,:,3] -   torsions[:,:,0]
@@ -397,9 +398,204 @@ def rmsd_traj(reference,traj,out=None):
     return rmsd
 
 
+### Single stranded motifs ##
+def ss_motif_traj(ref,traj,treshold=0.8,cutoff=2.4,sequence=None,bulges=0,out=None):
+    
+    top_traj = traj.topology
+    # initialize nucleic class
+    nn_traj = nucleic.Nucleic(top_traj)
+
+    top_ref = ref.topology
+    # initialize nucleic class
+    nn_ref = nucleic.Nucleic(top_ref)
+
+    ll = len(nn_ref.ok_residues)
+    if(sequence==None):
+        sequence = "N"*ll
+    else:
+        assert(len(sequence)==ll)
+        
+    coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
+    ref_mat = calc_gmat(coords_ref,cutoff).reshape(-1)
+    
+    rna_seq = nn_traj.rna_seq_id
+    res_idxs = definitions.get_idx(rna_seq,sequence,bulges)
+    resname_idxs = [[nn_traj.rna_seq[l] for l in rr]  for rr  in res_idxs]
+    if(len(res_idxs)==0):
+        return []
+
+    lcs_idx = nn_traj.indeces_lcs
+    results = []
+    count = 1
+    for i in xrange(traj.n_frames):
+        
+        gmats = [ calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1)  for j in res_idxs]
+            
+        dd = distance.cdist([ref_mat],gmats)/np.sqrt(ll)
+        low = np.where(dd[0]<treshold)
+        for k in low[0]:
+            results.append([i,dd[0,k],resname_idxs[k]])
+
+            # Write aligned PDB 
+            if(out != None):
+                pdb_out = "%s_%05d_%s_%d.pdb" % (out,count,resname_idxs[k][0],i)
+                # slice trajectory
+                tmp_atoms = []
+                tmp_res =[]
+                for r1 in res_idxs[k]:
+                    tmp_atoms.extend([at.index for at in nn_traj.ok_residues[r1].atoms])
+                    tmp_res.append([at for at in nn_traj.ok_residues[r1].atoms])
+                traj_slice = traj[i].atom_slice(tmp_atoms)
+                
+                # align whatever is in common in the backbone
+                idx_target = []
+                idx_ref = []
+                for res1,res2 in zip(nn_ref.ok_residues,traj_slice.topology.residues):
+                    name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
+                    for at in res1.atoms:
+                        if at.name in definitions.bb_atoms:
+                            if(at.name in name2):
+                                idx_ref.append(at.index)
+                                idx_target.append(((res2.atom(at.name)).index))
+                                #idx_target.append(res2[name2.index(at.name)].index)
+                traj_slice.superpose(ref,atom_indices=idx_target, ref_atom_indices=idx_ref)
+                traj_slice.save(pdb_out)
+
+            count += 1
+    
+    return results
+
+
+
+##############################################################
+###### DOuble stranded motifs ############
+
+
+def ds_motif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,out=None):
+    
+    top_traj = traj.topology
+    # initialize nucleic class
+    nn_traj = nucleic.Nucleic(top_traj)
+
+    top_ref = ref.topology
+    # initialize nucleic class
+    nn_ref = nucleic.Nucleic(top_ref)
+
+    ll = len(nn_ref.ok_residues)
+    assert(ll==l1+l2)
+    if(sequence==None):
+        sequence1 = "N"*l1
+        sequence2 = "N"*l2
+    else:
+        sequence1=(sequence).split("%")[0]
+        sequence2=(sequence).split("%")[1]
+        assert len(sequence1)==l1, "# FATAL: query structure and sequence length mismatch!"
+        assert len(sequence2)==l2, "# FATAL: query structure and sequence length mismatch!"
+
+        
+    coords_ref = ref.xyz[0,nn_ref.indeces_lcs]
+    ref_mat = calc_gmat(coords_ref,cutoff).reshape(-1)
+
+    coords_ref1 = ref.xyz[0,nn_ref.indeces_lcs[:,0:l1]]
+
+    ref_mat1 = calc_gmat(coords_ref1,cutoff).reshape(-1)
+    coords_ref2 = ref.xyz[0,nn_ref.indeces_lcs[:,l1:]]
+    ref_mat2 = calc_gmat(coords_ref2,cutoff).reshape(-1)
+   
+    # calculate center of mass distances
+    # this will be used to prune the search!
+    ref_com1 = np.average(np.average(coords_ref1,axis=0),axis=0)
+    ref_com2 = np.average(np.average(coords_ref2,axis=0),axis=0)
+    dcom =  np.sqrt(np.sum((ref_com1-ref_com2)**2))
+    
+    # find indeces of residues according to sequence
+    rna_seq = nn_traj.rna_seq_id
+
+    all_idx1 = definitions.get_idx(rna_seq,sequence1,bulges)
+    if(len(all_idx1)==0): return []
+    all_idx2 = definitions.get_idx(rna_seq,sequence2,bulges)
+    if(len(all_idx2)==0): return []
+
+
+    lcs_idx = nn_traj.indeces_lcs
+    idxs_combo = []
+    results = []
+    count = 1
+    for i in xrange(traj.n_frames):
+
+        # calculate eRMSD for strand1 
+        gmats1 = [calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1) for j in all_idx1]
+        dd1 = distance.cdist([ref_mat1],gmats1)
+        low1 = np.where(dd1[0]<treshold*np.sqrt(l1))
+        
+        # calculate eRMSD for strand2 
+        gmats2 = [calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1) for j in all_idx2]
+        dd2 = distance.cdist([ref_mat2],gmats2)
+        low2 = np.where(dd2[0]<treshold*np.sqrt(l2))
+
+        # do combination
+        combo_list = list(itertools.product(low1[0],low2[0]))
+        
+        gmats_combo = []
+        
+        for cc in combo_list:
+            llc = len(set(all_idx1[cc[0]] + all_idx2[cc[1]]))
+            # skip overlapping
+            if(llc != l1 + l2): continue
+            
+            # skip distant
+            com1 = np.average(np.average(traj.xyz[i,lcs_idx[:,all_idx1[cc[0]]]],axis=0),axis=0)
+            com2 = np.average(np.average(traj.xyz[i,lcs_idx[:,all_idx2[cc[1]]]],axis=0),axis=0)
+            dcoms = np.sqrt(np.sum((com1-com2)**2))
+            if(dcoms > 2.5*dcom): continue
+
+            idx_combo = all_idx1[cc[0]] + all_idx2[cc[1]]
+            idxs_combo.append(idx_combo)
+            gmats_combo.append(calc_gmat(traj.xyz[i,lcs_idx[:,idx_combo]],cutoff).reshape(-1))
+
+        # calculate distances
+        dd_combo = distance.cdist([ref_mat],gmats_combo)
+        low_combo = np.where(dd_combo[0]<treshold*np.sqrt(l1 + l2))
+
+        for k in low_combo[0]:
+            
+            #print idxs_combo[k]
+            resname_idxs = [nn_traj.rna_seq[l] for l  in idxs_combo[k]]
+            
+            results.append([i,dd_combo[0,k]/np.sqrt(l1 + l2),resname_idxs])
+
+            #print results[-1]
+            # Write aligned PDB 
+            if(out != None):
+                pdb_out = "%s_%05d_%s_%d.pdb" % (out,count,resname_idxs[k][0],i)
+                # slice trajectory
+                tmp_atoms = []
+                tmp_res =[]
+                for r1 in idxs_combo[k]:
+                    tmp_atoms.extend([at.index for at in nn_traj.ok_residues[r1].atoms])
+                    tmp_res.append([at for at in nn_traj.ok_residues[r1].atoms])
+                traj_slice = traj[i].atom_slice(tmp_atoms)
+                
+                # align whatever is in common in the backbone
+                idx_target = []
+                idx_ref = []
+                for res1,res2 in zip(nn_ref.ok_residues,traj_slice.topology.residues):
+                    name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
+                    for at in res1.atoms:
+                        if at.name in definitions.bb_atoms:
+                            if(at.name in name2):
+                                idx_ref.append(at.index)
+                                idx_target.append(((res2.atom(at.name)).index))
+                                #idx_target.append(res2[name2.index(at.name)].index)
+                traj_slice.superpose(ref,atom_indices=idx_target, ref_atom_indices=idx_ref)
+                traj_slice.save(pdb_out)
+
+            count += 1
+    return results
 
 ############### annotation  ##########
-######## TODO ##############
+
+
 
 def annotate_traj(traj):
     
@@ -416,60 +612,64 @@ def annotate_traj(traj):
 
         # calculate LCS
         coords = traj.xyz[i,nn.indeces_lcs]
-        lcs,origo= calc_lcs(coords)
 
-        # normal distance
-        dmat = distance.pdist(origo)
-        # prune search
-        m_idx = np.where(dmat<max_r)
+        # find bases in close contact (within ellipsoid w radius sqrt(2.5))
+        pairs,vectors,angles = calc_mat_annotation(coords)
 
-        i1 = condensed_idx[0][m_idx]
-        i2 = condensed_idx[1][m_idx]
+        # calculate rho
+        rho_12 = vectors[:,0,0]**2 + vectors[:,0,1]**2
+        rho_21 = vectors[:,1,0]**2 + vectors[:,1,1]**2
 
-        # calculate coordinates in LCS for short-ranged residues
-        diff = origo[i1]-origo[i2]
+        # calculate z squared 
+        z_12 = vectors[:,0,2]**2
+        z_21 = vectors[:,1,2]**2
+
+        # find stacked bases 
+
+        # z_ij  AND z_ji > 2 AA
+        stackz_12 = np.where(z_12>0.04)
+        stackz_21 = np.where(z_21>0.04)
         
-        dotp_12 = np.asarray([np.dot(diff[i],lcs[j]) for i,j in zip(range(len(diff)),i1)])
-        dotp_21 = np.asarray([np.dot(-diff[i],lcs[j]) for i,j in zip(range(len(diff)),i2)])
-        angle = np.asarray([np.dot(lcs[i][:,2],lcs[j][:,2]) for i,j in zip(i1,i2)])
-        
-        # zeta and rho 
-        z_12 = dotp_12[:,2]**2
-        z_21 = dotp_21[:,2]**2
-        rho_12 = dotp_12[:,0]**2 + dotp_12[:,1]**2
-        rho_21 = dotp_21[:,0]**2 + dotp_21[:,1]**2
-
-        # find stacking here
-        stackz_12 = np.where((z_12>0.04) & (z_12 <=0.225))
-        stackz_21 = np.where((z_21>0.04) & (z_21 <=0.225))
+        # rho_ij OR rho_ji < 2.5 AA
         rhoz_12 =  np.where(rho_12<0.0625)
         rhoz_21 =  np.where(rho_21<0.0625)
-        anglez = np.where(np.abs(angle) >0.76)
-        #stackz_21, rhoz_12 , rhoz_21,anglez  
-        # find pairing
-        pairz_12 = np.where((z_12<=0.04))
-        pairz_21 = np.where((z_21<=0.04))
-        #print stackz_12
-        #print stackz_21
-        inter_zeta = np.intersect1d(stackz_12,stackz_21)
         union_rho = np.union1d(rhoz_12[0],rhoz_21[0])
+
+        # angle between normal planes < 40 deg
+        anglez = np.where(np.abs(angles) >0.76)
+
+        # intersect all criteria
+        inter_zeta = np.intersect1d(stackz_12,stackz_21)
         inter_stack = np.intersect1d(union_rho,inter_zeta)
         inter_stack = np.intersect1d(inter_stack,anglez)
-        #print inter_stack
-        #print anglez
-        for p in inter_stack:
-            print nn.rna_seq[i1[p]],
-            print nn.rna_seq[i2[p]]
-            
-        #for ii in range(len(i1)):
-        #    print nn.rna_seq[i1[ii]],
-        #    print nn.rna_seq[i2[ii]],
 
-        #    print dotp_12[ii],
-        #    print dotp_21[ii],
-        #    print np.sqrt(rho_12[ii]), np.sqrt(rho_21[ii]),
-        #    print np.sqrt(z_12[ii]), np.sqrt(z_21[ii])
-            #print i1[stackz_21],i2[stackz_21]
+        # find paired bases  (z_ij < 2 AA AND z_j1 < 2 AA)
+        base_pair = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) and (j not in stackz_21[0]))]
+
+        # all the rest, unassigned 
+        unassigned = [j for j in xrange(len(pairs)) if(j not in inter_stack and j not in base_pair)]
+        
+        print "######"
+        for k in base_pair:
+            print nn.rna_seq[pairs[k,0]],
+            print nn.rna_seq[pairs[k,1]],            
+            print vectors[k,0],vectors[k,1],
+            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
+
+        print "###"
+        for k in inter_stack:
+            print nn.rna_seq[pairs[k,0]],
+            print nn.rna_seq[pairs[k,1]],            
+            print vectors[k,0],vectors[k,1],
+            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
+            
+        print "###"
+        for k in unassigned:
+            print nn.rna_seq[pairs[k,0]],
+            print nn.rna_seq[pairs[k,1]],            
+            print vectors[k,0],vectors[k,1],
+            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
+            
         exit()
         
 
