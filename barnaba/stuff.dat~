@@ -1,0 +1,21 @@
+rmsd  - OK
+ermsd xx - OK
+torsion  - OK
+jcouplings - OK
+DUMP  - OK
+ss_motif OK
+ds_motif OK
+snippet - OK
+annotation - almost done
+
+cluster xx
+
+annotation_figures
+enm  xx
+
+score
+smm
+
+command-line interface
+documentation
+tutorial/notebooks?

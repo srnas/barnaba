@@ -41,9 +41,26 @@ fh = open("angles_1.dat",'w')
 fh.write(stri)
 fh.close()
 
-
 resi = ["RG_69_0","RU_37_0"]
-angles = ["gamma"]
+angles = ["gamma","alpha"]
+
+angles_b,rr = bb.backbone_angles(fname,residues=resi,angles=angles)
+stri = "%20s " % "#"
+for pp in angles:
+    stri += " %10s " % pp
+stri += "\n"
+
+for e in range(angles_b.shape[1]):
+    stri += "%20s " % (rr[e])
+    for k in range(angles_b.shape[2]):
+        stri += " %10.4f " % angles_b[0,e,k]
+    stri += "\n"
+    
+fh = open("angles_2.dat",'w')
+fh.write(stri)
+fh.close()
+
+
 angles_b,rr = bb.backbone_angles(traj,topology=fname,residues=resi,angles=angles)
 stri = ""
 for p in range(angles_b.shape[0]):
@@ -51,7 +68,7 @@ for p in range(angles_b.shape[0]):
         stri += " %10.4f %10.4f " % (angles_b[p,0,k],angles_b[p,1,k])
     stri += "\n"
     
-fh = open("angles_2.dat",'w')
+fh = open("angles_3.dat",'w')
 fh.write(stri)
 fh.close()
 

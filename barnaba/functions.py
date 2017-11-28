@@ -69,7 +69,7 @@ def calc_mat_annotation(coords):
     lcs,origo= calc_lcs(coords)
 
 
-    cutoff_sq=2.5  # hardcoded cutoff squared  ()
+    cutoff_sq=2.89  # hardcoded cutoff squared  (1.7)
     # prune search first
     max_r  = np.max(definitions.f_factors)*np.sqrt(cutoff_sq)
     dmat = distance.squareform(distance.pdist(origo))
@@ -169,7 +169,7 @@ def dump_rvec_traj(traj,cutoff=2.4):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
         rvecs.append(calc_rmat(coords_lcs,cutoff))
         
-    return np.asarray(rvecs), nn.ok_residues
+    return np.asarray(rvecs), nn.rna_seq
 
 
 def dump_gvec_traj(traj,cutoff=2.4):
@@ -180,7 +180,7 @@ def dump_gvec_traj(traj,cutoff=2.4):
     for i in xrange(traj.n_frames):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
         gvecs.append(calc_gmat(coords_lcs,cutoff))
-    return np.asarray(gvecs), nn.ok_residues
+    return np.asarray(gvecs), nn.rna_seq
 
 
 ########### BACKBONE ANGLES ##############
@@ -594,20 +594,53 @@ def ds_motif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,
     return results
 
 ############### annotation  ##########
+def wc_gaussian(vec):
 
+    vec = 10.0*vec
+    dev1  = vec - definitions.wc_mean
+    maha1 = np.einsum('...k,...kl,...l->...', dev1, definitions.inv_sigma, dev1)
+    return (2 * np.pi)**(-1.5)* definitions.det_sigma**(0.5)*np.exp(-0.5 * maha1)
+
+
+def dihedral(p1,p2,p3,p4):
+
+    # difference vectors b0 is reversed
+    #b0 = vecs[:,1] - vecs[:,0]
+    #b1 = vecs[:,1] - vecs[:,2]
+    #b2 = vecs[:,2] - vecs[:,3]
+    b0 = p2-p1
+    b1 = p2-p3
+    b2 = p3-p4
+    # norm
+    norm_sq = np.sum(b1**2)
+    norm_sq_inv = 1.0/norm_sq
+
+    #print (np.sum(b0*b1,axis=1)*b1).shape
+    v0 = b0 - b1*((np.sum(b0*b1)*norm_sq_inv))
+    v2 = b2 - b1*((np.sum(b0*b2)*norm_sq_inv))
+    x = np.sum(v0*v2)
+    m = np.cross(v0,b1)*np.sqrt(norm_sq_inv)
+    y = np.sum(m*v2)
+    return np.arctan2( y, x )
 
 
 def annotate_traj(traj):
+
+    # this is the binning for annotation
+    bins = [0,1.84,3.84,2.*np.pi]
+    bins_label = ["W","H","S"]
     
     top = traj.topology
     # initialize nucleic class
     nn = nucleic.Nucleic(top)
-
+    
     max_r  = np.max(definitions.f_factors)*1.58
-
     condensed_idx =  np.triu_indices(len(nn.ok_residues), 1)
-    pairs = []
-    annotations = []
+
+    stackings = []
+    pairings = []
+    others = []
+    
     for i in xrange(traj.n_frames):
 
         # calculate LCS
@@ -623,7 +656,6 @@ def annotate_traj(traj):
         # calculate z squared 
         z_12 = vectors[:,0,2]**2
         z_21 = vectors[:,1,2]**2
-
         # find stacked bases 
 
         # z_ij  AND z_ji > 2 AA
@@ -636,41 +668,126 @@ def annotate_traj(traj):
         union_rho = np.union1d(rhoz_12[0],rhoz_21[0])
 
         # angle between normal planes < 40 deg
-        anglez = np.where(np.abs(angles) >0.76)
+        anglez = np.where(np.abs(angles) >0.766)
 
         # intersect all criteria
         inter_zeta = np.intersect1d(stackz_12,stackz_21)
         inter_stack = np.intersect1d(union_rho,inter_zeta)
-        inter_stack = np.intersect1d(inter_stack,anglez)
+        stacked = np.intersect1d(inter_stack,anglez)
+
+        # now I have found all stackings.
+        #stacked_pairs = [[nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]]] for k in stacked]
+        stacked_pairs = [[pairs[k,0],pairs[k,1]] for k in stacked]
+        stacked_annotation = np.chararray((len(stacked_pairs),2))
+        stacked_annotation[:] = ">"
+        
+        # revert where z_ij is negative
+        rev1 = np.where(vectors[stacked,0,2]<0)
+        stacked_annotation[rev1[0],0] = "<"
+
+        rev2 = np.where(vectors[stacked,1,2]>0)
+        stacked_annotation[rev2[0],1] = "<"
+
+        stacked_annotation = ["".join(el) for el in stacked_annotation]
+        ######################################################
 
         # find paired bases  (z_ij < 2 AA AND z_j1 < 2 AA)
-        base_pair = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) and (j not in stackz_21[0]))]
-
-        # all the rest, unassigned 
-        unassigned = [j for j in xrange(len(pairs)) if(j not in inter_stack and j not in base_pair)]
+        #paired = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) and (j not in stackz_21[0]))]
+        paired = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) or (j not in stackz_21[0]))]
+        #paired_pairs = [[nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]]] for k in paired]
+        paired_pairs = [[pairs[k,0],pairs[k,1]] for k in paired]
         
-        print "######"
-        for k in base_pair:
-            print nn.rna_seq[pairs[k,0]],
-            print nn.rna_seq[pairs[k,1]],            
-            print vectors[k,0],vectors[k,1],
-            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
+        # calculate edge angle. subtract 0.16 as Watson edge is not zero
+        edge_angles_1 = np.arctan2(vectors[paired,0,1],vectors[paired,0,0]) - definitions.theta1
+        edge_angles_2 = np.arctan2(vectors[paired,1,1],vectors[paired,1,0]) - definitions.theta1
 
-        print "###"
-        for k in inter_stack:
-            print nn.rna_seq[pairs[k,0]],
-            print nn.rna_seq[pairs[k,1]],            
-            print vectors[k,0],vectors[k,1],
-            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
-            
-        print "###"
-        for k in unassigned:
-            print nn.rna_seq[pairs[k,0]],
-            print nn.rna_seq[pairs[k,1]],            
-            print vectors[k,0],vectors[k,1],
-            print angles[k], np.sqrt(rho_12[k]), np.sqrt(rho_21[k])
-            
-        exit()
+        # shift to 0-2pi range
+        edge_angles_1[np.where(edge_angles_1<0.0)] += 2.*np.pi
+        edge_angles_2[np.where(edge_angles_2<0.0)] += 2.*np.pi
+
+        # find edge: 0 Watson, 1:Hoogsteen, 2sugar
+        edge_1 = np.digitize(edge_angles_1,bins)-1
+        edge_2 = np.digitize(edge_angles_2,bins)-1
+
+        # calculate dihedral angle for cis/trans
+        #angle_glyco = np.array([dihedral(traj.xyz[i,nn.indeces_glyco[1,pairs[k,0]]],\
+        #                        traj.xyz[i,nn.indeces_glyco[0,pairs[k,0]]],\
+        #                        traj.xyz[i,nn.indeces_glyco[0,pairs[k,1]]],\
+        #                        traj.xyz[i,nn.indeces_glyco[1,pairs[k,1]]]) for k in paired])
+    
         
+        paired_annotation = np.chararray((len(paired_pairs),3))
+        paired_annotation[:] = "X"
+        
+        # now explicit loop, a bit messy. sorry, Guido.
+        for j in xrange(len(paired_pairs)):
+
+            # if angle is larger than 60 deg, skip
+            if(np.abs(angles[paired[j]]) < 0.5 ): continue
+
+            index1 = paired_pairs[j][0]
+            index2 = paired_pairs[j][1]
+            
+            # find donor and acceptor in first base
+            r1_donor = nn.donors[index1]
+            r1_acceptor = nn.acceptors[index1]
+            # find donor and acceptor in second base
+            r2_donor = nn.donors[index2]
+            r2_acceptor = nn.acceptors[index2]
+            combo_list = list(itertools.product(r1_donor,r2_acceptor)) + list(itertools.product(r1_acceptor,r2_donor))
+            
+            # distances between donor and acceptors
+            delta = np.diff(traj.xyz[i,combo_list],axis=1)
+            dist_sq = np.sum(delta**2,axis=2)
+            # number or distances less than 3.3 AA is n_hbonds
+            n_hbonds = (dist_sq<0.1089).sum()
+            # if no hydrogen bonds, skip 
+            if(n_hbonds==0): continue
+
+            # find edge
+            paired_annotation[j][0] = bins_label[edge_1[j]]
+            paired_annotation[j][1] = bins_label[edge_2[j]]
+
+            gidxs = [nn.indeces_glyco[index1][1],nn.indeces_glyco[index1][0],nn.indeces_glyco[index2][0],nn.indeces_glyco[index2][1]]
+
+            # if atoms in glyco are missing, do not calculate cis/trans
+            if(None in gidxs):
+                paired_annotation[j][2] = "x"
+            else:
+                angle_glyco = dihedral(traj.xyz[i,gidxs[0]],traj.xyz[i,gidxs[1]],traj.xyz[i,gidxs[2]],traj.xyz[i,gidxs[3]])
+                if(np.abs(angle_glyco) > 0.5*np.pi):
+                    paired_annotation[j][2] = "t"
+                else:
+                    paired_annotation[j][2] = "c"
+                
+            # if is WWc, check for Watson-crick and GU
+            if("".join(paired_annotation[j]) == "WWc"):
+                r1 =  nn.rna_seq_id[index1]
+                r2 =  nn.rna_seq_id[index2]
+                ll = "".join(sorted([r1,r2]))
+                if((ll=="AU" and n_hbonds > 1) or ( ll == "CG" and n_hbonds > 2)):
+                    paired_annotation[j] = ["W","C","c"]
+                if(ll=="GU" and n_hbonds > 1):
+                    paired_annotation[j] = ["G","U","c"]
+                    
+            #print nn.rna_seq[index1],
+            #print nn.rna_seq[index2],
+            #print "".join(paired_annotation[j]),
+            #print vectors[paired[j],0],
+            #print vectors[paired[j],1],
+            #print  angles[paired[j]]
+        #exit()
+        paired_annotation = ["".join(el) for el in paired_annotation]
+
+        #unassigned = [j for j in xrange(len(pairs)) if(j not in stacked and j not in paired)]
+        #unassigned_pairs = [[pairs[k,0],pairs[k,1]] for k in unassigned]
+        #for k in unassigned:
+        #    print nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]], vectors[k,0], vectors[k,1]
+        
+        stackings.append([stacked_pairs,stacked_annotation])
+        pairings.append([paired_pairs,paired_annotation])
+        #others.append(unassigned_pairs)
+
+    return stackings, pairings, nn.rna_seq
 
 ############# cluster #############

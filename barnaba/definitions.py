@@ -30,16 +30,34 @@ term_5prime = ["OP1","OP2","P","OP3"]
 f_factors = [0.5,0.5,0.3]
 scale = [1./f_factors[0],1./f_factors[1],1./f_factors[2]]
 
+
+# donors
+
+donors = {"A":["N6","C2","C8","O2'"],\
+          "C":["N4","C5","C6","O2'"],\
+          "G":["N1","N2","C8","O2'"],\
+          "U":["N3","C5","C6","O2'"]}
+
+acceptors = {"A":["N1","N3","N7","O2'"],\
+             "C":["N3","O2","O2'"],\
+             "G":["O6","N3","N7","O2'"],\
+             "U":["O2","O4","O2'"]}
+
+glyco = {"A":["C1'","N9"],
+         "C":["C1'","N1"],
+         "G":["C1'","N9"],
+         "U":["C1'","N1"]}
+
 # mean values and covariance matrix for wc-pair calculation
 # extracted from empirical distribution
-wc_mean = [2.86,4.67,0.01]
-wc_sigma = [[ 0.26, -0.14,0.0],\
-            [-0.14,0.13,0.0],\
-            [ 0.0, 0.0,  0.33 ]]
-det_sigma=0.004686
-inv_sigma=[[  9.15492958,   9.85915493,   0.        ],\
-               [  9.85915493,  18.30985915,   0.        ],\
-               [  0.        ,   0.         ,  3.03030303]]
+#wc_mean = [2.86,4.67,0.01]
+#wc_sigma = [[ 0.26, -0.14,0.0],\
+#            [-0.14,0.13,0.0],\
+#            [ 0.0, 0.0,  0.33 ]]
+#det_sigma=0.004686
+#inv_sigma=[[  9.15492958,   9.85915493,   0.        ],\
+#               [  9.85915493,  18.30985915,   0.        ],\
+#               [  0.        ,   0.         ,  3.03030303]]
 
 # treshold values for base pair edges were obtained
 # from the angular distribution

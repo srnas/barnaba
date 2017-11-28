@@ -1,8 +1,9 @@
 import barnaba.barnaba as bb
+import sys
 
-fname = "data/sample1.pdb"
+fname = sys.argv[1]
 
-rvecs,resi = bb.dump_rvec(fname)
+rvecs,resi = bb.dump_rvec(fname,cutoff=1.7)
 
 fh = open("dump_r.dat",'w')
 stri = ""

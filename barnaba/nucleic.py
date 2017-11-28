@@ -8,13 +8,14 @@ class Nucleic:
 
         
         # loop over residues
-        ok_residues = []
         indeces_lcs = []
-        indeces_glyco = []
         
-        #self.bonds = list(topology.bonds)
         self.rna_seq_id = []
         self.rna_seq = []
+        self.donors = []
+        self.acceptors = []
+        self.indeces_glyco = []
+        self.ok_residues = []
         
         for res in topology.residues:
             if(res.name in definitions.residue_dict):
@@ -30,31 +31,39 @@ class Nucleic:
                         warn = "# Skipping unknown residue %s \n" % res 
                         sys.stderr.write(warn)
                     continue
-            # try to fetch the fundamental atoms: C2,C4,C6,C1' and N1/N9
-            nat = "N1"
-            if res_type in definitions.purines:
-                nat = "N9"
+            # try to fetch the fundamental atoms: C2,C4,C6
             try:
                 i0 = res.atom("C2")
                 i1 = res.atom("C6")
                 i2 = res.atom("C4")
-                i3 = res.atom("C1'")
-                i4 = res.atom(nat)
             except:
                 warn = "# Skipping residue %s -  missing atoms \n" % res 
                 sys.stderr.write(warn)
                 continue
-        
-            indeces_lcs.append([i0.index,i1.index,i2.index])
-            indeces_glyco.append([i4.index,i3.index])
-            ok_residues.append(res)
+            # invert for pyrimidine
+            if(res_type in definitions.purines):
+                indeces_lcs.append([i0.index,i1.index,i2.index])
+            else:
+                indeces_lcs.append([i0.index,i2.index,i1.index])
+
+            # fetch indeces of N1/N9, C1', donor and acceptors
+            # this will be used in annotation
+            ats = [at.name for at in res.atoms]    
+            self.donors.append([res.atom(at).index for at  in definitions.donors[res_type] if at in ats])
+            self.acceptors.append([res.atom(at).index for at  in definitions.acceptors[res_type] if at in ats])
+
+            # glycosidic bond
+            glyco = [res.atom(at).index for at  in definitions.glyco[res_type] if at in ats]
+            if(len(glyco)==2):
+                self.indeces_glyco.append(glyco)
+            else:
+                self.indeces_glyco.append([None,None])
+                
+            self.ok_residues.append(res)
             self.rna_seq_id.append(res_type)
-            my_resname = "%s_%s_%s" % (res.name,res.resSeq,res.chain.index)
-            self.rna_seq.append(my_resname)
+            self.rna_seq.append("%s_%s_%s" % (res.name,res.resSeq,res.chain.index))
             
         self.indeces_lcs = np.asarray(indeces_lcs).T
-        self.indeces_glyco = np.asarray(indeces_glyco).T
-        self.ok_residues = ok_residues
 
         if(len(self.ok_residues)<1):
             warn = "# Only %d  found in structure. Exiting \n" % len(ok_residues) 

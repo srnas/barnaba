@@ -1,10 +1,9 @@
 
-import barnaba.ss_motif as bb
+import barnaba.barnaba as bb
 
 fname = "data/GNRA.pdb"
 fname1 = "data/1S72.pdb"
-
-dist = bb.ssmotif(fname,fname1,bulges=1,treshold=0.6,write='prova')
+dist = bb.ss_motif(fname,fname1,bulges=1,treshold=0.6,out='ss_motif')
 fh=open("ssmotif.dat",'w')
 stri = ""
 for el in dist:
@@ -12,12 +11,5 @@ for el in dist:
     for jj in el[2]:
         stri += "%s-" % jj
     stri += "\n"
-fh.write(stri)
+h.write(stri)
 fh.close()
-#fh = open("ermsd.dat",'w')
-#stri = ""
-#for e in range(len(dist)):
-#    stri += "%14e \n" % (dist[e])
-
-#fh.write(stri)
-#fh.close()

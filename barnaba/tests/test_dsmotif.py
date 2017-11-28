@@ -1,10 +1,10 @@
 
-import barnaba.ds_motif as bb
+import barnaba.barnaba as bb
 
 fname = "data/SARCIN.pdb"
 fname1 = "data/1S72.pdb"
 
-dist = bb.dsmotif(fname,fname1,l1=8,l2=7,bulges=0,treshold=0.65,write="test")
+dist = bb.ds_motif(fname,fname1,l1=8,l2=7,bulges=0,treshold=0.65,out="ds_motif")
 fh=open("dsmotif.dat",'w')
 stri = ""
 for el in dist:

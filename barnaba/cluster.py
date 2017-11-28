@@ -7,7 +7,6 @@ from scipy.spatial.distance import squareform,pdist
 def pca(gvecs,nevecs=6,sample_weight=None):
 
     # subtract average
-
     data = gvecs-np.average(gvecs,axis=0,weights=sample_weight)[np.newaxis,:]       
 
     # calculate covariance
@@ -60,8 +59,6 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
     center_idx = []
     for o,ii1 in enumerate(scenters):
         
-        #if(ii1==len(scenters)-1): continue
-        #if(ii1!=len(scenters)-1):
         gvec_tmp = gvecs[cluster_members[ii1]]
         dists = squareform(pdist(gvec_tmp))/np.sqrt(float(slen))
         labels_tmp = [labels[k] for k in cluster_members[ii1]]               
@@ -72,5 +69,4 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
         center_idx.append(labels.index(labels_tmp[min_idx]))
     new_labels = [labels_map[cluster_labels[k]] for k in range(len(cluster_labels))]
     return new_labels, center_idx
-        #nc = n_clusters_
         

@@ -1,0 +1,96 @@
+import sys
+mmap = {"0":"0","1":"9"}
+
+
+# barnaba annotation ##
+fh = open("pairings.dat")
+b_anno = []
+b_anno1 = []
+for line in fh:
+    if("#" not in line):
+        ll1 = line.split()[0]
+        ll2 = line.split()[1]
+        r1 = "%s.%s%s" % (mmap[ll1.split("_")[2]],ll1.split("_")[0],ll1.split("_")[1])
+        r2 = "%s.%s%s" % (mmap[ll2.split("_")[2]],ll2.split("_")[0],ll2.split("_")[1])
+        rr = "/".join(sorted([r1,r2]))
+        anno = line.split()[2]
+        if(anno=="XXX"): continue
+        if(anno=="WCc" or anno=="GUc"):
+            anno = "WWc"
+        b_anno1.append(anno)
+        b_anno.append(rr)
+fh.close()
+print "# read %d barnaba pairing" % len(b_anno)
+
+# read dssr annotation 
+d_anno = []
+d_anno1 = []
+fh = open("1S72_dssr.anno")
+for line in fh:
+    r1 = line.split()[1]
+    r2 = line.split()[2]
+    ll = "/".join(sorted([r1,r2]))
+    if(ll in old_anno): continue
+    anno = line.split()[6]
+    anno1 = anno[1:] + anno[0]
+    d_anno1.append(anno1)
+    d_anno.append(ll)    
+fh.close()
+print "# read %d dssr pairing" % len(d_anno)
+
+# read fred annotation
+f_anno = []
+f_anno1 = []
+fh = open("1S72_fr3d_basepairs.csv")
+for line in fh:
+    r1 = line.split(",")[0][1:-1].split("|")
+    r2 = line.split(",")[2][1:-2].split("|")
+    rr1 = "%s.%s%s" % (r1[2],r1[3],r1[4])
+    rr2 = "%s.%s%s" % (r1[2],r1[3],r1[4])
+    ll = "/".join(sorted([rr1,rr2]))
+    if(ll in f_anno): continue
+    anno = line.split(",")[1][1:-1]
+    if(anno[0] == "n"):
+        anno = anno[1:]
+    anno1 = anno[1:] + anno[0] 
+    f_anno1.append(anno1)
+    f_anno.append(ll)
+print "# read %d fr3d pairing" % len(f_anno)
+
+exit()
+
+oks =0
+oks1 = 0
+for j in range(len(new_anno)):
+    if(new_anno[j] in old_anno):
+        k = old_anno.index(new_anno[j])
+        if(old_anno1[k]==new_anno1[j]):
+            oks += 1
+            oks1 += 1
+        else:
+            #print "MMH %s has different annotation:new %s old %s " % (new_anno[j], new_anno1[j],old_anno1[k])
+            oks1 += 1
+    else:
+        print "MMH %s not present in dssr %s " % (new_anno[j], new_anno1[j])
+
+print "oks: %d , oks-1 %d (%d)" % (oks,oks1,len(new_anno))
+print "#######"
+
+
+oks =0
+oks1 = 0
+for j in range(len(old_anno)):
+    if(old_anno[j] in new_anno):
+        k = new_anno.index(old_anno[j])
+        if(new_anno1[k]==old_anno1[j]):
+            oks += 1
+            oks1 += 1
+        else:
+            #print "MMH %s has different annotation:old %s new %s " % (old_anno[j], old_anno1[j],new_anno1[k])
+            oks1 += 1
+    else:
+        print "MMH %s not present in mine %s " % (old_anno[j], old_anno1[j])
+
+print "oks: %d , oks-1 %d (%d)" % (oks,oks1,len(old_anno))
+print "#######"
+exit()
