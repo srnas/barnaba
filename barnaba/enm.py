@@ -76,7 +76,10 @@ class Enm:
         self.e_val = e_val
         self.e_vec = e_vec
         self.coords = coords
+        #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
         self.idx_c2 = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
+        self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
+
 
     def get_eval(self):
         return self.e_val
@@ -111,7 +114,7 @@ class Enm:
             # sum contributions from all eigenvectors
             tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
             sigma.append(np.dot(diff,np.dot(tensor,diff)))
-        return sigma
+        return sigma, self.seq_c2
 
 
     def print_eval(self):
