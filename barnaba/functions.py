@@ -132,6 +132,19 @@ def calc_gmat(coords,cutoff):
     
     return mat
 
+def calc_scoremat(coords,cutoff):
+
+    dotp,m_idx = calc_3dmat(coords,cutoff)
+    ll = coords.shape[1]
+        
+    dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
+    dotp_norm = np.sqrt(np.sum(dotp_scale**2,axis=1))
+    dotp[dotp_norm>cutoff] = 0.0
+    
+    nonzero = dotp[~np.all(dotp == 0, axis=1)]
+
+    return nonzero.T
+
 ###########################################
 ###########  ERMSD ########################
 
@@ -593,13 +606,6 @@ def ds_motif_traj(ref,traj,l1,l2,treshold=0.9,cutoff=2.4,sequence=None,bulges=0,
             count += 1
     return results
 
-############### annotation  ##########
-def wc_gaussian(vec):
-
-    vec = 10.0*vec
-    dev1  = vec - definitions.wc_mean
-    maha1 = np.einsum('...k,...kl,...l->...', dev1, definitions.inv_sigma, dev1)
-    return (2 * np.pi)**(-1.5)* definitions.det_sigma**(0.5)*np.exp(-0.5 * maha1)
 
 
 def dihedral(p1,p2,p3,p4):
@@ -635,11 +641,10 @@ def annotate_traj(traj):
     nn = nucleic.Nucleic(top)
     
     max_r  = np.max(definitions.f_factors)*1.58
-    condensed_idx =  np.triu_indices(len(nn.ok_residues), 1)
+    #condensed_idx =  np.triu_indices(len(nn.ok_residues), 1)
 
     stackings = []
     pairings = []
-    others = []
     
     for i in xrange(traj.n_frames):
 
@@ -709,12 +714,6 @@ def annotate_traj(traj):
         edge_1 = np.digitize(edge_angles_1,bins)-1
         edge_2 = np.digitize(edge_angles_2,bins)-1
 
-        # calculate dihedral angle for cis/trans
-        #angle_glyco = np.array([dihedral(traj.xyz[i,nn.indeces_glyco[1,pairs[k,0]]],\
-        #                        traj.xyz[i,nn.indeces_glyco[0,pairs[k,0]]],\
-        #                        traj.xyz[i,nn.indeces_glyco[0,pairs[k,1]]],\
-        #                        traj.xyz[i,nn.indeces_glyco[1,pairs[k,1]]]) for k in paired])
-    
         
         paired_annotation = np.chararray((len(paired_pairs),3))
         paired_annotation[:] = "X"
@@ -765,29 +764,18 @@ def annotate_traj(traj):
                 r1 =  nn.rna_seq_id[index1]
                 r2 =  nn.rna_seq_id[index2]
                 ll = "".join(sorted([r1,r2]))
-                if((ll=="AU" and n_hbonds > 1) or ( ll == "CG" and n_hbonds > 2)):
-                    paired_annotation[j] = ["W","C","c"]
-                if(ll=="GU" and n_hbonds > 1):
-                    paired_annotation[j] = ["G","U","c"]
+                if((z_12[paired[j]] < 0.04) and (z_21[paired[j]]<0.04)):
+                    if(((ll=="AU" and n_hbonds > 1) or ( ll == "CG" and n_hbonds > 2))):
+                        paired_annotation[j] = ["W","C","c"]
+                    if(ll=="GU" and n_hbonds > 1):
+                        paired_annotation[j] = ["G","U","c"]
                     
-            #print nn.rna_seq[index1],
-            #print nn.rna_seq[index2],
-            #print "".join(paired_annotation[j]),
-            #print vectors[paired[j],0],
-            #print vectors[paired[j],1],
-            #print  angles[paired[j]]
-        #exit()
         paired_annotation = ["".join(el) for el in paired_annotation]
 
-        #unassigned = [j for j in xrange(len(pairs)) if(j not in stacked and j not in paired)]
-        #unassigned_pairs = [[pairs[k,0],pairs[k,1]] for k in unassigned]
-        #for k in unassigned:
-        #    print nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]], vectors[k,0], vectors[k,1]
         
         stackings.append([stacked_pairs,stacked_annotation])
         pairings.append([paired_pairs,paired_annotation])
-        #others.append(unassigned_pairs)
 
     return stackings, pairings, nn.rna_seq
 
-############# cluster #############
+

@@ -1,5 +1,5 @@
 rmsd  - OK
-ermsd xx - OK
+ermsd - OK
 torsion  - OK
 jcouplings - OK
 DUMP  - OK
@@ -7,13 +7,13 @@ ss_motif OK
 ds_motif OK
 snippet - OK
 annotation - OK
+cluster  - OK
 
-cluster xx
-score
+score - Class 
+enm  - Class (to be tested)
 smm
-enm  xx
 
-annotation_figures
+
 command-line interface
 documentation
 tutorial/notebooks?

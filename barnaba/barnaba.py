@@ -1,6 +1,7 @@
 import sys
 import functions
 import mdtraj as md
+import definitions
 
 def ermsd(reference,target,cutoff=2.4,topology=None):
 
@@ -138,3 +139,62 @@ def ds_motif(query,target,l1,l2,treshold=0.9,cutoff=2.4,topology=None,sequence=N
     sys.stderr.write(warn)
 
     return functions.ds_motif_traj(ref,traj,l1,l2,treshold=treshold,sequence=sequence,bulges=bulges,out=out)
+
+
+## DOT-BRACKET ##
+def dot_bracket(pairings,sequence):
+
+    ll = len(sequence)
+    dot_bracket = []
+    for k,pp in enumerate(pairings):
+        openings = []
+        closings = []
+        
+        for e in range(len(pp[0])):
+            if(pp[1][e]=="WCc"):
+                idx1 = pp[0][e][0]
+                idx2 = pp[0][e][1]
+                if(idx1 in openings):
+                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx1])
+                    warn += " Dot-bracket annotation set to xxx \n"
+                    sys.stderr.write(warn)
+                    dot_bracket.append("".join(["x"]*ll))                            
+                    continue
+                
+                if(idx2 in closings):
+                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx2])
+                    warn += " Dot-bracket annotation set to xxx \n"
+                    sys.stderr.write(warn)
+                    dot_bracket.append("".join(["x"]*ll))
+                    continue
+                
+                openings.append(idx1)
+                closings.append(idx2)
+
+        # check pseudoknots
+        dotbr = ['.']*ll
+        levels = [-1]*ll
+        for idx1 in xrange(len(openings)):
+            start1 = openings[idx1]
+            end1 = closings[idx1]
+            # up one level
+            levels[start1] += 1
+            levels[end1] += 1
+        
+            for idx2 in xrange(len(closings)):
+                end2 = closings[idx2]
+                if(levels[end2] == levels[start1]):
+                    if(end2 > start1 and end2 < end1):
+                        levels[start1] += 1
+                        levels[end1] += 1
+                        
+        for idx1 in xrange(len(openings)):
+            start1 = openings[idx1]
+            end1 = closings[idx1]
+            
+            dotbr[start1] = definitions.op[levels[start1]]
+            dotbr[end1] = definitions.cl[levels[end1]]
+        dot_bracket.append("".join(dotbr))
+    return dot_bracket
+
+

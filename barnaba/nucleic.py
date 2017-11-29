@@ -4,7 +4,7 @@ import sys
 
 class Nucleic:
 
-    def __init__(self,topology):
+    def __init__(self,topology,modified=True):
 
         
         # loop over residues
@@ -22,6 +22,7 @@ class Nucleic:
                 res_type = definitions.residue_dict[res.name]
 
             else:
+                if(modified==False): continue
                 if(res.name in definitions.modified_dict):
                     res_type = definitions.modified_dict[res.name]
                     warn = "# Treating nucleotide %s as %s \n" % (res,res_type)
