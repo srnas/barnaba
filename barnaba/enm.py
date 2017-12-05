@@ -1,5 +1,5 @@
 #   This is baRNAba, a tool for analysis of nucleic acid 3d structure
-#   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it) and Giovanni Pinamonti (giopina@sissa.it)
+#   Copyright (C) 2017 Sandro Bottaro (sandro.bottaro@bio.ku.dk) and Giovanni Pinamonti (GP)
 
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License V3 as published by
