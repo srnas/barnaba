@@ -1,14 +1,11 @@
+import barnaba as bb
 
-import barnaba.barnaba as bb
+top = "data/sample1.pdb"
+traj = "data/samples.xtc"
 
-#fname = "data/sample1.pdb"
-fname ="/Users/sandrobottaro/Projects/OPC/notebook/Tetranucleotides/AAAA/AAAAh.pdb"
-traj="/Users/sandrobottaro/Projects/OPC/notebook/Tetranucleotides/reweight/AAAA_TIP3P_300/traj_AAAA_TIP3P_300.dcd"
-angles,rr = bb.jcouplings(traj,topology=fname)
-#angles,rr = bb.jcouplings(fname,couplings=["H3P","H2H3","H1H2"])
-#angles,rr = bb.jcouplings(fname)
-print angles.shape
-fh = open("jcouplings.dat",'w')
+
+angles,rr = bb.jcouplings(traj,topology=top)
+fh = open("jcouplings.test.dat",'w')
 for e in range(angles.shape[0]):
     stri = ""
     for k in range(angles.shape[1]):
@@ -18,13 +15,9 @@ for e in range(angles.shape[0]):
     stri += "\n"
     fh.write(stri)
 fh.close()
-#exit()
 
-angles,rr = bb.jcouplings(traj,topology=fname,raw=True)
-#angles,rr = bb.jcouplings(fname,raw=True,couplings=["H3P","H2H3","H1H2"])
-#angles,rr = bb.jcouplings(fname,raw=True)
-print angles.shape
-fh = open("jcouplings_raw.dat",'w')
+angles,rr = bb.jcouplings(traj,topology=top,raw=True)
+fh = open("jcouplings_raw.test.dat",'w')
 for e in range(angles.shape[0]):
     stri = ""
     for k in range(angles.shape[1]):

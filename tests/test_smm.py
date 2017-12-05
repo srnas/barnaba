@@ -1,6 +1,6 @@
 import mdtraj as md
 import barnaba.smm as smm
-import barnaba.barnaba as bb
+import barnaba as bb
 
 fname = "data/sample1.pdb"
 

@@ -1,11 +1,9 @@
-import barnaba.barnaba as bb
-import sys
+import barnaba as bb
 
-fname = sys.argv[1]
-
+fname = "data/sample1.pdb"
 rvecs,resi = bb.dump_rvec(fname,cutoff=1.7)
 
-fh = open("dump_r.dat",'w')
+fh = open("dump_r.test.dat",'w')
 stri = ""
 for i1 in range(len(resi)):
     for i2 in range(len(resi)):
@@ -16,7 +14,7 @@ fh.close()
 
 
 gvecs,resi = bb.dump_gvec(fname)
-fh = open("dump_g.dat",'w')
+fh = open("dump_g.test.dat",'w')
 stri = ""
 for i1 in range(len(resi)):
     for i2 in range(len(resi)):

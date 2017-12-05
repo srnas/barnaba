@@ -1,8 +1,9 @@
 import sys
 import numpy as np
 
-import barnaba.barnaba as dd
+import barnaba as bb
 import barnaba.cluster as cc
+
 import mdtraj as md
 from scipy.spatial import distance
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ top = "data/UUCG.pdb"
 
 # first, calculate all g-vectors
 print "# Calculating G-vectors"
-gvec,seq = dd.dump_gvec(traj,top)
+gvec,seq = bb.dump_gvec(traj,top)
 lent = gvec.shape[0]
 gvec = gvec.reshape(lent,-1)[::5]
 
@@ -40,7 +41,7 @@ print "# Dump PDB centroids"
 t = md.load(traj, top=top)
 idxs = [ii for ii,kk in enumerate(new_labels) if(kk==0)]
 for i,k in enumerate(center_idx):
-    t[k].save_pdb("cluster_%03d.pdb" % (i))
+    t[k].save_pdb("cluster_%03d.test.pdb" % (i))
     plt.text(w[k,0],w[k,1],str(i),ha='center',va='center')
     idxs = [ii for ii,kk in enumerate(new_labels) if(kk==i+1)]
 
