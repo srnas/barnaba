@@ -1,5 +1,19 @@
+#   This is baRNAba, a tool for analysis of nucleic acid 3d structure
+#   Copyright (C) 2017 Sandro Bottaro (sandro.bottaro@bio.ku.dk)
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License V3 as published by
+#   the Free Software Foundation, 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+""" scoring function for RNA structure prediction """
+
 import mdtraj as md
-import functions
+import functions as ff
 import nucleic
 import numpy as np
 import kde as kde
@@ -7,6 +21,7 @@ import sys
 
 class Escore:
 
+    """ Constructor """
     def __init__(self,references,cutoff=1.58,bandwidth=0.25):
 
         mats = []
@@ -14,7 +29,7 @@ class Escore:
             pdb = md.load(references[i])    
             nn_ref = nucleic.Nucleic(pdb.topology,modified=False)
             coords = pdb.xyz[0,nn_ref.indeces_lcs]
-            mat = functions.calc_scoremat(coords,cutoff)
+            mat = ff.calc_scoremat(coords,cutoff)
             mats.extend(mat)
         mats = np.asarray(mats)
         # set kernel density
@@ -27,9 +42,8 @@ class Escore:
         sys.stderr.write(warn)
         
     def score(self,sample,topology=None):
-
-        print "AAA"
-        print sample, topology
+        
+        """ Score """
         if(topology==None):
             traj = md.load(sample)
         else:
@@ -41,6 +55,6 @@ class Escore:
         scores = []
         for j in xrange(traj.n_frames):
             coords = traj.xyz[j,nn.indeces_lcs]
-            mat = functions.calc_scoremat(coords,self.cutoff+0.2)
+            mat = ff.calc_scoremat(coords,self.cutoff+0.2)
             scores.append(np.sum(self.kernel(10.0*mat)))
         return scores
