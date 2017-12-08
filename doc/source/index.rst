@@ -9,8 +9,15 @@ Welcome to baRNAba's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+	     baRNAba package
+==============
 
-
+Submodules
+----------
+.. automodule:: functions
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Indices and tables
 ==================

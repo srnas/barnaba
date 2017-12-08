@@ -10,7 +10,5 @@
 # emacs crap
 *~
 
-tests/*.pdb
-tests/*.test.dat
-tests/*.xtc
+tests/tmp/
 build/

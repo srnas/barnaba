@@ -1,41 +1,61 @@
 import barnaba as bb
+import os
+import filecmp
 
-# align pdb to pdb with the same sequence
-fname = "data/sample1.pdb"
-fname1 = "data/sample2.pdb"
-
-dist = bb.ermsd(fname,fname1)
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("ermsd_01.test.dat",'w')
-fh.write(stri)
-fh.close()
-
-# align pdb to pdb with different sequence
-fname = "data/4v7t-pdb-bundle3_G521_00006.align.pdb"
-fname1 = "data/centroid_10.pdb"
-
-dist = bb.ermsd(fname,fname1)
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("ermsd_02.test.dat",'w')
-fh.write(stri)
-fh.close()
-
-fname = "data/4v7t-pdb-bundle3_G521_00006.align.pdb"
-fname1 = "data/centroid_10.pdb"
-
-dist = bb.ermsd(fname,fname1,cutoff=5.0)
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("ermsd_03.test.dat",'w')
-fh.write(stri)
-fh.close()
+cwd = os.getcwd()
+outdir = "%s/test/tmp" % cwd
+refdir = "%s/test/reference/" % cwd
+os.system("mkdir %s" % (outdir))
 
 
-# align trajectory to pdb
-fname = "data/sample1.pdb"
-fname1 = "data/samples.xtc"
+def test_ermsd_1():
 
-dist = bb.ermsd(fname,fname1,topology=fname)
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("ermsd_04.test.dat",'w')
-fh.write(stri)
-fh.close()
+    # align pdb to pdb with the same sequence
+    fname = "%s/test/data/sample1.pdb" % cwd
+    fname1 = "%s/test/data/sample2.pdb" % cwd
+    
+    dist = bb.ermsd(fname,fname1)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    
+    fh = open("%s/ermsd_01.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+
+    assert(filecmp.cmp("%s/ermsd_01.test.dat" % outdir,"%s/ermsd_01.test.dat" % refdir)==True)
+    
+def test_ermsd_2():
+    # align pdb to pdb with different sequence
+    fname = "%s/test/data/4v7t-pdb-bundle3_G521_00006.align.pdb" % cwd
+    fname1 = "%s/test/data/centroid_10.pdb" % cwd
+    
+    dist = bb.ermsd(fname,fname1)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    fh = open("%s/ermsd_02.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/ermsd_02.test.dat" % outdir,"%s/ermsd_02.test.dat" % refdir)==True)
+
+def test_ermsd_3():
+    
+    fname = "%s/test/data/4v7t-pdb-bundle3_G521_00006.align.pdb" % cwd
+    fname1 = "%s/test/data/centroid_10.pdb" % cwd
+    
+    dist = bb.ermsd(fname,fname1,cutoff=5.0)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    fh = open("%s/ermsd_03.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/ermsd_03.test.dat" % outdir,"%s/ermsd_03.test.dat" % refdir)==True)
+
+def test_ermsd_4():
+    # align trajectory to pdb
+    fname = "%s/test/data/sample1.pdb" % cwd
+    fname1 = "%s/test/data/samples.xtc" % cwd
+    
+    dist = bb.ermsd(fname,fname1,topology=fname)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    fh = open("%s/ermsd_04.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/ermsd_04.test.dat" % outdir,"%s/ermsd_04.test.dat" % refdir)==True)
+

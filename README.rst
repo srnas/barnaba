@@ -50,6 +50,11 @@ or download a zip file from the web:
 
    https://github.com/srnas/barnaba/tree/library
 
+then move to barnaba directory and run the command
+
+   python setup.py install --user
+
+
 Usage
 ------------
 BaRNAba can be either used as a python package or using the command-line interface.

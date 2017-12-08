@@ -1,31 +1,51 @@
 import barnaba as bb
+import os
+import filecmp
 
-# align pdb to pdb with the same sequence
-fname = "data/sample1.pdb"
-fname1 = "data/sample2.pdb"
+cwd = os.getcwd()
+outdir = "%s/test/tmp" % cwd
+refdir = "%s/test/reference/" % cwd
+os.system("mkdir %s" % (outdir))
 
-dist = bb.rmsd(fname,fname1,out='aligned_1.pdb')
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("rmsd_01.test.dat",'w')
-fh.write(stri)
-fh.close()
+def test_rmsd_1():
+    # align pdb to pdb with the same sequence
+    fname = "%s/test/data/sample1.pdb" % cwd
+    fname1 = "%s/test/data/sample2.pdb" % cwd
 
-# align pdb to pdb with different sequence
-fname = "data/4v7t-pdb-bundle3_G521_00006.align.pdb"
-fname1 = "data/centroid_10.pdb"
+    dist = bb.rmsd(fname,fname1,out='%s/aligned_1.pdb' % outdir)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    
+    fh = open("%s/rmsd_01.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/rmsd_01.test.dat" % outdir,"%s/rmsd_01.test.dat" % refdir)==True)
+    assert(filecmp.cmp("%s/aligned_1.pdb" % outdir,"%s/aligned_1.pdb" % refdir)==True)
 
-dist = bb.rmsd(fname,fname1,out='aligned_2.pdb')
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("rmsd_02.test.dat",'w')
-fh.write(stri)
-fh.close()
+def test_rmsd_2():
+    # align pdb to pdb with different sequence
+    fname = "%s/test/data/4v7t-pdb-bundle3_G521_00006.align.pdb" % cwd
+    fname1 = "%s/test/data/centroid_10.pdb" % cwd
 
-# align trajectory to pdb
-fname = "data/sample1.pdb"
-fname1 = "data/samples.xtc"
+    dist = bb.rmsd(fname,fname1,out='%s/aligned_2.pdb' % outdir)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+    fh = open("%s/rmsd_02.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/rmsd_02.test.dat" % outdir,"%s/rmsd_02.test.dat" % refdir)==True)
+    assert(filecmp.cmp("%s/aligned_2.pdb" % outdir,"%s/aligned_2.pdb" % refdir)==True)
+    
+def test_rmsd_3():
+    
+    # align trajectory to pdb
+    fname = "%s/test/data/sample1.pdb" % cwd
+    fname1 = "%s/test/data/samples.xtc" % cwd
 
-dist = bb.rmsd(fname,fname1,topology=fname,out='aligned_3.xtc')
-stri = "".join([ "%14e \n" % (dd) for dd in dist])
-fh = open("rmsd_03.test.dat",'w')
-fh.write(stri)
-fh.close()
+    
+    dist = bb.rmsd(fname,fname1,topology=fname,out='%s/aligned_3.xtc' % outdir)
+    stri = "".join([ "%14e \n" % (dd) for dd in dist])
+
+    fh = open("%s/rmsd_03.test.dat" % outdir,'w')
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/rmsd_03.test.dat" % outdir,"%s/rmsd_03.test.dat" % refdir)==True)
+    assert(filecmp.cmp("%s/aligned_3.xtc" % outdir,"%s/aligned_3.xtc" % refdir)==True)
