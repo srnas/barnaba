@@ -44,11 +44,11 @@ Installation
 -------------
 You can obtain barnaba using git:
 
-    git clone git://github.com/srnas/barnaba.git
+    git clone -b library git://github.com/srnas/barnaba.git
 
 or download a zip file from the web:
 
-   https://github.com/srnas/barnaba
+   https://github.com/srnas/barnaba/tree/library
 
 Usage
 ------------
