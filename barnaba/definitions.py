@@ -61,17 +61,6 @@ glyco = {"A":["C1'","N9"],
          "G":["C1'","N9"],
          "U":["C1'","N1"]}
 
-# mean values and covariance matrix for wc-pair calculation
-# extracted from empirical distribution
-#wc_mean = [2.86,4.67,0.01]
-#wc_sigma = [[ 0.26, -0.14,0.0],\
-#            [-0.14,0.13,0.0],\
-#            [ 0.0, 0.0,  0.33 ]]
-#det_sigma=0.004686
-#inv_sigma=[[  9.15492958,   9.85915493,   0.        ],\
-#               [  9.85915493,  18.30985915,   0.        ],\
-#               [  0.        ,   0.         ,  3.03030303]]
-
 # treshold values for base pair edges were obtained
 # from the angular distribution
 
@@ -124,15 +113,15 @@ couplings_karplus = {\
                      #  HCOP from Lee, Sarma 1976 
                      #"1H5P":[18.1,-4.8,1.5,0.0,-td_pi],\
                      #"2H5P":[18.1,-4.8,1.5,0.0,td_pi],\
-                     # HCOP from Lankhorst, Journal of Biomolecular Structure and Dynamics, 1(6):1387–1405, 1984.
+                     # HCOP from Lankhorst, Journal of Biomolecular Structure and Dynamics, 1(6):1387 1405, 1984.
                      "1H5P":[15.3,-6.1,1.6,0.0,-td_pi],\
                      "2H5P":[15.3,-6.1,1.6,0.0,td_pi],\
-                     # HCOP from Mooren Nucleic acids research, 22(13):2658–2666, 1994
+                     # HCOP from Mooren Nucleic acids research, 22(13):2658 2666, 1994
                      #"1H5P":[15.3,-6.2,1.5,0.0,-td_pi],\
                      #"2H5P":[15.3,-6.2,1.5,0.0,td_pi],\
-                     #HCOP from Marino, Accounts of chemical research, 32(7):614–623, 1999.
+                     #HCOP from Marino, Accounts of chemical research, 32(7):614 623, 1999.
                      "C4Pb":[6.9,-3.4,0.7,0.0,0.0],\
-                     #HCOP from wijmenga, Progress in nuclear magnetic resonance spectroscopy, 32(4):287–387, 1998
+                     #HCOP from wijmenga, Progress in nuclear magnetic resonance spectroscopy, 32(4):287 387, 1998
                      #"C4Pb":[8.0,-3.4,0.5,0.0,0.0], \
                      ##### GAMMA  #########
                      # from Davies, BD Conformations of nucleosides and nucleotides  Progress in NMR spectroscopy, 1977
@@ -144,10 +133,10 @@ couplings_karplus = {\
                      ##### EPSILON ########
                      # From Lankhorst, Altona, 1984
                      "H3P":[15.3,-6.1,1.6,0.0,td_pi],\
-                     # Marino and Scwhalbe  Accounts of chemical research, 32(7):614–623, 1999
+                     # Marino and Scwhalbe  Accounts of chemical research, 32(7):614 623, 1999
                      "C4Pe":[6.9,-3.4,0.7,0.0,0.0],\
                      ######  CHI #########
-                     # Ippel Magnetic resonance in chemistry, 34(13):S156–S176, 1996.
+                     # Ippel Magnetic resonance in chemistry, 34(13):S156 S176, 1996.
                      "H1C2/4":[4.7,2.3,0.1,0.0,-0.5*td_pi],\
                      "H1C6/8":[4.5,-0.6,0.1,0.0,-0.5*td_pi],
                      

@@ -9,19 +9,24 @@
 #   GNU General Public License for more details.
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
+This module contains different barnaba functionalities. One can both call the function from PDB/XTC 
+or passing a mdtraj trajectory object.
+
+"""
 import sys
 import mdtraj as md
 from scipy.spatial import distance
 import itertools
 import numpy as np
-
 import definitions
 import nucleic
 import functions as ff
 
     
 ############## ERMSD ###############
+
 def ermsd(reference,target,cutoff=2.4,topology=None):
 
     ref = md.load(reference)
@@ -36,7 +41,6 @@ def ermsd(reference,target,cutoff=2.4,topology=None):
     sys.stderr.write(warn)
 
     return ermsd_traj(ref,traj,cutoff=cutoff)
-
 
 def ermsd_traj(reference,traj,cutoff=2.4):
     
@@ -622,7 +626,7 @@ def annotate_traj(traj):
     # initialize nucleic class
     nn = nucleic.Nucleic(top)
     
-    max_r  = np.max(definitions.f_factors)*1.58
+    #max_r  = np.max(definitions.f_factors)*1.58
     #condensed_idx =  np.triu_indices(len(nn.ok_residues), 1)
 
     stackings = []
@@ -633,7 +637,7 @@ def annotate_traj(traj):
         # calculate LCS
         coords = traj.xyz[i,nn.indeces_lcs]
 
-        # find bases in close contact (within ellipsoid w radius sqrt(2.5))
+        # find bases in close contact (within ellipsoid w radius 1.7)
         pairs,vectors,angles = ff.calc_mat_annotation(coords)
 
         # calculate rho

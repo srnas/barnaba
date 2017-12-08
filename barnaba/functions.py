@@ -9,7 +9,6 @@
 #   GNU General Public License for more details.
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 di' qualcosa di sinistra! d'Alema di' qualcosa!
 """
@@ -19,8 +18,7 @@ import definitions
 import numpy as np
 
 
-def calc_lcs(coords):
-    
+def calc_lcs(coords):    
     """
     Calculate local coordinates system
 
@@ -36,8 +34,7 @@ def calc_lcs(coords):
     lcs : (n,3,3) numpy array
         x y z vectors defining a local coordinate system in the geometrical center of the nucleobase
     origo : (n,3) numpy array 
-        origin  of local coordinate systems
-        
+        origin  of local coordinate systems        
     """
     
     # calculate center of mass
@@ -60,6 +57,25 @@ def calc_lcs(coords):
 
 
 def calc_3dmat(coords,cutoff):
+    """
+    Calculate relative position of nucleobases within an ellipsoidal cutoff
+
+    Parameters
+    ----------
+    coords : (3,n,3) numpy array 
+        (3,n,3) numpy array with positions of C2,C4 and C6 atoms for pyrimidines (C,U,T) and C2,C6,C4 for purines (A,G) (axis 0) relative to n nucleobases (axis 1). xyz coordinates in axis 2.
+
+    cutoff : float
+       ellipsoidal cutoff
+    
+    Returns
+    -------
+    dotp : (x,3) numpy array
+       xyz coordinates for each pair
+
+    m_idx : (x,2) numpy array 
+       indeces of the pair
+    """
     
     # prune search first
     lcs,origo= calc_lcs(coords)
@@ -71,11 +87,27 @@ def calc_3dmat(coords,cutoff):
     #diff = [origo[y]-origo[x] for x,y in m_idx]
     diff = origo[m_idx[:,1]]-origo[m_idx[:,0]]
     
-    dotp = np.array([np.dot(diff[i],lcs[j]) for i,j in zip(range(len(diff)),m_idx[:,0])])    
+    dotp = np.array([np.dot(diff[i],lcs[j]) for i,j in zip(range(len(diff)),m_idx[:,0])])
     return dotp,m_idx
 
 
 def calc_rmat(coords,cutoff):
+    """
+    Calculate relative position of nucleobases. Returns a square matrix with zero elements for pairs outside ellispoidal cutoff 
+
+    Parameters
+    ----------
+    coords : (3,n,3) numpy array 
+        (3,n,3) numpy array with positions of C2,C4 and C6 atoms for pyrimidines (C,U,T) and C2,C6,C4 for purines (A,G) (axis 0) relative to n nucleobases (axis 1). xyz coordinates in axis 2.
+
+    cutoff : float
+        ellipsoidal cutoff
+    
+    Returns
+    -------
+    dotp : (n,n,3) numpy array
+       xyz coordinates for each pair. For pairs outside the cutoff the coordinates are (0,0,0)
+    """
 
     dotp,m_idx = calc_3dmat(coords,cutoff)
     ll = coords.shape[1]
@@ -95,7 +127,27 @@ def calc_rmat(coords,cutoff):
 
 
 def calc_mat_annotation(coords):
+
+    """
+    Calculate matrix for annotation purposes.
+
+    Parameters
+    ----------
+    coords : (3,n,3) numpy array 
+        (3,n,3) numpy array with positions of C2,C4 and C6 atoms for pyrimidines (C,U,T) and C2,C6,C4 for purines (A,G) (axis 0) relative to n nucleobases (axis 1). xyz coordinates in axis 2.
+
+    Returns
+    -------
+    pairs : (x,2) numpy array
+        indeces of pairs to be considered when performing the annotation
+
+    vectors: (x,2,3) numpy array
+        position vector r_ij and r_ji 
     
+    angles: (x) numpy array
+       cosine of angle beween the normal vectors constructed on base i and base j
+    """
+
     lcs,origo= calc_lcs(coords)
 
     cutoff_sq=2.89  # hardcoded cutoff squared  (1.7)
@@ -133,7 +185,24 @@ def calc_mat_annotation(coords):
     return np.array(pairs), np.array(vectors), np.array(angles)
     
 def calc_gmat(coords,cutoff):
- 
+    
+    """
+    Calculate G-vectors for each pair of bases within ellipsoidal cutoff distance 
+
+    Parameters
+    ----------
+    coords : (3,n,3) numpy array 
+        (3,n,3) numpy array with positions of C2,C4 and C6 atoms for pyrimidines (C,U,T) and C2,C6,C4 for purines (A,G) (axis 0) relative to n nucleobases (axis 1). xyz coordinates in axis 2.
+
+    cutoff : float
+        ellipsoidal cutoff
+    
+    Returns
+    -------
+    dotp : (n,n,4) numpy array
+        G coordinates for each pair. For pairs outside the cutoff the coordinates are (0,0,0,0)
+    """
+
     ll = coords.shape[1]
 
     mat = np.zeros((ll,ll,4))
@@ -161,7 +230,23 @@ def calc_gmat(coords,cutoff):
     return mat
 
 def calc_scoremat(coords,cutoff):
+    """
+    Calculate relative position of nucleobases within an ellipsoidal cutoff
 
+    Parameters
+    ----------
+    coords : (3,n,3) numpy array 
+        (3,n,3) numpy array with positions of C2,C4 and C6 atoms for pyrimidines (C,U,T) and C2,C6,C4 for purines (A,G) (axis 0) relative to n nucleobases (axis 1). xyz coordinates in axis 2.
+
+    cutoff : float
+        ellipsoidal cutoff
+    
+    Returns
+    -------
+    dotp : (x,3) numpy array
+        xyz coordinates for each pair
+    """
+    
     dotp,m_idx = calc_3dmat(coords,cutoff)
     ll = coords.shape[1]
         
@@ -175,7 +260,20 @@ def calc_scoremat(coords,cutoff):
 
 
 def dihedral(p1,p2,p3,p4):
+    """
+    calculate dihedral angle given 4 position vectors
+    Parameters
+    ----------
+    p1,p2,p3,p4: (3) numpy array 
+        position vectors
 
+    Returns
+    -------
+    dotp : float
+        angle in radians
+    
+    """
+    
     # difference vectors b0 is reversed
     #b0 = vecs[:,1] - vecs[:,0]
     #b1 = vecs[:,1] - vecs[:,2]
