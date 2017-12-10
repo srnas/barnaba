@@ -1,15 +1,22 @@
+import barnaba as bb
 import mdtraj as md
 import barnaba.smm as smm
-import barnaba as bb
+import os
+import filecmp
 
-fname = "data/sample1.pdb"
+cwd = os.getcwd()
+outdir = "%s/test/tmp" % cwd
+refdir = "%s/test/reference/" % cwd
+os.system("mkdir %s" % (outdir))
 
-# initialize class. Only PDB are accepted
-traj = "data/UUCG.xtc"
-top = "data/UUCG.pdb"
-gvec,seq = bb.dump_gvec(traj,top)
-lent = gvec.shape[0]
-gvec = gvec.reshape(lent,-1)[::5]
 
-smm = smm.SMM(gvec,eps=0.5)
-
+def test_smm_1():
+    
+    fname = "%s/test/data/UUCG.pdb" % cwd
+    traj = "%s/test/data/UUCG.xtc" % cwd
+    
+    gvec,seq = bb.dump_gvec(traj,topology=fname)
+    lent = gvec.shape[0]
+    gvec = gvec.reshape(lent,-1)[::5]
+    s = smm.SMM(gvec,eps=0.5)
+    

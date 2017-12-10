@@ -1,16 +1,27 @@
 import barnaba.escore as escore
+import os
+import filecmp
 
-fname = "data/1S72.pdb"
-# set "force-field"
-ee = escore.Escore([fname])
+cwd = os.getcwd()
+outdir = "%s/test/tmp" % cwd
+refdir = "%s/test/reference/" % cwd
+os.system("mkdir -p %s" % (outdir))
 
+fname = "%s/test/data/sample1.pdb" % cwd
+traj = "%s/test/data/samples.xtc" % cwd
+ffname = "%s/test/data/1S72.pdb" % cwd
 
-fname = "data/samples.xtc"
-tname = "data/sample1.pdb"
-ss =  ee.score(fname,tname)
-fh = open("escore.test.dat",'w')
-stri = ""
-for e in range(len(ss)):
-    stri += "%10.4e \n " % (ss[e])
-fh.write(stri)
-fh.close()
+def test_score():
+    
+    # set "force-field"
+    ee = escore.Escore([ffname])
+    
+    ss =  ee.score(traj,topology=fname)
+    fh = open("%s/score_01.test.dat" % outdir,'w')    
+    stri = " ".join(["%10.4e \n" % (ss[e]) for e in range(len(ss))])
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/score_01.test.dat" % outdir,"%s/score_01.test.dat" % refdir)==True)
+        
+
+    
