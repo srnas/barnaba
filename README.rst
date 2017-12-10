@@ -2,7 +2,7 @@
 Introduction
 ============
 
-BaRNAba is a tool for analyzing RNA three-dimensional structures.
+BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. It supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more, as it uses the MDtraj library.
 BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi and Giovanni Pinamonti.
 This is what you can do with baRNAba:
 
@@ -19,6 +19,7 @@ This is what you can do with baRNAba:
 11. Score three-dimensional structures using eSCORE (Bottaro et al, Nucleic Acids Research)
 
 For bugs, questions or comments contact Sandro at sandro dot bottaro (guess) gmail dot com
+
 If you use baRNAba in your work,  please cite the following paper:
 
 S.Bottaro, F. di Palma, G.Bussi. The role of nucleobases 
