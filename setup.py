@@ -7,5 +7,7 @@ setup(name='barnaba',
       author='Sandro Bottaro',
       author_email='sandro dot bottaro at gmail dot com',
       packages=['barnaba'],
+      install_requires=['python>=2.7','numpy','scipy'],
+      test_suite='nose.collector',
       zip_safe=False)
 
