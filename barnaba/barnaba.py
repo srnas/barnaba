@@ -23,7 +23,7 @@ import numpy as np
 import definitions
 import nucleic
 import functions as ff
-
+import os
     
 ############## ERMSD ###############
 
@@ -824,11 +824,13 @@ def dot_bracket(pairings,sequence):
 
 #############################################################
 
-def snippet(pdb,sequence):
+def snippet(pdb,sequence,outdir=None):
     
     import reader as  reader
 
-    
+    if(outdir==None):
+        outdir = os.getcwd()
+
     atoms = ["C2","C4","C6"]
     
     # check query sequence
@@ -872,7 +874,7 @@ def snippet(pdb,sequence):
                     continue
             
             name_pref = pdb[0:-4].split("/")[-1]
-            new_pdb = "%s_%s_%05d.pdb" % (name_pref,cur_pdb.model.sequence_id[index[0]],ii)
+            new_pdb = "%s/%s_%s_%05d.pdb" % (outdir,name_pref,cur_pdb.model.sequence_id[index[0]],ii)
          
             fh_pdb = open(new_pdb,'w')
             fh_pdb.write(cur_pdb.model.string_pdb(index,noP=True,center=True))
