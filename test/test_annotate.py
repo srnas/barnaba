@@ -14,8 +14,9 @@ fname1 = "%s/test/data/samples.xtc" % cwd
 def test_annotate_1():
     
     stackings, pairings, res = bb.annotate(fname1,topology=fname)
-    fh = open("%s/stackings_01.test.dat" % outdir,'w')
-    
+    dotbr = bb.dot_bracket(pairings,res)
+
+    fh = open("%s/stackings_01.test.dat" % outdir,'w')    
     stri = "# STACKING \n"
     for k in range(len(stackings)):
         stri += "# frame %d \n" % k
@@ -26,6 +27,7 @@ def test_annotate_1():
         stri += "\n"
     fh.write(stri)
     fh.close()
+    assert(filecmp.cmp("%s/stackings_01.test.dat" % outdir,"%s/stackings_01.test.dat" % refdir)==True)
     
     fh = open("%s/pairings_01.test.dat" % outdir,'w')
     stri = "# PAIRING \n"
@@ -37,16 +39,27 @@ def test_annotate_1():
             stri += " %4s \n" % (pairings[k][1][e])
     fh.write(stri)
     fh.close()
-
-    assert(filecmp.cmp("%s/stackings_01.test.dat" % outdir,"%s/stackings_01.test.dat" % refdir)==True)
     assert(filecmp.cmp("%s/pairings_01.test.dat" % outdir,"%s/pairings_01.test.dat" % refdir)==True)
+
+    
+    fh = open("%s/dotbracket_01.test.dat" % outdir,'w')        
+    stri = ""
+    for k in range(len(pairings)):
+        stri += " %06d " % k
+        stri += "%s \n" % dotbr[k]
+    fh.write(stri)
+    fh.close()
+    assert(filecmp.cmp("%s/dotbracket_01.test.dat" % outdir,"%s/dotbracket_01.test.dat" % refdir)==True)
+
+
+
 
 
 def test_annotate_2():
     
     fname = "%s/test/data/1S72.pdb" % cwd
     stackings, pairings, res = bb.annotate(fname)
-    
+    dotbr = bb.dot_bracket(pairings,res)
     fh = open("%s/stackings_02.test.dat" % outdir,'w')
     stri = "# STACKING \n"
     for e in range(len(stackings[0][0])):
@@ -65,8 +78,12 @@ def test_annotate_2():
     fh.write(stri)
     fh.close()
 
+    fh = open("%s/dotbracket_02.test.dat" % outdir,'w')        
+    fh.write(str(dotbr[0]))
+    fh.close()
     assert(filecmp.cmp("%s/stackings_02.test.dat" % outdir,"%s/stackings_02.test.dat" % refdir)==True)
     assert(filecmp.cmp("%s/pairings_02.test.dat" % outdir,"%s/pairings_02.test.dat" % refdir)==True)
-
+    assert(filecmp.cmp("%s/dotbracket_02.test.dat" % outdir,"%s/dotbracket_02.test.dat" % refdir)==True)
+    
 
 
