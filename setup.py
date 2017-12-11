@@ -1,4 +1,5 @@
-from setuptools import setup
+from setuptools import setup,find_packages
+
 
 setup(name='barnaba',
       version='0.1',
@@ -6,8 +7,10 @@ setup(name='barnaba',
       url='https://github.com/srnas/barnaba',
       author='Sandro Bottaro',
       author_email='sandro dot bottaro at gmail dot com',
-      packages=['barnaba'],
-      install_requires=['python>=2.7','numpy','scipy'],
+      packages=find_packages(),
+      python_requires='>=2.6',
+      install_requires=['numpy','scipy'],
       test_suite='nose.collector',
       zip_safe=False)
+
 

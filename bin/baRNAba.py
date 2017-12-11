@@ -19,7 +19,7 @@ import glob
 import os
 import argparse
 import barnaba as bb
-
+    
 def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
@@ -35,13 +35,15 @@ def parse():
     parser_01.add_argument("--ref", dest="reference",help="Reference PDB file",required=True)
     parser_01.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
 
-    parser_01a = subparsers.add_parser('ERMSD', help='calculate eRMSD')
+    
+    #############
+    parser_01a = subparsers.add_parser('RMSD', help='calculate RMSD')
     parser_01a.add_argument("-o", dest="name",help="output_name",default=None,required=False)
     parser_01a.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",required=False,default=None)
     parser_01a.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
-    parser_01a.add_argument("--top", dest="top",help="Topology file",required=False)
-    
+    parser_01a.add_argument("--top", dest="top",help="Topology file",required=False)    
     parser_01a.add_argument("--ref", dest="reference",help="Reference PDB file",required=True)
+    parser_01a.add_argument("--dump", dest="dump",help="Write aligned PDB/TRJ",action='store_true',default=False)
 
     
     # ESCORE PARSER 
@@ -61,9 +63,9 @@ def parse():
     parser_03.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_03.add_argument("--top", dest="top",help="Topology file",required=False)
 
-    parser_03.add_argument("--query", dest="reference",help="Reference PDB file",required=True)
+    parser_03.add_argument("--query", dest="query",help="Query PDB file",required=True)
     parser_03.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_03.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.7,type=float)    
+    parser_03.add_argument("--threshold", dest="threshold",help="ERMSD threshold",default=0.7,type=float)    
     parser_03.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides",default=0,type=int)   
     parser_03.add_argument("--sequence", dest="seq",help="Sequence Accepts ACGU/NRY/ format. Default = any",required=False,default=None)
     parser_03.add_argument("--dump", dest="dump",help="Write pdb files",action='store_true',default=False)
@@ -75,12 +77,12 @@ def parse():
     parser_04.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_04.add_argument("--top", dest="top",help="Topology file",required=False)
 
-    parser_04.add_argument("--query", dest="reference",help="Reference PDB file",required=True)
+    parser_04.add_argument("--query", dest="query",help="Reference PDB file",required=True)
     parser_04.add_argument("--l1", dest="l1",help="Length of first strand",required=True,type=int)    
     parser_04.add_argument("--l2", dest="l2",help="Lenght of second strand",required=True,type=int)    
 
     parser_04.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff",default=2.4,type=float)    
-    parser_04.add_argument("--treshold", dest="treshold",help="ERMSD treshold",default=0.7,type=float)    
+    parser_04.add_argument("--threshold", dest="threshold",help="ERMSD threshold",default=0.7,type=float)    
     parser_04.add_argument("--bulges", dest="bulges",help="Number of allowed bulged nucleotides",default=0,type=int)   
     parser_04.add_argument("--sequence", dest="seq",help="Sequence Accepts ACGU/NRY/ format. Default = any",required=False,default=None)
     parser_04.add_argument("--dump", dest="dump",help="Write pdb files",action='store_true',default=False)
@@ -91,8 +93,6 @@ def parse():
     parser_05.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
     parser_05.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_05.add_argument("--top", dest="top",help="Topology file",required=False)
-
-    parser_05.add_argument("--pymol", dest="pymol",help="Write script.pml file for coloring",action='store_true',default=False)
     parser_05.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
 
     
@@ -149,18 +149,6 @@ def parse():
     parser_10.add_argument("--zmodes", dest="zmodes",help="Write modes corresponding to zero eigenvalues",action='store_true',default=False)
     parser_10.add_argument("--protein", dest="protein",help="Consider Proteins as well",action='store_true',default=False)
 
-    # CALCULATE NOE DISTANCES
-    parser_11 = subparsers.add_parser('NOE', help='Calculate NOE')
-    parser_11.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-    parser_11.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
-    parser_11.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
-    parser_11.add_argument("--top", dest="top",help="Topology file",required=False)
-    
-    parser_11.add_argument("--cutoff", dest="cutoff",help="Print to file only average distance below cutoff (in nm)",default=0.8,type=float)  
-    parser_11.add_argument("--nbins", dest="nbins",help="number of bins for block analysis (default=1)",default=1,type=int)  
-    parser_11.add_argument("--weight", dest="weight",help="weights ",required=False,default=None)
-    parser_11.add_argument("--temp", dest="temp",help="Set temperature. This will interpret weights as free energies",required=False,default=0.0,type=float)
-
 
     # SMM
     parser_12 = subparsers.add_parser('SMM', help="Stop motion modeling")
@@ -203,50 +191,100 @@ def parse():
 def ermsd(args):
 
     if(args.top==None):
-        dd = [bb.ermsd(args.reference,pdb,args.cutoff) for pdb in args.pdbs]
+        dd = [bb.ermsd(args.reference,pdb,cutoff=args.cutoff) for pdb in args.pdbs]
     else:
         dd = bb.ermsd(args.reference,args.trj,topology=args.top,cutoff=args.cutoff)
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba eRMSD calculation.\n")
+        
+    fh = open(args.name + ".out",'w')
     fh.write("# %s \n" % (" ".join(sys.argv[:])))
-    fh.write("".join([ "%14e \n" % (d) for d in dd]))
+    fh.write("#%10s   %10s\n" % ("Frame","eRMSD"))
+    fh.write("".join([ " %10d   %10.4e \n" % (i,d) for i,d in enumerate(dd)]))
     fh.close()
     
 def rmsd(args):
 
+
     if(args.top==None):
-        dd = [bb.rmsd(args.reference,pdb,args.cutoff) for pdb in args.pdbs]
+        if(args.dump==True):
+            dd = [bb.rmsd(args.reference,pdb,out="%s_%06d.pdb" % (out,i)) for i,pdb in enumerate(args.pdbs)]
+        else:
+            dd = [bb.rmsd(args.reference,pdb) for i,pdb in enumerate(args.pdbs)]
     else:
-        dd = bb.rmsd(args.reference,args.trj,topology=args.top,cutoff=args.cutoff)
-    fh = open(args.name,'w')
-    fh.write("# This is a baRNAba eRMSD calculation.\n")
+        if(args.dump==True):
+            out = "%s.%s" % (args.name, (args.trj).split(".")[-1])
+            dd = bb.rmsd(args.reference,args.trj,topology=args.top,out=out)
+        else:
+            dd = bb.rmsd(args.reference,args.trj,topology=args.top)
+
+    fh = open(args.name + ".out",'w')
     fh.write("# %s \n" % (" ".join(sys.argv[:])))
-    fh.write("".join([ "%14e \n" % (d) for d in dd]))
+    fh.write("#%10s   %10s\n" % ("Frame","RMSD"))
+    fh.write("".join([ " %10d   %10.4e \n" % (i,d) for i,d in enumerate(dd)]))
     fh.close()
 
 
-####################### SCORING ########################
         
 def score(args):
+    
+    import barnaba.escore as escore
+    # set "force-field"
+    ee = escore.Escore([args.reference],cutoff=args.cutoff)
+    if(args.top==None):
+        dd = [ee.score(pdb)[0] for pdb in args.pdbs]
+    else:
+        dd = ee.score(args.trj,topology=args.top)
 
-    import score
-    score.score(args)
+    # Write to file
+    fh = open(args.name + ".out",'w')
+    fh.write("# %s \n" % (" ".join(sys.argv[:])))
+    fh.write("#%10s   %10s\n" % ("Frame","ESCORE"))
+    fh.write("".join([ " %10d   %10.4e \n" % (i,d) for i,d in enumerate(dd)]))
+    fh.close()
 
 
-####################### MOTIF #########################
 
 def ss_motif(args):
 
-    import ss_motif
-    ss_motif.ss_motif(args)
+    out = None
+    if(args.dump==True):out = args.name
+
+    stri = "# %s \n" % (" ".join(sys.argv[:]))
+    if(args.top==None):
+        stri += "#%20s %10s %s \n" % ("PDB","eRMSD","Sequence")
+        for i in range(len(args.pdbs)):
+            dd = bb.ss_motif(args.query,args.pdbs[i],out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
+            stri += " ".join([" %20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+    else:
+        dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
+        stri += " ".join([" %20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+
+    fh = open(args.name + ".out",'w')
+    fh.write(stri)
+    fh.close()
 
 
 def ds_motif(args):
 
-    import ds_motif
-    ds_motif.ds_motif(args)
-    
-##################### ANNOTATE #######################
+    out = None
+    if(args.dump==True):out = args.name
+
+    stri = "# %s \n" % (" ".join(sys.argv[:]))
+    if(args.top==None):
+        stri += "#%20s %10s %s \n" % ("PDB","eRMSD","Sequence")
+        for i in range(len(args.pdbs)):
+            dd = bb.ds_motif(args.query,args.pdbs[i],out=out,l1=args.l1,l2=args.l2,\
+                             bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
+            stri += " ".join([" %20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+    else:
+        stri += "#%20s %10s %s \n" % ("frame","eRMSD","Sequence")
+        dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,l1=args.l1,l2=args.l2,\
+                         bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
+        stri += " ".join([" %20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+
+    fh = open(args.name + ".out",'w')
+    fh.write(stri)
+    fh.close()
+
 
 def annotate(args):
 
@@ -292,11 +330,6 @@ def snippet(args):
     import snippet
     snippet.snippet(args)
 
-####################  NOE  #######################
-
-def noe(args):
-    import noe
-    noe.noe(args)
 
 ####################  SMM  #######################
 
@@ -309,9 +342,6 @@ def cluster(args):
     import cluster
     cluster.cluster(args)
 
-def rmsd(args):
-    import cluster
-    cluster.cluster(args)
 
 ####################### MAIN #########################
 
@@ -320,7 +350,7 @@ def main():
     def filename(args):
         # create output filename
         if(args.name == None):
-            outfile = 'outfile.' + args.subparser_name + ".rna"
+            outfile = 'outfile.' + args.subparser_name 
             ll = glob.glob(outfile + "*")
             args.name = outfile
             if(len(ll)!=0):
@@ -328,22 +358,10 @@ def main():
                 os.system("cp " + outfile + " " + outfile + ".backup." + str(len(ll)))
             print "# No name specified. Your output will be written to",outfile
         else:
-            outfile = args.name + "." + args.subparser_name + ".rna"
+            outfile = args.name + "." + args.subparser_name
             print "# Your output will be written to",outfile
             args.name = outfile
     
-    # check at startup!
-    try:
-        import numpy
-    except ImportError:
-        sys.stderr.write('# Numpy is not installed \n')
-        sys.exit(1)
-
-    try:
-        import scipy
-    except ImportError:
-        sys.stderr.write('# Scipy is not installed \n')
-        sys.exit(1)
 
     # Parse options
     args = parse()
@@ -352,15 +370,15 @@ def main():
     outfile = filename(args)
 
     # check
-    if(args.subparser_name!="SMM" and args.subparser_name!="CLUSTER" and args.subparser_name!="SNIPPET"):
-
-        if(args.pdbs==None):
-            assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file"
-            assert args.top != None, "# Please provide a topology file"
-        else:
-            if(args.subparser_name!="ENM"):
-                assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory file, not both"
-            
+    #if(args.subparser_name!="SMM" and args.subparser_name!="CLUSTER" and args.subparser_name!="SNIPPET"):#
+    #
+    #    if(args.pdbs==None):
+    #        assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file"
+    #        assert args.top != None, "# Please provide a topology file"
+    #    else:
+    #        if(args.subparser_name!="ENM"):
+    #            assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory file, not both"
+    #        
     
     # call appropriate function
     options = {'ERMSD' : ermsd,\
@@ -374,7 +392,6 @@ def main():
                'JCOUPLING':couplings,\
                'ENM':enm,\
                'SNIPPET' : snippet,\
-               "NOE":noe,\
                'SMM':smm,\
                'CLUSTER':cluster}
 

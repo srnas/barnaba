@@ -53,7 +53,7 @@ or download a zip file from the web:
 
 then move to barnaba directory and run the command
 
-   python setup.py install --user
+   pip install -e .
 
 
 Usage

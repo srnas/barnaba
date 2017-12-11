@@ -13,7 +13,7 @@
 """ scoring function for RNA structure prediction """
 
 import mdtraj as md
-import functions as ff
+import calc_mats as ff
 import nucleic
 import numpy as np
 import kde as kde
