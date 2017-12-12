@@ -19,7 +19,8 @@ import glob
 import os
 import argparse
 import barnaba as bb
-    
+import itertools as its
+
 def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
@@ -36,7 +37,7 @@ def parse():
     parser_01.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
 
     
-    #############
+    # RMSD parser
     parser_01a = subparsers.add_parser('RMSD', help='calculate RMSD')
     parser_01a.add_argument("-o", dest="name",help="output_name",default=None,required=False)
     parser_01a.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",required=False,default=None)
@@ -93,7 +94,7 @@ def parse():
     parser_05.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
     parser_05.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_05.add_argument("--top", dest="top",help="Topology file",required=False)
-    parser_05.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
+    parser_05.add_argument("--dotbracket", dest="dotbr",help="write dot-bracket annotation",action='store_true',default=False)
 
     
     # DUMP
@@ -102,23 +103,12 @@ def parse():
     parser_06.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
     parser_06.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_06.add_argument("--top", dest="top",help="Topology file",required=False)
-    parser_06.add_argument("--stride", dest="stride",help="Stride",required=False,default=1,type=int)
 
     parser_06.add_argument("--cutoff", dest="cutoff",help="Ellipsoidal cutoff (default=2.4)",default=2.4,type=float)
     parser_06.add_argument("--dumpG", dest="dumpG",help="Write G vectors on .gvec file",action='store_true',default=False)
     parser_06.add_argument("--dumpR", dest="dumpR",help="Write R vectors on .rvec file",action='store_true',default=False)
-    parser_06.add_argument("--dumpP", dest="dumpP",help="Write P vectors on .pvec file",action='store_true',default=False)
-    parser_06.add_argument("--atom", dest="atom",help="Specify atom type (default = P)",default="P",required=False)
-    parser_06.add_argument("--hread", dest="read",help="make output human-readable",action='store_true',default=False)
     
-    # CREATE FRAGMENTS
-    parser_07 = subparsers.add_parser('SNIPPET', help='SPLIT structure in multiple PDB')
-    parser_07.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-    parser_07.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=True)
-    parser_07.add_argument("--seq", dest="seq",help="Sequence type. Accepts ACGU/NRY format",required=True)
 
-
-    # ###########################################
     # CALCULATE TORSION ANGLES
     parser_08 = subparsers.add_parser('TORSION', help='Calculate dihedral angles')
     parser_08.add_argument("-o", dest="name",help="output_name",default=None,required=False)
@@ -126,7 +116,11 @@ def parse():
     parser_08.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_08.add_argument("--top", dest="top",help="Topology file",required=False)
 
-    parser_08.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
+    parser_08.add_argument("--backbone", dest="backbone",help="calculate backbone (a,b,g,d,e,z) and chi torsion angle",action='store_true',default=False)
+    parser_08.add_argument("--sugar", dest="sugar",help="calculate sugar torsion angles (v0...v5)",action='store_true',default=False)
+    parser_08.add_argument("--pucker", dest="pucker",help="calculate sugar pucker angles (amplitude, phase)",action='store_true',default=False)
+    parser_08.add_argument("--res", dest="res",help="Calculate torsion angle for specific residues",required=False,nargs="+",default=None)
+    
 
     # CALCULATE TORSION ANGLES - J COUPLINGS OK
     parser_09 = subparsers.add_parser('JCOUPLING', help='Calculate J couplings.')
@@ -134,37 +128,25 @@ def parse():
     parser_09.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
     parser_09.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_09.add_argument("--top", dest="top",help="Topology file",required=False)
-
-    parser_09.add_argument("--hread", dest="hread",help="make output human-readable",action='store_true',default=False)
+    parser_09.add_argument("--res", dest="res",help="Calculate couplings for specific residues",required=False,nargs="+",default=None)
     parser_09.add_argument("--raw",dest="raw",help="print raw angles for j3",action="store_true",default=False)
-                          
+
+    # CREATE FRAGMENTS
+    parser_07 = subparsers.add_parser('SNIPPET', help='SPLIT structure in multiple PDB')
+    parser_07.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=True)
+    parser_07.add_argument("--seq", dest="seq",help="Sequence type. Accepts ACGU/NRY format",required=True)
+    parser_07.add_argument("--outdir", dest="outdir",help="outdir",required=False,default=None)
+
     # CALCULATE ENM
     parser_10 = subparsers.add_parser('ENM', help='Calculate ENM')
     parser_10.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-    parser_10.add_argument("--pdb", dest="pdbs",help="PDB file",default=None,required=True)
+    parser_10.add_argument("--pdb", dest="pdb",help="PDB file",default=None,required=True)
 
     parser_10.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in nm (default=0.9)",default=0.9,type=float)
-    parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SBP','AA'], help='Type of ENM (default=SBP)')    
+    parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SB','SP','BP','SBP','AA'], help='Type of ENM (default=SBP)')    
     parser_10.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
-    parser_10.add_argument("--zmodes", dest="zmodes",help="Write modes corresponding to zero eigenvalues",action='store_true',default=False)
-    parser_10.add_argument("--protein", dest="protein",help="Consider Proteins as well",action='store_true',default=False)
+    parser_10.add_argument("--shape", dest="shape",help="calculate C2/C2 fluctuations",action='store_true',default=False)
 
-
-    # SMM
-    parser_12 = subparsers.add_parser('SMM', help="Stop motion modeling")
-    parser_12.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-
-    parser_12.add_argument("--gvec", dest="gvec",help="GVEC",required=True)
-    parser_12.add_argument("--weight", dest="weight",help="optional weights for GVEC",required=False,default=None)
-    parser_12.add_argument("--temp", dest="temp",help="Set temperature. This will interpret weights as free energies",required=False,default=0.0,type=float)
-    parser_12.add_argument("--ref", dest="ref",help="GVEC of source and sink reference structure",required=True)
-
-    parser_12.add_argument("--eps", dest="eps",help="eps",default=0.2,type=float)
-    parser_12.add_argument("--epsc", dest="epsc",help="eps",default=0.7,type=float)
-    parser_12.add_argument("--ncluster", dest="ncluster",required=False,default=20,type=int)
-    parser_12.add_argument("--ntraj", dest="ntraj",required=False,default=0,type=int)
-    parser_12.add_argument("--dist", dest="dist",help="distance for defining source and sink",default=0.3,type=float)
-    parser_12.add_argument("--projection", dest="mode",required=False,default="kernel",choices=["kernel","PCA"])
     
     # CLUSTERING
     parser_13 = subparsers.add_parser('CLUSTER', help="Stop motion modeling")
@@ -200,7 +182,9 @@ def ermsd(args):
     fh.write("#%10s   %10s\n" % ("Frame","eRMSD"))
     fh.write("".join([ " %10d   %10.4e \n" % (i,d) for i,d in enumerate(dd)]))
     fh.close()
-    
+
+####################### RMSD ########################
+
 def rmsd(args):
 
 
@@ -222,7 +206,7 @@ def rmsd(args):
     fh.write("".join([ " %10d   %10.4e \n" % (i,d) for i,d in enumerate(dd)]))
     fh.close()
 
-
+####################### ESCORE ########################
         
 def score(args):
     
@@ -242,6 +226,7 @@ def score(args):
     fh.close()
 
 
+####################### SS_MOTIF ########################
 
 def ss_motif(args):
 
@@ -262,6 +247,8 @@ def ss_motif(args):
     fh.write(stri)
     fh.close()
 
+
+####################### DS_MOTIF ########################
 
 def ds_motif(args):
 
@@ -286,56 +273,254 @@ def ds_motif(args):
     fh.close()
 
 
+####################### ANNOTATE ########################
+
 def annotate(args):
 
-    import annotate
-    annotate.annotate(args)
+    stri_p = "# %s \n" % (" ".join(sys.argv[:]))
+    stri_p += "#%15s %15s %4s \n" % ("RES1","RES2","ANNO")
+    
+    stri_s = "# %s \n" % (" ".join(sys.argv[:]))
+    stri_s += "#%15s %15s %4s \n" % ("RES1","RES2","ANNO")
 
-##################### ANNOTATE #######################
+    stri_dot = "# %s \n" % (" ".join(sys.argv[:]))
+
+    if(args.top==None):
+        for i in range(len(args.pdbs)):
+            st, pair, res = bb.annotate(args.pdbs[i])
+            stri_p += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
+            stri_p += "".join([ " %15s %15s %4s \n " % (res[pair[0][0][e][0]],res[pair[0][0][e][1]],pair[0][1][e]) for e in range(len(pair[0][0]))])
+            
+            stri_s += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
+            stri_s += "".join([ " %15s %15s %4s \n " % (res[st[0][0][e][0]],res[st[0][0][e][1]],st[0][1][e]) for e in range(len(st[0][0]))])
+
+            if(args.dotbr):
+                dotbr = bb.dot_bracket(pair,res)
+                stri_dot += "%-20s %s\n" %(args.pdbs[i].split("/")[-1],dotbr[0])
+
+            
+    else:
+        st,pair,res = bb.annotate(args.trj,topology=args.top)
+        if(args.dotbr):
+            dotbr = bb.dot_bracket(pair,res)
+            stri_dot += "".join(["%-10d %s\n" %(k,dotbr[k]) for k in range(len(pair))])
+            
+        for k in range(len(st)):
+            stri_p += "# Frame %d \n" % k
+            stri_p += "".join([ " %15s %15s %4s \n " % (res[pair[k][0][e][0]],res[pair[k][0][e][1]],pair[k][1][e]) for e in range(len(pair[k][0]))])
+        
+            stri_s += "# Frame %d \n" % k
+            stri_s += "".join([ " %15s %15s %4s \n " % (res[st[k][0][e][0]],res[st[k][0][e][1]],st[k][1][e]) for e in range(len(st[k][0]))])
+            
+            
+        
+    fh1 = open(args.name + ".pairing.out",'w')
+    fh1.write(stri_p)
+    fh1.close()
+    
+    fh2 = open(args.name + ".stacking.out",'w')
+    fh2.write(stri_s)
+    fh2.close()
+
+    if(args.dotbr):
+        fh3 = open(args.name + ".dotbracket.out",'w')
+        fh3.write(stri_dot)
+        fh3.close()
+
+##################### DUMP #######################
 
 def dump(args):
 
-    import dump
-    dump.dump(args)
+    assert args.dumpR or args.dumpG, "# ERROR. choose --dumpR and/or --dumpR"
+    
 
- ##################### ANNOTATE #######################
+    if(args.dumpR):
+        stri_r = "# %s \n" % (" ".join(sys.argv[:]))
+        stri_r += "#%15s %15s %11s %11s %11s \n" % ("RES1","RES2","x","y","z")
+
+        if(args.top==None):
+            for i in range(len(args.pdbs)):
+                rvecs,resi = bb.dump_rvec(args.pdbs[i],cutoff=args.cutoff)
+                idxs = its.permutations(range(len(resi)), 2)
+                stri_r += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
+                stri_r += "".join([" %15s %15s %11.4e %11.4e %11.4e \n" % (resi[i1],resi[i2],rvecs[0,i1,i2,0],rvecs[0,i1,i2,1],rvecs[0,i1,i2,2]) for i1,i2 in idxs if(sum(rvecs[0,i1,i2]**2)> 1.E-05)])
+        else:
+            rvecs,resi = bb.dump_rvec(args.trj,topology=args.top,cutoff=args.cutoff)
+            idxs = its.permutations(range(len(resi)), 2)
+            for i in range(len(rvecs)):
+                stri_r += "# Frame %d \n" % i
+                stri_r += "".join([" %15s %15s %11.4e %11.4e %11.4e \n" % (resi[i1],resi[i2],rvecs[i,i1,i2,0],rvecs[i,i1,i2,1],rvecs[i,i1,i2,2]) for i1,i2 in idxs if(sum(rvecs[i,i1,i2]**2)> 1.E-05)])
+                
+        fh = open(args.name + ".rvec.out",'w')
+        fh.write(stri_r)
+        fh.close()
+        
+    if(args.dumpG):
+        
+        stri_g = "# %s \n" % (" ".join(sys.argv[:]))
+        stri_g += "#%15s %15s %11s %11s %11s %11s \n" % ("RES1","RES2","G0","G1","G2","G3")
+        
+        if(args.top==None):
+            for i in range(len(args.pdbs)):
+                rvecs,resi = bb.dump_gvec(args.pdbs[i],cutoff=args.cutoff)
+                idxs = its.permutations(range(len(resi)), 2)
+                stri_g += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
+                stri_g += "".join([" %15s %15s %11.4e %11.4e %11.4e %11.4e \n" % (resi[i1],resi[i2],rvecs[0,i1,i2,0],rvecs[0,i1,i2,1],rvecs[0,i1,i2,2],rvecs[0,i1,i2,3]) for i1,i2 in idxs if(sum(rvecs[0,i1,i2]**2)> 1.E-05)])
+        else:
+            rvecs,resi = bb.dump_rvec(args.trj,topology=args.top,cutoff=args.cutoff)
+            idxs = its.permutations(range(len(resi)), 2)
+            for i in range(len(rvecs)):
+                stri_g += "# Frame %d \n" % i
+                stri_g += "".join([" %15s %15s %11.4e %11.4e %11.4e %11.4e \n" % (resi[i1],resi[i2],rvecs[i,i1,i2,0],rvecs[i,i1,i2,1],rvecs[i,i1,i2,2],rvecs[i,i1,i2,3]) for i1,i2 in idxs if(sum(rvecs[i,i1,i2]**2)> 1.E-05)])
+                
+        fh = open(args.name + ".gvec.out",'w')
+        fh.write(stri_g)
+        fh.close()
+        
+
+##################### CALCULATE TORSION ANGLES #######################
     
 def torsion(args):
+    
+    assert args.backbone or args.sugar or args.pucker, "# ERROR. choose --backbone/sugar/pucker"
+    
+    if(args.backbone):
+        
+        stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
+        stri_b += "#%15s  %11s %11s %11s %11s %11s %11s %11s\n" % ("RESIDUE","alpha","beta","gamma","delta","eps","zeta","chi")
 
-    import torsions
-    torsions.torsions(args)
+        if(args.top==None):
+            for i in range(len(args.pdbs)):
+                stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
+                angles_b,rr = bb.backbone_angles(args.pdbs[i],residues=args.res)
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+        else:
+            
+            angles_b,rr = bb.backbone_angles(args.trj,topology=args.top,residues=args.res)
+            for i in range(angles_b.shape[0]):
+                stri_b += "# Frame %d \n" % i
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+            
+            
+        fh = open(args.name + ".backbone.out",'w')
+        fh.write(stri_b)
+        fh.close()
+
+    if(args.sugar):
+        
+        stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
+        stri_b += "#%15s  %11s %11s %11s %11s %11s \n" % ("RESIDUE","nu0","nu1","nu2","nu3","nu4")
+
+        if(args.top==None):
+            for i in range(len(args.pdbs)):
+                stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
+                angles_b,rr = bb.sugar_angles(args.pdbs[i],residues=args.res)
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+        else:
+            
+            angles_b,rr = bb.sugar_angles(args.trj,topology=args.top,residues=args.res)
+            for i in range(angles_b.shape[0]):
+                stri_b += "# Frame %d \n" % i
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+            
+            
+        fh = open(args.name + ".sugar.out",'w')
+        fh.write(stri_b)
+        fh.close()
+
+    if(args.pucker):
+        
+        stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
+        stri_b += "#%15s  %11s %11s \n" % ("RESIDUE","Phase","Amplitude")
+
+        if(args.top==None):
+            for i in range(len(args.pdbs)):
+                stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
+                angles_b,rr = bb.pucker_angles(args.pdbs[i],residues=args.res)
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+        else:
+            
+            angles_b,rr = bb.pucker_angles(args.trj,topology=args.top,residues=args.res)
+            for i in range(angles_b.shape[0]):
+                stri_b += "# Frame %d \n" % i
+                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                        
+        fh = open(args.name + ".pucker.out",'w')
+        fh.write(stri_b)
+        fh.close()
+      
 
 def couplings(args):
-        
-    import couplings
-    couplings.couplings(args)
 
+    from  barnaba import definitions
+    stri = "# %s \n" % (" ".join(sys.argv[:]))
+    stri += "#%15s %s\n" % ("RESIDUE","".join([" %11s" % (k) for k in definitions.couplings_karplus]))
+    
+    if(args.top==None):
+        for i in range(len(args.pdbs)):
+            stri += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
+            angles_b,rr = bb.jcouplings(args.pdbs[i],residues=args.res,raw=args.raw)
+            stri += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+    else:
+        angles_b,rr = bb.jcouplings(args.trj,topology=args.top,residues=args.res,raw=args.raw)
+        for i in range(angles_b.shape[0]):
+            stri += "# Frame %d \n" % i
+            stri += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
 
-####################  SPLIT #######################
+    fh = open(args.name + ".couplings.out",'w')
+    fh.write(stri)
+    fh.close()
 
-def split(args):
-    import split
-    split.split(args)
+    
+
+####################  SNIPPET #######################
+
+def snippet(args):
+
+    for pdb in args.pdbs:
+        bb.snippet(pdb,args.seq,outdir=args.outdir)
 
 
 ####################  ENM  #######################
 
 def enm(args):
-    import enm
-    enm.enm(args)
+    
+    import barnaba.enm as enm
+    
+    if(args.type=="AA"):
+        sele = "AA"
+    else:
+        sele = []
+        if("P" in args.type):
+            sele.append("P")
+        if("S" in args.type):
+            sele.append("C1\'")
+        if("B" in args.type):
+            sele.append("C2")
 
-####################  SNIPPET  #######################
+    net = enm.Enm(args.pdb,sele_atoms=sele)
 
-def snippet(args):
-    import snippet
-    snippet.snippet(args)
+    # print eigenvectors 
+    evecs = net.print_evec(args.ntop)
+    fh = open(args.name + ".evecs.out",'w')
+    fh.write(evecs)
+    fh.close()
 
+    # print eigenvalues 
+    evals = net.print_eval()
+    fh = open(args.name + ".evals.out",'w')
+    fh.write(evals)
+    fh.close()
 
-####################  SMM  #######################
+    if(args.shape):
+        
+        fluc,res =  net.c2_fluctuations()
+        stri = "# %19s %s \n" % ("Residues","Fluctuations")
+        stri +=  "".join(["%10s/%-10s %.6e \n" % (res[i],res[i+1],fluc[i]) for i in range(len(fluc)) ])
+        fh = open(args.name + ".shape.out",'w')
+        fh.write(stri)
+        fh.close()
 
-def smm(args):
-    import smm
-    smm.smm(args)
 
 
 def cluster(args):
