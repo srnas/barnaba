@@ -160,7 +160,7 @@ def parse():
     #parser_13.add_argument("--eps", dest="eps",help="epsilon used for DBSCAN clustering. default=0.7",default=0.7,type=float)
     #parser_13.add_argument("--mins", dest="mins",help="minsample for DBSCAN clustering, Default=50",default=50,type=float)
     
-    #args = parser.parse_args()
+    args = parser.parse_args()
 
     # CLUSTER
     
