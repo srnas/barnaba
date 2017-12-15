@@ -67,7 +67,11 @@ acceptors = {"A":["N1","N3","N7","O2'"],\
 glyco = {"A":["C1'","N9"],
          "C":["C1'","N1"],
          "G":["C1'","N9"],
-         "U":["C1'","N1"]}
+         "U":["C1'","N1"],
+         "dA":["C1'","N9"],
+         "dC":["C1'","N1"],
+         "dG":["C1'","N9"],
+         "dT":["C1'","N1"]}
 
 # treshold values for base pair edges were obtained
 # from the angular distribution
