@@ -42,7 +42,7 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
 
     
     slen = np.sqrt(gvecs.shape[1]/4.)
-    eps *=np.sqrt(slen)
+    #eps *=np.sqrt(slen)
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(gvecs,sample_weight=sample_weight)
 
     cluster_labels = db.labels_
