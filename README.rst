@@ -58,40 +58,74 @@ then move to barnaba directory and run the command
 
 Usage
 ------------
-BaRNAba can be either used as a python package or using the command-line interface.
-Here's some minimal examples. You can find more elaborate examples at XXX
+BaRNAba can be either used as a Python library. A number of Notebook examples can be found in the examples directory. Alternatively, the a command-line interface can be found in the bin directory.
+Here's a minimal how-to
 0.  minimal help
-    ./baRNAba --help 
-
+    ``` python
+    ./baRNAba.py --help
+    ```
 1. Calculate the ERMSD between structures
-   ./baRNAba ERMSD --ref sample1.pdb --pdb sample2.pdb sample3.pdb ...
+``` python
+./baRNAba.py ERMSD --ref ../test/data/sample1.pdb --pdb ../test/data/sample2.pdb
+```   
+trajectories can be provided as well, by specifying a topology file
+    ``` python
+   ./baRNAba.py ERMSD --ref ../test/data/sample1.pdb --top ../test/data/sample1.pdb --trj ../test/data/samples.xtc
+```
+   other accepted options are shown in a function-specific help
+``` python
+./baRNAba.py ERMSD --help
+```
+2. Calculate the RMSD between structures
+``` python
+./baRNAba.py RMSD --ref ../test/data/sample1.pdb --pdb ../test/data/sample2.pdb --dump
+```   
    
-   trajectories can be provided as well, by specifying a topology file
-   ./baRNAba ERMSD --ref sample1.pdb --top sample1.pdb --trj samples.xtc 
-
-2. Calculate ESCORE
-   ./baRNAba ESCORE --ff 1S72.pdb --pdb sample1.pdb ...
-
-3. Find hairpin loop motif
-   ./baRNAba SS_MOTIF --query motif.pdb --pdb file1.pdb file2.pdb 
-
+3. Find single stranded motif
+``` python
+./baRNAba.py SS_MOTIF --query ../test/data/GNRA.pdb --pdb ../test/data/1S72.pdb 
+```
+   
 4. Find double stranded motif. l1 and l2 are the lengths of the two strands
-   ./baRNAba DS_MOTIF --query motif.pdb --pdb file1.pdb file2.pdb ... --l1 l1 --l2 l2
+``` python
+./baRNAba.py DS_MOTIF --query ../test/data/SARCIN.pdb --pdb ../test/data/1S72.pdb --l1 8 --l2 7
+```
 
-5. Annotate structures/trajectories according to the Leontis/Westhof classification.  
-   ./baRNAba ANNOTATE --pdb file1.pdb file2.pdb ...
+5. Annotate structures/trajectories according to the Leontis/Westhof classification.
+``` python
+./baRNAba.py ANNOTATE --pdb ../test/data/SARCIN.pdb
+```
 
-6. Calculate dihedral backbone angles and sugar pucker
-   ./baRNAba TORSION --pdb file1.pdb file2.pdb --hread 
+6. Calculate backbone/sugar/pseudorotation angles
+``` python   
+./baRNAba.py TORSION --pdb ../test/data/GNRA.pdb --backbone --sugar --pucker
+```
 
 7. Calculate J-couplings (H1'H2', H2'H3' H3'H4', H4'H5', H4'H5'',1H5P,2H5P,H3P_+)
-   ./baRNAba JOCUPLING --pdb file1.pdb file2.pdb ... --jcoupling --hread 
+```python
+   ./baRNAba.py JCOUPLING --pdb ../test/data/sample1.pdb 
+```
 
-8. Calculate NOE signal
-   ./baRNAba NOE --pdb file1.pdb 
+9. Calculate elastic network models for RNA and predict SHAPE reactivity. NB: only works with PDB.
+``` python
+./baRNAba.py ENM --pdb ../test/data/GNRA.pdb --shape 
+```
 
-9. Calculate elastic network models for RNA and predict SHAPE reactivity 
-   ./baRNAba ENM --pdb file1.pdb 
+10. Calculate relative positions between bases R_ij  ang G vectors for pairs within ellipsoidal cutoff
+``` python
+./baRNAba.py DUMP --pdb ../test/data/GNRA.pdb --dumpG --dumpR
+```
+
+11. Extract fragments from structures with a given sequence. NB: only works with PDB.
+``` python
+./baRNAba.py SNIPPET --pdb ../test/data/1S72.pdb  --seq NNGNRANN
+```
+
+12. Calculate ESCORE
+``` python
+./baRNAba.py ESCORE --ff ../test/data/1S72.pdb --pdb ../test/data/sample1.pdb
+```
+
 
 
 

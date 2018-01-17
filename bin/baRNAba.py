@@ -133,6 +133,7 @@ def parse():
 
     # CREATE FRAGMENTS
     parser_07 = subparsers.add_parser('SNIPPET', help='SPLIT structure in multiple PDB')
+    parser_07.add_argument("-o", dest="name",help="output_name",default=None,required=False)
     parser_07.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=True)
     parser_07.add_argument("--seq", dest="seq",help="Sequence type. Accepts ACGU/NRY format",required=True)
     parser_07.add_argument("--outdir", dest="outdir",help="outdir",required=False,default=None)
@@ -140,7 +141,7 @@ def parse():
     # CALCULATE ENM
     parser_10 = subparsers.add_parser('ENM', help='Calculate ENM')
     parser_10.add_argument("-o", dest="name",help="output_name",default=None,required=False)
-    parser_10.add_argument("--pdb", dest="pdb",help="PDB file",default=None,required=True)
+    parser_10.add_argument("--pdb", dest="pdbs",help="PDB file",default=None,required=True)
 
     parser_10.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in nm (default=0.9)",default=0.9,type=float)
     parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SB','SP','BP','SBP','AA'], help='Type of ENM (default=SBP)')    
@@ -189,7 +190,7 @@ def rmsd(args):
 
     if(args.top==None):
         if(args.dump==True):
-            dd = [bb.rmsd(args.reference,pdb,out="%s_%06d.pdb" % (out,i)) for i,pdb in enumerate(args.pdbs)]
+            dd = [bb.rmsd(args.reference,pdb,out="%s_%06d.pdb" % (args.name,i)) for i,pdb in enumerate(args.pdbs)]
         else:
             dd = [bb.rmsd(args.reference,pdb) for i,pdb in enumerate(args.pdbs)]
     else:
@@ -501,7 +502,7 @@ def enm(args):
         if("B" in args.type):
             sele.append("C2")
 
-    net = enm.Enm(args.pdb,sele_atoms=sele)
+    net = enm.Enm(args.pdbs,sele_atoms=sele)
 
     # print eigenvectors 
     evecs = net.print_evec(args.ntop)
@@ -552,14 +553,15 @@ def main():
     args = parse()
 
     # create filename
-    outfile = filename(args)
+    if(args.subparser_name!="SNIPPET"):
+        outfile = filename(args)
 
     # check
     if(args.pdbs==None):
         assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file (--trj)"
         assert args.top != None, "# Please provide a topology file"
     else:
-        if(args.subparser_name!="ENM" or args.subparser_name!="SNIPPET"):
+        if(args.subparser_name != "ENM" and args.subparser_name!="SNIPPET"):
             assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory+topology files, not both"
             
     
