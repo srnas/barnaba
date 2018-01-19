@@ -1124,7 +1124,7 @@ def snippet(pdb,sequence,outdir=None):
     # check query sequence
     for item in sequence:
         if(item not in definitions.known_abbrev):
-            print "# FATAL Error. Symbol ", item, " not known. Use ACGU NYR"
+            print "# FATAL Error. Symbol ", item, " not known. Use AUCG/NYRSWKMBDHV"
             return 1
         if(item == "%"):
             print "# Fatal error. Single strand only"
