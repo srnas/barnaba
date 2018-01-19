@@ -95,6 +95,11 @@ def test_sugar_4():
     fh.write(stri)
     fh.close()
     assert(filecmp.cmp("%s/sugar_04.test.dat" % outdir,"%s/sugar_04.test.dat" % refdir)==True)
+
+test_sugar_1()
+test_sugar_2()
+test_sugar_3()
+test_sugar_4()
         
 
 
