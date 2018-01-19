@@ -458,7 +458,7 @@ def couplings(args):
 
     from  barnaba import definitions
     stri = "# %s \n" % (" ".join(sys.argv[:]))
-    stri += "#%15s %s\n" % ("RESIDUE","".join([" %11s" % (k) for k in definitions.couplings_karplus]))
+    stri += "#%15s %s\n" % ("RESIDUE","".join([" %11s" % (k) for k in  definitions.couplings_idx.keys()]))
     
     if(args.top==None):
         for i in range(len(args.pdbs)):

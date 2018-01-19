@@ -270,7 +270,7 @@ def dihedral(p1,p2,p3,p4):
     Returns
     -------
     dotp : float
-        angle in radians
+        angle in radians, range (-pi,pi)
     
     """
     

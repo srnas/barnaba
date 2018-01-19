@@ -21,6 +21,27 @@ import calc_mats as ff
 import os
     
 def ermsd(reference,target,cutoff=2.4,topology=None):
+    
+    """
+    Calculate ermsd between reference and target structures  
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of reference structure, any format accepted by MDtraj can be used.
+    target : string 
+         Filename of target structure. If a trajectory is provided, a topology file must be specified.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    cutoff :  float, optional
+         Cutoff for eRMSD calculation. 
+         The default value of 2.4 should work in most cases. This cutoff value roughly correspond to considering pair of bases whose distance is within an ellipsoidal cutoff with axis x=y=2.4*5 = 12 Angstrom and z=2.4*3=7.2 Angstrom. Larger values of cutoff can be useful when analyzing unstructured/flexible molecules.
+    Returns
+    -------
+        array :
+            eRMSD distance numpy array with dimension *m*,  the number of structures in target.
+    
+    """
 
     ref = md.load(reference)
     warn =  "# Loaded reference %s \n" % reference
@@ -61,6 +82,26 @@ def ermsd_traj(reference,traj,cutoff=2.4):
 
 
 def dump_rvec(filename,topology=None,cutoff=2.4):
+    """
+    Calculate relative position of pair of nucleobases within ellipsoidal cutoff
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    cutoff :  float, optional
+         Cutoff for eRMSD calculation. 
+         This cutoff value roughly correspond to considering pair of bases whose distance is within an ellipsoidal cutoff with axis x=y=2.4*5 = 12 Angstrom and z=2.4*3=7.2 Angstrom. Larger values of cutoff can be useful when analyzing unstructured/flexible molecules.
+    Returns
+    -------
+    rmat :
+        Numpy array with dimension (m,n,n,3). *m* is the number of structures in target, *n* is the number of nucleotides. As an example, the position of base 10 in the reference system of base 9 in the fourth frame is given by v = rmat[3,8,9], where v is a 3-dimensional vector
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+
+    """
 
     if(topology==None):
         traj = md.load(filename)
@@ -86,6 +127,28 @@ def dump_rvec_traj(traj,cutoff=2.4):
 
 def dump_gvec(filename,topology=None,cutoff=2.4):
     
+    """
+    Calculate relative position of pair of nucleobases within ellipsoidal cutoff
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    cutoff :  float, optional
+         Cutoff for eRMSD calculation. 
+         This cutoff value roughly correspond to considering pair of bases whose distance is within an ellipsoidal cutoff with axis x=y=2.4*5 = 12 Angstrom and z=2.4*3=7.2 Angstrom. Larger values of cutoff can be useful when analyzing unstructured/flexible molecules.
+    Returns
+    -------
+    gmat :
+        Numpy array with dimension (m,n,n,4). *m* is the number of structures in target, *n* is the number of nucleotides. As an example, the position of base 10 in the reference system of base 9 in the fourth frame is given by v = rmat[3,8,9], where v is a 4-dimensional vector
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+       
+
+    """
+    
     if(topology==None):
         traj = md.load(filename)
     else:
@@ -109,6 +172,27 @@ def dump_gvec_traj(traj,cutoff=2.4):
 
 
 def rmsd(reference,target,topology=None,out=None):
+    
+    """
+    Calculate rmsd after optimal alignment between reference and target structures. Superposition and RMSD calculations are performed using all heavy atoms. 
+    If the sequence of reference and target is different, only backbone/sugar heavy atoms are used.
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of reference structure, any format accepted by MDtraj can be used.
+    target : string 
+         Filename of target structure. If a trajectory is provided, a topology file must be specified.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    out :  string, optional
+         If a string is specified, superimposed PDB structures are written to disk with the specified prefix.
+    Returns
+    -------
+    array :
+        RMSD distance (in nm) numpy array with dimension *m*,  the number of structures in target.
+    
+    """
 
     ref = md.load(reference)
     warn =  "# Loaded reference %s \n" % reference
@@ -183,6 +267,30 @@ def rmsd_traj(reference,traj,out=None):
 
 def backbone_angles(filename,topology=None,residues=None,angles=None):
 
+    """
+    Calculate backbone ([alpha,beta,gamma,delta,espilon,zeta]) and glycosydic (chi) torsion angles.
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    residues :  list, optional
+         If a list of residues is specified, only the selected residues will be calculated. Otherwise, the calculation is performed for all residues.
+         The residue naming convention is RESNAME_RESNUMBER_CHAININDEX
+    angles : list, optional
+         If a list of angles is specified, only the selected angles will be calculated. 
+         Otherwise, the calculation is performed for all torsion angles. 
+    Returns
+    -------
+    array :
+        Torsion angles in radians. A Numpy array with dimension (m,n,q) is returned. *m* is the number of structures in target, *n* is the number of residues, and q is the number of requested angles (7 by default).
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+
+    """
+    
     if(topology==None):
         traj = md.load(filename)
     else:
@@ -227,6 +335,31 @@ def backbone_angles_traj(traj,residues=None,angles=None):
 ########################################################
     
 def sugar_angles(filename,topology=None,residues=None,angles=None):
+    
+    """
+    Calculate sugar [nu1,nu2,nu3,nu4,nu5] torsion angles.
+
+    Parameters
+    ----------
+    reference : string  
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional 
+         Topology filename. Must be specified if target is a trajectory.
+    residues :  list, optional
+         If a list of residues is specified, only the selected residues will be calculated. Otherwise, the calculation is performed for all residues.
+         The residue naming convention is RESNAME_RESNUMBER_CHAININDEX
+    angles : list, optional
+         If a list of angles is specified, only the selected angles will be calculated. 
+         Otherwise, the calculation is performed for all torsion angles. 
+
+    Returns
+    -------
+    array :
+        Torsion angles in radians. A Numpy array with dimension (m,n,q) is returned. *m* is the number of structures in target, *n* is the number of residues, and q is the number of requested angles (5 by default).
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+
+    """
 
     if(topology==None):
         traj = md.load(filename)
@@ -269,6 +402,27 @@ def sugar_angles_traj(traj,residues=None,angles=None):
 #############################################################
 
 def pucker_angles(filename,topology=None,residues=None):
+    
+    """
+    Calculate sugar pucker pseudorotation  torsion angles: phase and amplitude
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    residues :  list, optional
+         If a list of residues is specified, only the selected residues will be calculated. Otherwise, the calculation is performed for all residues.
+         The residue naming convention is RESNAME_RESNUMBER_CHAININDEX
+    Returns
+    -------
+    array :
+        Phase and amplitude. A Numpy array with dimension (m,n,2) is returned. *m* is the number of structures in target, *n* is the number of residues.
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+
+    """
 
     if(topology==None):
         traj = md.load(filename)
@@ -294,6 +448,34 @@ def pucker_angles_traj(traj,residues=None):
 ################################################################
 
 def jcouplings(filename,topology=None,residues=None,couplings=None,raw=False):
+    
+    """
+    Calculate 3J scalar couplings from structure using the Karplus equations.
+
+    Parameters
+    ----------
+    reference : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    residues :  list, optional
+         If a list of residues is specified, only the selected residues will be calculated. Otherwise, the calculation is performed for all residues.
+         The residue naming convention is RESNAME_RESNUMBER_CHAININDEX
+    couplings:
+         If a list of couplings to be chosen from [H1H2, H2H3,H3H4,1H5P,2H5P,C4Pb,1H5H4,2H5H4,H3P,C4Pe,H1C2/4,H1C6/8] 
+         is specified, only the selected couplings will be calculated. 
+         Otherwise, the calculation is performed for all of them. 
+    raw: bool, optional
+         raw values of the angles are returned. 
+
+    Returns
+    -------
+    array :
+         Scalar couplings in Hz. A Numpy array with dimension (m,n,q) is returned. *m* is the number of structures in target, *n* is the number of residues and *q* is the number of couplings. If raw = True, a (m,n,5) array is returned with the values of the torsion angles used for the calculation.
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX
+
+    """
 
     if(topology==None):
         traj = md.load(filename)
@@ -375,6 +557,36 @@ def jcouplings_traj(traj,residues=None,couplings=None,raw=False):
 ##############################################################
 
 def ss_motif(query,target,topology=None,threshold=0.8,cutoff=2.4,sequence=None,out=None,bulges=0):
+    
+    """
+    Find single stranded motif similar to *query* in *target*
+
+    Parameters
+    ----------
+    query : string 
+         Filename of query structure, any format accepted by MDtraj can be used.
+    target : string 
+         Filename of target structure. If a trajectory is provided, a topology file must be specified.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    threshold : float, optional
+         all substructures in target with eRMSD < threshold will be returned. 
+    sequence: string, optional
+         By default, the search is performed in a sequence-independent manner, unless a specific sequence is specified. Abbreviations (R/Y/N) are accepted.
+    out: string, optional
+         Hits are written to PDB files and aligned to query with the specified prefix. If *out* is not specified, PDB are not written.
+    bulges: int, optional
+         Maximum number of allowed bulges, i.e. maximium number of inserted nucleotides. Default value is 0.
+    cutoff :  float, optional
+         Cutoff for eRMSD calculation. 
+         The default value of 2.4 should work in most cases. This cutoff value roughly correspond to considering pair of bases whose distance is within an ellipsoidal cutoff with axis x=y=2.4*5 = 12 Angstrom and z=2.4*3=7.2 Angstrom. Larger values of cutoff can be useful when analyzing unstructured/flexible molecules.
+    
+    Returns
+    -------
+        list :
+            list of results. Each element in the list contain: the frame number, the eRMSD from query and the residues
+    
+    """
 
     ref = md.load(query)
     warn =  "# Loaded query %s \n" % query
@@ -457,6 +669,40 @@ def ss_motif_traj(ref,traj,threshold=0.8,cutoff=2.4,sequence=None,bulges=0,out=N
 ##########################################################################################
 
 def ds_motif(query,target,l1,l2,threshold=0.9,cutoff=2.4,topology=None,sequence=None,bulges=0,out=None):
+    
+    """
+    Find single stranded motif similar to *query* in *target*
+
+    Parameters
+    ----------
+    query : string 
+         Filename of query structure, any format accepted by MDtraj can be used.
+    target : string 
+         Filename of target structure. If a trajectory is provided, a topology file must be specified.
+    l1 : int 
+         Number of nucleotides in the first strand
+    l2 : int 
+         Number of nucleotides in the second strand
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    threshold : float, optional
+         all substructures in target with eRMSD < threshold will be returned. 
+    sequence: string, optional
+         By default, the search is performed in a sequence-independent manner, unless a specific sequence is specified. Abbreviations (R/Y/N) are accepted.
+    out: string, optional
+         Hits are written to PDB files and aligned to query with the specified prefix. If *out* is not specified, PDB are not written.
+    bulges: int, optional
+         Maximum number of allowed bulges, i.e. maximium number of inserted nucleotides. Default value is 0.
+    cutoff :  float, optional
+         Cutoff for eRMSD calculation. 
+         The default value of 2.4 should work in most cases. This cutoff value roughly correspond to considering pair of bases whose distance is within an ellipsoidal cutoff with axis x=y=2.4*5 = 12 Angstrom and z=2.4*3=7.2 Angstrom. Larger values of cutoff can be useful when analyzing unstructured/flexible molecules.
+    
+    Returns
+    -------
+        list :
+            list of results. Each element in the list contain: the frame number, the eRMSD from query and the residues
+    
+    """
 
     ref = md.load(query)
     warn =  "# Loaded query %s \n" % query        
@@ -597,6 +843,25 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
 
 
 def annotate(filename,topology=None):
+    
+    """
+    Find base-pair and base-stacking 
+
+    Parameters
+    ----------
+    filename : string 
+         Filename of structure, any format accepted by MDtraj can be used.
+    topology : string, optional
+         Topology filename. Must be specified if target is a trajectory.
+    Returns
+    -------
+    stackings : list
+    pairings : list
+        stackings and pairings contains the list of interactions for the N frames in the PDB/trajectory file and it is organized in the following way: for a given frame i=1..n there are k=1..q interactions between residues with index pairings[i][0][k][0] and pairings[i][0][k][1]. The type of interaction is specified at the element pairings[i][1][k].
+    seq : 
+        List of residue names. Each residue is identified with the string RESNAME_RESNUMBER_CHAININDEX       
+
+    """
     
     if(topology==None):
         traj = md.load(filename)
@@ -761,6 +1026,22 @@ def annotate_traj(traj):
 
 def dot_bracket(pairings,sequence):
 
+    """
+    calculate dot-bracket annotation 
+
+    Parameters
+    ----------
+    pairings : list 
+         List of pairings as returned by annotate function
+    sequence : list
+         Sequence as returned by annotate function
+    Returns
+    -------
+    list :
+        strings with the dot-bracket annotation
+
+    """
+
     ll = len(sequence)
     dot_bracket = []
     for k,pp in enumerate(pairings):
@@ -818,7 +1099,21 @@ def dot_bracket(pairings,sequence):
 #############################################################
 
 def snippet(pdb,sequence,outdir=None):
-    
+
+    """
+    Extract fragments fro pdb with a givn sequence
+
+    Parameters
+    ----------
+    pdb : string 
+         name of PDB file. Only PDB are accepted. 
+    sequence: 
+         sequence to extract. N/R/Y abbreviations are accepted. 
+    outdir : string
+        specify output directory
+
+    """
+
     import reader as  reader
 
     if(outdir==None):
