@@ -36,7 +36,7 @@ modified_dict = {'1MA':'A','5AA':'A','P5P':'A','2MA':'A',\
 
 others = ["ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HSD","HSE","HSP","ILE","HIS","LEU","LYS","LSN","MET","PHE","PRO","SER","THR","TRP","TYR","VAL","HOH","MG","K","NA","CL","CD","CA"]
 
-known_abbrev = ["A","C","G","U","N","Y","R","%"]
+known_abbrev = ["A","C","G","U","N","Y","R","S","W","K","M","B","D","H","V","%"]
 term_5prime = ["OP1","OP2","P","OP3"]
 
 # geometric definitions
@@ -155,21 +155,40 @@ couplings_karplus = {\
 }
 
              
-
+# Nomenclature Committee of the International Union of Biochemistry (NC-IUB).
+# Nomenclature for Incompletely Specified Bases in Nucleic Acid Sequences.
+# Recommendations 1984. Biochem. J. 143001985, 229, 281-286.
 def get_pattern(query):
     # build pattern for regular expression
     pattern = "^"
     for res in query:
-        assert res in known_abbrev, "# Fatal error: character %s not known. Use AUCG/NYR" % (res)
+        assert res in known_abbrev, "# Fatal error: character %s not known. Use AUCG/NYRSWKMBDHV" % (res)
         if(res in rna):
             pattern += res
         else:
-            if(res == "N"):
+            if(res == "N"): # aNy
                 pattern += "[AUCGT]"
-            if(res == "Y"):
+            if(res == "Y"): # pYrimidine
                 pattern += "[UCT]"
-            if(res == "R"):
+            if(res == "R"): # puRine
                 pattern += "[AG]"
+            if(res == "S"): # Strong
+                pattern += "[GC]"
+            if(res == "W"): # Weak
+                pattern += "[AUT]"
+            if(res == "K"): # Keto
+                pattern += "[GUT]"
+            if(res == "M"): # aMino
+                pattern += "[AC]"
+            if(res == "B"): # not adenine
+                pattern += "[UCGT]"
+            if(res == "D"): # not cytosine
+                pattern += "[AUGT]"
+            if(res == "H"): # not guanine
+                pattern += "[AUCT]"
+            if(res == "V"): # not uracil
+                pattern += "[ACG]"
+
     pattern += "$"
     return pattern
 
