@@ -6,8 +6,9 @@ python:
 #  - "3.5"
 #  - "3.6"
 install:
-  - pip install numpy cython
+  - pip install numpy scipy cython
   - pip install pandas
+  - pip install sklearn
   - pip install mdtraj
   - pip install nose
   - pip install -e .
