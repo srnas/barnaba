@@ -25,9 +25,9 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy
   - source activate test-environment
-  - conda install -c omnia pyemma
-  - conda install -c omnia mdtraj
-  - python setup.py install
+  #- conda install -c omnia pyemma
+  - conda install -c conda-forge mdtraj
+  - pip install -e .
 
 script:
   # Your test script goes here
