@@ -1,13 +1,30 @@
 import barnaba as bb
 import os
-import filecmp
+import difflib
+import sys
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
 os.system("mkdir %s" % (outdir))
 
+def comp(s1,s2,j):
 
+
+    diff = [x for x in difflib.unified_diff(s1,s2)]
+    
+    if(len(list(diff))==0):
+        return 0
+    else:
+        #print '\n'.join(diff)
+        sys.stderr.write(''.join(diff))
+        fh = open("%s/diff_%d.test.dat" % (outdir,j),'w')
+        fh.write(''.join(diff))
+        fh.close()
+        assert(1==2)
+    
+    
+    
 def test_ermsd_1():
 
     # align pdb to pdb with the same sequence
@@ -21,7 +38,11 @@ def test_ermsd_1():
     fh.write(stri)
     fh.close()
 
-    assert(filecmp.cmp("%s/ermsd_01.test.dat" % outdir,"%s/ermsd_01.test.dat" % refdir)==True)
+    ref_string = (open("%s/ermsd_01.test.dat" % refdir)).readlines()
+    tmp_string = (open("%s/ermsd_01.test.dat" % outdir)).readlines()
+
+    return comp(ref_string,tmp_string,1)
+
     
 def test_ermsd_2():
     # align pdb to pdb with different sequence
@@ -33,7 +54,12 @@ def test_ermsd_2():
     fh = open("%s/ermsd_02.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/ermsd_02.test.dat" % outdir,"%s/ermsd_02.test.dat" % refdir)==True)
+    
+    ref_string = (open("%s/ermsd_02.test.dat" % refdir)).readlines()
+    tmp_string = (open("%s/ermsd_02.test.dat" % outdir)).readlines()
+
+    return comp(ref_string,tmp_string,2)
+
 
 def test_ermsd_3():
     
@@ -45,9 +71,15 @@ def test_ermsd_3():
     fh = open("%s/ermsd_03.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/ermsd_03.test.dat" % outdir,"%s/ermsd_03.test.dat" % refdir)==True)
+    
+    ref_string = (open("%s/ermsd_03.test.dat" % refdir)).readlines()
+    tmp_string = (open("%s/ermsd_03.test.dat" % outdir)).readlines()
+
+    return comp(ref_string,tmp_string,3)
+
 
 def test_ermsd_4():
+    
     # align trajectory to pdb
     fname = "%s/test/data/sample1.pdb" % cwd
     fname1 = "%s/test/data/samples.xtc" % cwd
@@ -57,5 +89,10 @@ def test_ermsd_4():
     fh = open("%s/ermsd_04.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/ermsd_04.test.dat" % outdir,"%s/ermsd_04.test.dat" % refdir)==True)
+
+    ref_string = (open("%s/ermsd_04.test.dat" % refdir)).readlines()
+    tmp_string = (open("%s/ermsd_04.test.dat" % outdir)).readlines()
+
+    return comp(ref_string,tmp_string,4)
+
 
