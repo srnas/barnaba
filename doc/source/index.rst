@@ -10,14 +10,7 @@ Welcome to baRNAba's documentation!
    :maxdepth: 2
    :caption: Contents:
 	     baRNAba package
-==============
-
-Submodules
-----------
-.. automodule:: functions
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   README
 
 Indices and tables
 ==================

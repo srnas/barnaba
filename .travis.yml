@@ -31,4 +31,4 @@ install:
 
 script:
   # Your test script goes here
-  - .travis/run.tests
+  - nosetests -v
