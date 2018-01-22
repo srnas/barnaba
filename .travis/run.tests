@@ -1,8 +1,0 @@
-#! /bin/bash
-
-# full list:
-#for name in test/test_*.py
-for name in test/test_sugar.py
-do
-  python $name
-done
