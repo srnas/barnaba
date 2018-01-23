@@ -34,12 +34,11 @@ baRNAba requires:
    - Mdtraj
      
 baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories
-To perform stop motion modeling analysis (SMM), pyemma is required too.
+To perform cluster analysis, scikit-learn is required too.
 
-We highly recommend to install the above packages using conda (http://conda.pydata.org/docs/index.html)
+MDtraj can be installed using pip:
 
-  conda install -c omnia mdtraj
-  conda install -c omnia pyemma
+    pip install mdtraj
 
 Installation
 -------------
@@ -58,13 +57,14 @@ then move to barnaba directory and run the command
 
 Usage
 ------------
-BaRNAba can be either used as a Python library. A number of Notebook examples can be found in the examples directory. Alternatively, the a command-line interface can be found in the bin directory.
-Here's a minimal how-to
-0.  minimal help
+BaRNAba can be either used as a Python library or as a commandline tool.
+A number of Notebook examples can be found in the examples directory. Alternatively, the command-line interface can be found in the bin directory. Here's a minimal how-to
+
+0.  minimal help  
 
     ./baRNAba.py --help
 
-1. Calculate the ERMSD between structures
+1. Calculate the ERMSD between structures  
 
    ./baRNAba.py ERMSD --ref ../test/data/sample1.pdb --pdb ../test/data/sample2.pdb
   
@@ -72,7 +72,7 @@ trajectories can be provided as well, by specifying a topology file
 
    ./baRNAba.py ERMSD --ref ../test/data/sample1.pdb --top ../test/data/sample1.pdb --trj ../test/data/samples.xtc  
 
-other accepted options are shown in a function-specific help
+other accepted options are shown in a function-specific help  
 
    ./baRNAba.py ERMSD --help
   
