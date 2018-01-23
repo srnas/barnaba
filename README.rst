@@ -4,28 +4,36 @@
 Introduction
 ============
 
-BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. It supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more, as it uses the MDtraj library.
+BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. BaRNAba uses MDtraj to read/write topology and trajectory files, as such it supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more.  
 BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi and Giovanni Pinamonti.
 This is what you can do with baRNAba:
 
-1. Calculate eRMSD for nucleic acids
-2. Calculate RMSD and do RMSD superpositions
-3. Search for single stranded RNA motifs/fragments in the PDB database or in simulations
-4. Search for double stranded RNA motifs/fragments in the PDB database or in simulations
+1. Calculate eRMSD [ermsd]_
+2. Calculate RMSD after optimal alignment
+3. Search for single/double stranded RNA motifs in the PDB database or in simulations [ermsd]_
 5. Annotate PDB structures and trajectories with the Leontis-Westhof classification
 6. Cluster nucleic acids structures using the eRMSD as a metric distance
-7. Calculate elastic network models for nucleic acids and nucleic acids/protein complexes (Pinamonti et al. Nucleic Acids Research, 2015)
-8. Perform a Stop-Motion analysis (Bottaro et al. Nucleic Acids Research, 2016)
+7. Calculate elastic network models for nucleic acids and nucleic acids/protein complexes [enm]_
+8. Perform a stop-motion modeling analysis [smm]_
 9. Calculate backbone and pucker torsion angles in a PDB structure or trajectory
 10. Back-calculate 3J scalar couplings from PDB structure or trajectory
-11. Score three-dimensional structures using eSCORE (Bottaro et al, Nucleic Acids Research)
+11. Score three-dimensional structures using eSCORE [ermsd]_
 
-For bugs, questions or comments contact Sandro at sandro dot bottaro (guess) gmail dot com
+For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat) gmail dot com
 
 If you use baRNAba in your work,  please cite the following paper:
-
-S.Bottaro, F. di Palma, G.Bussi. The role of nucleobases 
-in RNA structure and dynamics.  Nucleic Acids Research (2014)
+```
+@article{bottaro2014role,
+  title={The role of nucleobase interactions in RNA structure and dynamics},
+  author={Bottaro, Sandro and Di Palma, Francesco and Bussi, Giovanni},
+  journal={Nucleic acids research},
+  volume={42},
+  number={21},
+  pages={13306--13314},
+  year={2014},
+  publisher={Oxford University Press}
+}
+```
 
 Requirements
 -------------
@@ -120,13 +128,14 @@ other accepted options are shown in a function-specific help
 
 
 
-
-
-
-
-
-
-
-
+.. [ermsd] Bottaro, Sandro, Francesco Di Palma, and Giovanni Bussi.
+	   "The role of nucleobase interactions in RNA structure and dynamics."
+	   Nucleic acids research 42.21 (2014): 13306-13314.
+   [enm] Pinamonti, Giovanni, et al.
+	   "Elastic network models for RNA: a comparative assessment with molecular dynamics and SHAPE experiments."
+	   Nucleic acids research 43.15 (2015): 7260-7269.
+   [smm] Bottaro, Sandro, Alejandro Gil-Ley, and Giovanni Bussi.
+         "RNA folding pathways in stop motion."
+	 Nucleic acids research 44.12 (2016): 5883-5891.
 
 
