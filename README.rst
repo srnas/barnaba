@@ -22,6 +22,7 @@ This is what you can do with baRNAba:
 For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat) gmail dot com
 
 If you use baRNAba in your work,  please cite the following paper:
+
 ```
 @article{bottaro2014role,  
   title={The role of nucleobase interactions in RNA structure and dynamics},  
