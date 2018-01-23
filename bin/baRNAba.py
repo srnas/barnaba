@@ -146,6 +146,8 @@ def parse():
     parser_10.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in nm (default=0.9)",default=0.9,type=float)
     parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SB','SP','BP','SBP','AA'], help='Type of ENM (default=SBP)')    
     parser_10.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
+    parser_10.add_argument("--sparse", dest="sparse",help="Use sparse matrix diagonalization algorithm. Recomended for large matrices.",action='store_true',default=False)
+
     parser_10.add_argument("--shape", dest="shape",help="calculate C2/C2 fluctuations",action='store_true',default=False)
 
     
@@ -502,7 +504,7 @@ def enm(args):
         if("B" in args.type):
             sele.append("C2")
 
-    net = enm.Enm(args.pdbs,sele_atoms=sele)
+    net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop)
 
     # print eigenvectors 
     evecs = net.print_evec(args.ntop)
