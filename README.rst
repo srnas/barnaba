@@ -23,15 +23,15 @@ For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat)
 
 If you use baRNAba in your work,  please cite the following paper:
 ```
-@article{bottaro2014role,
-  title={The role of nucleobase interactions in RNA structure and dynamics},
-  author={Bottaro, Sandro and Di Palma, Francesco and Bussi, Giovanni},
-  journal={Nucleic acids research},
-  volume={42},
-  number={21},
-  pages={13306--13314},
-  year={2014},
-  publisher={Oxford University Press}
+@article{bottaro2014role,  
+  title={The role of nucleobase interactions in RNA structure and dynamics},  
+  author={Bottaro, Sandro and Di Palma, Francesco and Bussi, Giovanni},  
+  journal={Nucleic acids research},  
+  volume={42},  
+  number={21},  
+  pages={13306--13314},  
+  year={2014},  
+  publisher={Oxford University Press}  
 }
 ```
 
