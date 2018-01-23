@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/srnas/barnaba.svg?branch=regression-tests)](https://travis-ci.org/srnas/barnaba)
 
 Introduction
 ============
