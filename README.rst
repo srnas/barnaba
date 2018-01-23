@@ -131,10 +131,10 @@ other accepted options are shown in a function-specific help
 .. [ermsd] Bottaro, Sandro, Francesco Di Palma, and Giovanni Bussi.
 	   "The role of nucleobase interactions in RNA structure and dynamics."
 	   Nucleic acids research 42.21 (2014): 13306-13314.
-   [enm] Pinamonti, Giovanni, et al.
+.. [enm] Pinamonti, Giovanni, et al.
 	   "Elastic network models for RNA: a comparative assessment with molecular dynamics and SHAPE experiments."
 	   Nucleic acids research 43.15 (2015): 7260-7269.
-   [smm] Bottaro, Sandro, Alejandro Gil-Ley, and Giovanni Bussi.
+.. [smm] Bottaro, Sandro, Alejandro Gil-Ley, and Giovanni Bussi.
          "RNA folding pathways in stop motion."
 	 Nucleic acids research 44.12 (2016): 5883-5891.
 
