@@ -1,12 +1,12 @@
 import barnaba as bb
 import os
-import filecmp
+from comp_mine import comp
 import glob
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 fname = "%s/test/data/GNRA.pdb" % cwd
 fname1 = "%s/test/data/1S72.pdb" % cwd
 
@@ -23,11 +23,10 @@ def test_ssmotif():
     fh = open("%s/ssmotif_01.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/ssmotif_01.test.dat" % outdir,"%s/ssmotif_01.test.dat" % refdir)==True)
-
+    comp("%s/ssmotif_01.test.dat" % refdir)
+    
     # compare all pdbs
-    #of = glob.glob('%s/ss_motif*.pdb' % outdir)
-    #for f in of:
-    #    nf = f.replace("tmp","reference")
-    #    assert filecmp.cmp("%s" % f,"%s" % nf)==True, "%s not equal to %s" % (f,nf)
+    of = glob.glob('%s/ss_motif*.pdb' % refdir)
+    for f in of:
+        comp(f)
         

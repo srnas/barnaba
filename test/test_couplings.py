@@ -1,11 +1,12 @@
 import barnaba as bb
 import os
 import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 top = "%s/test/data/sample1.pdb" % cwd
 traj = "%s/test/data/samples.xtc" % cwd
@@ -24,7 +25,8 @@ def test_couplings_1():
     stri += "\n"
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/couplings_01.test.dat" % outdir,"%s/couplings_01.test.dat" % refdir)==True)
+    comp("%s/couplings_01.test.dat" % refdir)
+
 
 def test_couplings_2():
     
@@ -38,4 +40,4 @@ def test_couplings_2():
             stri += "\n"
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/couplings_01.test.dat" % outdir,"%s/couplings_01.test.dat" % refdir)==True)
+    comp("%s/couplings_02.test.dat" % refdir)

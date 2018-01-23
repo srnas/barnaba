@@ -1,7 +1,7 @@
 
 import barnaba.enm as enm
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
@@ -36,7 +36,7 @@ def test_enm_1():
         stri +=  "%10s/%-10s %.6e \n" % (res[i],res[i+1],fluc[i])
     fh.write(stri)
     fh.close()
-    
-    assert(filecmp.cmp("%s/enm_01.test.dat" % outdir,"%s/enm_01.test.dat" % refdir)==True)
-    assert(filecmp.cmp("%s/enm_02.test.dat" % outdir,"%s/enm_02.test.dat" % refdir)==True)
-    assert(filecmp.cmp("%s/enm_03.test.dat" % outdir,"%s/enm_03.test.dat" % refdir)==True)
+
+    comp("%s/enm_01.test.dat" % refdir)
+    comp("%s/enm_02.test.dat" % refdir)
+    comp("%s/enm_03.test.dat" % refdir)

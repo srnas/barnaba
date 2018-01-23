@@ -1,11 +1,11 @@
 import barnaba as bb
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 def test_rmsd_1():
     # align pdb to pdb with the same sequence
@@ -18,8 +18,8 @@ def test_rmsd_1():
     fh = open("%s/rmsd_01.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/rmsd_01.test.dat" % outdir,"%s/rmsd_01.test.dat" % refdir)==True)
-    #assert(filecmp.cmp("%s/aligned_1.pdb" % outdir,"%s/aligned_1.pdb" % refdir)==True)
+    comp("%s/rmsd_01.test.dat" % refdir)
+    comp("%s/aligned_1.pdb" % refdir)
 
 def test_rmsd_2():
     # align pdb to pdb with different sequence
@@ -31,8 +31,9 @@ def test_rmsd_2():
     fh = open("%s/rmsd_02.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/rmsd_02.test.dat" % outdir,"%s/rmsd_02.test.dat" % refdir)==True)
-    #assert(filecmp.cmp("%s/aligned_2.pdb" % outdir,"%s/aligned_2.pdb" % refdir)==True)
+    comp("%s/rmsd_02.test.dat" % refdir)
+    comp("%s/aligned_2.pdb" % refdir)
+
     
 def test_rmsd_3():
     
@@ -47,5 +48,6 @@ def test_rmsd_3():
     fh = open("%s/rmsd_03.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/rmsd_03.test.dat" % outdir,"%s/rmsd_03.test.dat" % refdir)==True)
-    #assert(filecmp.cmp("%s/aligned_3.xtc" % outdir,"%s/aligned_3.xtc" % refdir)==True)
+    comp("%s/rmsd_03.test.dat" % refdir)
+
+

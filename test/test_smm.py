@@ -2,12 +2,12 @@ import barnaba as bb
 import mdtraj as md
 import barnaba.smm as smm
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 
 def test_smm_1():

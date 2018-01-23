@@ -1,6 +1,6 @@
 import barnaba as bb
 import os
-import filecmp
+from comp_mine import comp
 import glob
 
 
@@ -14,6 +14,5 @@ fname = "%s/test/data/1S72.pdb" % cwd
 def test_snippet():
     bb.snippet(fname,"AAANU",outdir="%s" % outdir)
     for f in glob.glob("%s/1S72*.pdb" %outdir):
-        nf = f.replace("tmp","reference")
-        assert(filecmp.cmp("%s" % f,"%s" % nf)==True)
+        comp(f)
 

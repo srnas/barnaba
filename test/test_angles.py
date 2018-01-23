@@ -2,7 +2,7 @@
 import barnaba as bb
 import barnaba.definitions as dd
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
@@ -29,7 +29,7 @@ def test_angles_1():
         stri += "\n"
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/angles_01.test.dat" % outdir,"%s/angles_01.test.dat" % refdir)==True)
+    comp("%s/angles_01.test.dat" % refdir)
     
 
 def test_angles_2():
@@ -51,7 +51,8 @@ def test_angles_2():
     fh = open("%s/angles_02.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/angles_02.test.dat" % outdir,"%s/angles_02.test.dat" % refdir)==True)
+
+    comp("%s/angles_02.test.dat" % refdir)
 
 
 def test_angles_3():
@@ -74,7 +75,8 @@ def test_angles_3():
     fh = open("%s/angles_03.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/angles_03.test.dat" % outdir,"%s/angles_03.test.dat" % refdir)==True)
+    comp("%s/angles_03.test.dat" % refdir)
+
 
 
 def test_angles_4():
@@ -92,7 +94,7 @@ def test_angles_4():
     fh = open("%s/angles_04.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/angles_04.test.dat" % outdir,"%s/angles_04.test.dat" % refdir)==True)
+    comp("%s/angles_04.test.dat" % refdir)
         
 
 

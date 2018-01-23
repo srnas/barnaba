@@ -1,6 +1,6 @@
 import barnaba.escore as escore
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
@@ -21,7 +21,8 @@ def test_score():
     stri = " ".join(["%10.4e \n" % (ss[e]) for e in range(len(ss))])
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/score_01.test.dat" % outdir,"%s/score_01.test.dat" % refdir)==True)
+    comp("%s/score_01.test.dat" % refdir)
+
         
 
     

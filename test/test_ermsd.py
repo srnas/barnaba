@@ -1,29 +1,13 @@
 import barnaba as bb
 import os
-import difflib
 import sys
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
-def comp(s1,s2,j):
-
-
-    diff = [x for x in difflib.unified_diff(s1,s2)]
-    
-    if(len(list(diff))==0):
-        return 0
-    else:
-        #print '\n'.join(diff)
-        sys.stderr.write(''.join(diff))
-        fh = open("%s/diff_%d.test.dat" % (outdir,j),'w')
-        fh.write(''.join(diff))
-        fh.close()
-        assert(1==2)
-    
-    
     
 def test_ermsd_1():
 
@@ -38,13 +22,12 @@ def test_ermsd_1():
     fh.write(stri)
     fh.close()
 
-    ref_string = (open("%s/ermsd_01.test.dat" % refdir)).readlines()
-    tmp_string = (open("%s/ermsd_01.test.dat" % outdir)).readlines()
-
-    return comp(ref_string,tmp_string,1)
+    comp("%s/ermsd_01.test.dat" % refdir)
+    return 0
 
     
 def test_ermsd_2():
+    
     # align pdb to pdb with different sequence
     fname = "%s/test/data/4v7t-pdb-bundle3_G521_00006.align.pdb" % cwd
     fname1 = "%s/test/data/centroid_10.pdb" % cwd
@@ -54,11 +37,11 @@ def test_ermsd_2():
     fh = open("%s/ermsd_02.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    
-    ref_string = (open("%s/ermsd_02.test.dat" % refdir)).readlines()
-    tmp_string = (open("%s/ermsd_02.test.dat" % outdir)).readlines()
 
-    return comp(ref_string,tmp_string,2)
+    comp("%s/ermsd_02.test.dat" % refdir)
+    return 0
+
+    
 
 
 def test_ermsd_3():
@@ -72,10 +55,8 @@ def test_ermsd_3():
     fh.write(stri)
     fh.close()
     
-    ref_string = (open("%s/ermsd_03.test.dat" % refdir)).readlines()
-    tmp_string = (open("%s/ermsd_03.test.dat" % outdir)).readlines()
-
-    return comp(ref_string,tmp_string,3)
+    comp("%s/ermsd_03.test.dat" % refdir)
+    return 0
 
 
 def test_ermsd_4():
@@ -90,9 +71,9 @@ def test_ermsd_4():
     fh.write(stri)
     fh.close()
 
-    ref_string = (open("%s/ermsd_04.test.dat" % refdir)).readlines()
-    tmp_string = (open("%s/ermsd_04.test.dat" % outdir)).readlines()
-
-    return comp(ref_string,tmp_string,4)
+    comp("%s/ermsd_04.test.dat" % refdir)
+    return 0
 
 
+
+test_ermsd_1()

@@ -1,11 +1,12 @@
 import barnaba as bb
 import os
 import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 fname = "%s/test/data/sample1.pdb" % cwd
 fname1 = "%s/test/data/samples.xtc" % cwd
@@ -27,7 +28,7 @@ def test_annotate_1():
         stri += "\n"
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/stackings_01.test.dat" % outdir,"%s/stackings_01.test.dat" % refdir)==True)
+
     
     fh = open("%s/pairings_01.test.dat" % outdir,'w')
     stri = "# PAIRING \n"
@@ -39,7 +40,8 @@ def test_annotate_1():
             stri += " %4s \n" % (pairings[k][1][e])
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/pairings_01.test.dat" % outdir,"%s/pairings_01.test.dat" % refdir)==True)
+
+
 
     
     fh = open("%s/dotbracket_01.test.dat" % outdir,'w')        
@@ -49,9 +51,10 @@ def test_annotate_1():
         stri += "%s \n" % dotbr[k]
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/dotbracket_01.test.dat" % outdir,"%s/dotbracket_01.test.dat" % refdir)==True)
-
-
+    
+    comp("%s/stackings_01.test.dat" % refdir)
+    comp("%s/pairings_01.test.dat" % refdir)
+    comp("%s/dotbracket_01.test.dat" % refdir)
 
 
 
@@ -81,9 +84,10 @@ def test_annotate_2():
     fh = open("%s/dotbracket_02.test.dat" % outdir,'w')        
     fh.write(str(dotbr[0]))
     fh.close()
-    assert(filecmp.cmp("%s/stackings_02.test.dat" % outdir,"%s/stackings_02.test.dat" % refdir)==True)
-    assert(filecmp.cmp("%s/pairings_02.test.dat" % outdir,"%s/pairings_02.test.dat" % refdir)==True)
-    assert(filecmp.cmp("%s/dotbracket_02.test.dat" % outdir,"%s/dotbracket_02.test.dat" % refdir)==True)
+
+    comp("%s/stackings_02.test.dat" % refdir)
+    comp("%s/pairings_02.test.dat" % refdir)
+    comp("%s/dotbracket_02.test.dat" % refdir)
     
 
 

@@ -1,12 +1,12 @@
 import barnaba as bb
 import barnaba.definitions as dd
 import os
-import filecmp
+from comp_mine import comp
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 fname = "%s/test/data/sample1.pdb" % cwd
 fname1 = "%s/test/data/samples.xtc" % cwd
@@ -28,7 +28,8 @@ def test_sugar_1():
         stri += "\n"
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/sugar_01.test.dat" % outdir,"%s/sugar_01.test.dat" % refdir)==True)
+    comp("%s/sugar_01.test.dat" % refdir)
+
     
 
 def test_sugar_2():
@@ -50,7 +51,8 @@ def test_sugar_2():
     fh = open("%s/sugar_02.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/sugar_02.test.dat" % outdir,"%s/sugar_02.test.dat" % refdir)==True)
+    comp("%s/sugar_02.test.dat" % refdir)
+
 
 
 def test_sugar_3():
@@ -71,7 +73,7 @@ def test_sugar_3():
     fh = open("%s/sugar_03.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/sugar_03.test.dat" % outdir,"%s/sugar_03.test.dat" % refdir)==True)
+    comp("%s/sugar_03.test.dat" % refdir)
 
 
 def test_sugar_4():
@@ -94,92 +96,6 @@ def test_sugar_4():
     fh = open("%s/sugar_04.test.dat" % outdir,'w')
     fh.write(stri)
     fh.close()
-    assert(filecmp.cmp("%s/sugar_04.test.dat" % outdir,"%s/sugar_04.test.dat" % refdir)==True)
-
-test_sugar_1()
-test_sugar_2()
-test_sugar_3()
-test_sugar_4()
+    comp("%s/sugar_04.test.dat" % refdir)
         
 
-
-'''
-################################
-import barnaba as bb
-import barnaba.definitions as dd
-
-fname = "data/sample1.pdb"
-traj = "data/samples.xtc"
-
-angles,rr = bb.sugar_angles(fname)
-fh = open("sugar_0.test.dat",'w')
-stri = "%20s " % "#"
-for pp in dd.sugar_angles:
-    stri += " %10s " % pp
-stri += "\n"
-    
-for e in range(angles.shape[1]):
-    stri += "%20s " % (rr[e])
-    for k in range(angles.shape[2]):
-        stri += " %10.4f " % angles[0,e,k]
-    stri += "\n"
-fh.write(stri)
-fh.close()
-
-
-resi = ["RC5_1_0","RG_69_0","RU_37_0"]
-
-angles_b,rr = bb.sugar_angles(fname,residues=resi,angles=angles)
-stri = "%20s " % "#"
-for pp in angles:
-    stri += " %10s " % pp
-stri += "\n"
-
-for e in range(angles_b.shape[1]):
-    stri += "%20s " % (rr[e])
-    for k in range(angles_b.shape[2]):
-        stri += " %10.4f " % angles_b[0,e,k]
-    stri += "\n"
-    
-fh = open("sugar_1.test.dat",'w')
-fh.write(stri)
-fh.close()
-
-resi = ["RG_69_0","RU_37_0"]
-angles = ["nu4","nu2"]
-angles_b,rr = bb.sugar_angles(traj,topology=fname,residues=resi,angles=angles)
-stri = ""
-for p in range(angles_b.shape[0]):
-    for k in range(angles_b.shape[2]):
-        stri += " %10.4f %10.4f " % (angles_b[p,0,k],angles_b[p,1,k])
-    stri += "\n"
-    
-fh = open("sugar_2.test.dat",'w')
-fh.write(stri)
-fh.close()
-
-
-
-angles,rr = bb.pucker_angles(fname)
-
-fh = open("sugar_3.test.dat",'w')
-stri = "%20s " % "#"
-na = ["Phase","tm"]
-for pp in na:
-    stri += " %10s " % pp
-stri += "\n"
-    
-for e in range(angles.shape[1]):
-    stri += "%20s " % (rr[e])
-    for k in range(angles.shape[2]):
-        stri += " %10.4f " % angles[0,e,k]
-    stri += "\n"
-fh.write(stri)
-fh.close()
-
-
-    
-fh = open("sugar_4.test.dat",'w')
-fh.write(stri)
-fh.close()
-'''

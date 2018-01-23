@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 import os
-import filecmp
+from comp_mine import comp
 
 import barnaba as bb
 import barnaba.cluster as cc
@@ -14,7 +14,7 @@ import mdtraj as md
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
 refdir = "%s/test/reference/" % cwd
-os.system("mkdir %s" % (outdir))
+os.system("mkdir -p %s" % (outdir))
 
 top = "%s/test/data/UUCG.pdb" % cwd
 traj = "%s/test/data/UUCG.xtc" % cwd
@@ -32,7 +32,7 @@ def test_cluster():
     print "# Cumulative explained variance of component: 1=%5.1f 2:=%5.1f 3=%5.1f" % (v[0]*100,v[1]*100,v[2]*100)
     print "# DBSCAN clustering..."
     # do DBSCAN clustering. eps and min_samples need to be adjusted.
-    new_labels, center_idx = cc.dbscan(gvec,range(gvec.shape[0]),eps=0.6,min_samples=25)
+    new_labels, center_idx = cc.dbscan(gvec,range(gvec.shape[0]),eps=0.6,min_samples=10)
     print "DONE!"
 
     # create color palette. gray, small points for unassigned clusters.
@@ -49,7 +49,7 @@ def test_cluster():
     idxs = [ii for ii,kk in enumerate(new_labels) if(kk==0)]
     for i,k in enumerate(center_idx):
         t[k].save_pdb("%s/cluster_%03d.test.pdb" % (outdir,i))
-        #assert(filecmp.cmp("%s/cluster_%03d.test.pdb" % (outdir,i),"%s/cluster_%03d.test.pdb" % (refdir,i))==True)            
+        comp("%s/cluster_%03d.test.pdb" % (refdir,i))
         #plt.text(w[k,0],w[k,1],str(i),ha='center',va='center')
         idxs = [ii for ii,kk in enumerate(new_labels) if(kk==i+1)]
 
