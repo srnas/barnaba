@@ -21,7 +21,7 @@ import definitions
 
 class Enm:
 
-    def __init__(self,pdb,sele_atoms,cutoff=8.0):
+    def __init__(self,pdb,sele_atoms,cutoff=8.0,sparse=False,ntop=10):
 
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
@@ -49,35 +49,54 @@ class Enm:
         
         # difference
         diff = [coords[ii]-coords[jj] for ii,jj in m_idx]
-
-        # construct matrix
-        mat = np.zeros((ll,ll,3,3))
-        for kk in xrange(len(c_idx)):
-            ii = m_idx[kk][0]
-            jj = m_idx[kk][1]
-            mat[ii,jj] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
-
-        # now fill the 3n x 3n matrix (there might be a more pythonic way. but this works)
-        mat1 = np.zeros((3*ll,3*ll))
-        for k1 in range(ll):
-            # diagonal elements
-            diag = np.sum(mat[k1,:],axis=0) + np.sum(mat[:,k1],axis=0)
-            for i1 in range(3):
-                for i2 in range(i1,3):
-                    mat1[3*k1+i1,3*k1+i2] =  -diag[i1,i2]
-            # off diagonal
-            for k2 in range(k1+1,ll):
-                for i1 in range(3):
-                    for i2 in range(3):
-                        mat1[3*k1+i1,3*k2+i2] =  mat[k1,k2,i1,i2]
-                
-        # diagonalise
-        e_val,e_vec=eigh(mat1.T,lower=True)
-        self.e_val = e_val
+        
+        if sparse:
+            # construct matrix
+            mat = sp.lil_matrix((ll*3,ll*3))
+            #mat = dok_matrix((ll*3,ll*3)) ### slower
+            for kk in xrange(len(c_idx)):
+                ii = m_idx[kk][0]
+                jj = m_idx[kk][1]
+                ###
+                for mu in range(3):
+                    for nu in range(3):
+                        temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
+                        mat[3*ii+mu,3*jj+nu]+=-temp
+                        mat[3*jj+mu,3*ii+nu]+=-temp
+                        mat[3*ii+mu,3*ii+nu]+=temp
+                        mat[3*jj+mu,3*jj+nu]+=temp
+            # diagonalise
+            print '# Using sparse matrix diagonalization'
+            e_val,e_vec=eigsh(mat, k=ntop+6,sigma=definitions.tol)
+        else:
+            # construct matrix
+            mat = np.zeros((3*ll,3*ll))
+            for kk in xrange(len(c_idx)):
+                ii = m_idx[kk][0]
+                jj = m_idx[kk][1]
+                for mu in range(3):
+                    for nu in range(3):
+                        temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
+                        mat[3*ii+mu,3*jj+nu]+=-temp
+                        #mat[3*jj+mu,3*ii+nu]+=-temp ### no need to fill the lower triangle
+                        mat[3*ii+mu,3*ii+nu]+=temp
+                        mat[3*jj+mu,3*jj+nu]+=temp
+            # diagonalise
+            e_val,e_vec=eigh(mat.T,lower=True)
+        ### check here:
+        ### 2) MAXVEC has to be obtained from args.ntop
+        ###    Done. Do I want to print the 0 modes or not?
+        ### 4) EIGSH IS GIVIN EXTRA ZERO-MODES!
+        ###    Sigma has to be >zero to avoid extra null modes to pop out
+        ###    if sigma > 10x smallest eval => wrong results
+        ###    I set sigma=tol. This should work if tol makes sense
+        
+        self.e_val = e_val ### GP Is there a particular reason for not doing this before
         self.e_vec = e_vec
         self.coords = coords
         #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-        self.idx_c2 = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
+        # get C2 indexes for future C2-C2 fluctuations ### TODO: why don't we do it later?
+        self.idx_c2 = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")] 
         self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
 
 
@@ -89,7 +108,7 @@ class Enm:
 
     def c2_fluctuations(self):
 
-
+        # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print "# no C2 atoms in PDB"
             exit(1)
