@@ -21,7 +21,6 @@ def test_enm_1():
     fh.write(evecs)
     fh.close()
 
-
     # print eigenvalues 
     evals = SBP_enm.print_eval()
     fh = open("%s/enm_02.test.dat" % outdir,'w')    
@@ -40,3 +39,24 @@ def test_enm_1():
     comp("%s/enm_01.test.dat" % refdir)
     comp("%s/enm_02.test.dat" % refdir)
     comp("%s/enm_03.test.dat" % refdir)
+
+def test_enm_2():
+    
+    # initialize class. Only PDB are accepted
+    S_enm = enm.Enm(fname,sele_atoms=["C1\'"])
+    
+    # print eigenvectors
+    evecs = S_enm.print_evec(3)
+    fh = open("%s/enm_04.test.dat" % outdir,'w')    
+    fh.write(evecs)
+    fh.close()
+
+    # print eigenvalues 
+    evals = S_enm.print_eval()
+    fh = open("%s/enm_05.test.dat" % outdir,'w')    
+    fh.write(evals)
+    fh.close()
+    
+    comp("%s/enm_04.test.dat" % refdir)
+    comp("%s/enm_05.test.dat" % refdir)
+
