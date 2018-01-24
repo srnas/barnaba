@@ -77,8 +77,7 @@ class Enm:
                 for mu in range(3):
                     for nu in range(3):
                         temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
-                        mat[3*ii+mu,3*jj+nu]+=-temp
-                        #mat[3*jj+mu,3*ii+nu]+=-temp ### no need to fill the lower triangle
+                        mat[3*ii+mu,3*jj+nu]=-temp
                         mat[3*ii+mu,3*ii+nu]+=temp
                         mat[3*jj+mu,3*jj+nu]+=temp
             # diagonalise
