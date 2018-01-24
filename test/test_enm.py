@@ -80,6 +80,18 @@ def test_enm_3():
     fh = open("%s/enm_07.test.dat" % outdir,'w')    
     fh.write(evecs)
     fh.close()
+
+    # print C2'-C2' fluctuations
+    fluc,res =  AA_enm.c2_fluctuations()
+    fh = open("%s/enm_08.test.dat" % outdir,'w')    
+    stri = "# %19s %s \n" % ("Residues","Fluctuations")
+    for i in range(len(fluc)):
+        stri +=  "%10s/%-10s %.6e \n" % (res[i],res[i+1],fluc[i])
+    fh.write(stri)
+    fh.close()
+
+
     
     comp("%s/enm_06.test.dat" % refdir)
     comp("%s/enm_07.test.dat" % refdir)
+    comp("%s/enm_08.test.dat" % refdir)

@@ -36,7 +36,7 @@ class Enm:
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
     def __init__(self,pdb,sele_atoms=["C1\'","C2","P"],cutoff=0.9,sparse=False,ntop=10):
-        
+        self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
         if(sele_atoms=="AA"):
@@ -63,7 +63,7 @@ class Enm:
         
         # difference
         diff = [coords[ii]-coords[jj] for ii,jj in m_idx]
-        if sparse:
+        if self.sparse:
             # construct matrix
             ele_up=np.zeros(len(c_idx)*9)
             idx_up=np.zeros((2,len(c_idx)*9))
@@ -97,7 +97,7 @@ class Enm:
             idx_tot=np.concatenate([idx_up,idx_down,idx_diag],axis=1)
             ele_tot=np.concatenate([ele_up,ele_up,ele_diag])
             mat=sp.csc_matrix((ele_tot,idx_tot))
-            
+            self.mat=mat # store the interaction matrix for future C2-C2 calculations
             # diagonalise
             print '# Using sparse matrix diagonalization'
             e_val,e_vec=eigsh(mat, k=ntop+6,sigma=definitions.tol)
@@ -131,8 +131,8 @@ class Enm:
         self.e_vec = e_vec
         self.coords = coords
         #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-        # get C2 indexes for future C2-C2 fluctuations ### TODO: why don't we do it later?
-        self.idx_c2 = [x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")] 
+        # get C2 indexes for future C2-C2 fluctuations
+        self.idx_c2 = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
         self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
 
 
@@ -146,29 +146,73 @@ class Enm:
 
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
-            print "# no C2 atoms in PDB"
+            print "# no C2 atoms in PDB: can't compute C2-C2 fluctuations"
             exit(1)
 
-        sigma = []
-        for n in range(len(self.idx_c2)-1):
-            i = 3*self.idx_c2[n]
-            j = 3*(self.idx_c2[n+1])
-            diff = self.coords[self.idx_c2[n]]-self.coords[self.idx_c2[n+1]] 
-            diff /= np.sqrt(np.sum(diff**2))
-        
-            v_i = [self.e_vec[i:i+3,k] for k in xrange(6,len(self.e_val))]
-            v_j = [self.e_vec[j:j+3,k] for k in xrange(6,len(self.e_val))]
+        if self.sparse:
+            # To deal with big matrices the effective interaction matrix
+            # of the C2 beads is computed (see Pinamonti et al. NAR 2015)
+            ll=len(self.coords)
+            if len(self.idx_c2)*3==ll :
+            #    #skip effective interaction computation if there are only C2 beads
+                M_new=mat
+            else:
+                # submatrices
+                idx_a=np.sort(np.concatenate([3*self.idx_c2+i for i in range(3)]))
+                M_a=self.mat[np.ix_(idx_a,idx_a)]
+                idx_b=np.delete(np.arange(3*ll),idx_a)
+                M_b=self.mat[np.ix_(idx_b,idx_b)]
+                W=self.mat[np.ix_(idx_a,idx_b)]
+                
+                X=spsolve(M_b.tocsc(),W.T.tocsc())
+                ### X is not a sparse matrix... Damn...
+                # effective interaction matrix between C2 beads
+                M_new=(M_a-sp.csc_matrix.dot(W.tocsc(),X)).toarray()
+                eval_new,evec_new=eigh(M_new)
+            # Computing the fluctuations
+            sigma=[]
+            for n in range(len(self.idx_c2)-1):
+                i = 3*n
+                j = 3*(n+1)
+                diff = self.coords[self.idx_c2[n]]-self.coords[self.idx_c2[n+1]] 
+                diff /= np.sqrt(np.sum(diff**2))
+                
+                v_i = [evec_new[i:i+3,k] for k in xrange(6,len(eval_new))]
+                v_j = [evec_new[j:j+3,k] for k in xrange(6,len(eval_new))]
+                
+                top = len(eval_new)-6
+                
+                c_ii = np.array([np.outer(v_i[k],v_i[k])/eval_new[k+6] for k in xrange(top)])
+                c_jj = np.array([np.outer(v_j[k],v_j[k])/eval_new[k+6] for k in xrange(top)])
+                c_ij = np.array([np.outer(v_i[k],v_j[k])/eval_new[k+6] for k in xrange(top)])
+                c_ji = np.array([np.outer(v_j[k],v_i[k])/eval_new[k+6] for k in xrange(top)])
+                
+                # sum contributions from all eigenvectors
+                tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
+                sigma.append(np.dot(diff,np.dot(tensor,diff)))
 
-            top = len(self.e_val)-6
+        else:
+
+            sigma = []
+            for n in range(len(self.idx_c2)-1):
+                i = 3*self.idx_c2[n]
+                j = 3*(self.idx_c2[n+1])
+                diff = self.coords[self.idx_c2[n]]-self.coords[self.idx_c2[n+1]] 
+                diff /= np.sqrt(np.sum(diff**2))
+                
+                v_i = [self.e_vec[i:i+3,k] for k in xrange(6,len(self.e_val))]
+                v_j = [self.e_vec[j:j+3,k] for k in xrange(6,len(self.e_val))]
+                
+                top = len(self.e_val)-6
+                
+                c_ii = np.array([np.outer(v_i[k],v_i[k])/self.e_val[k+6] for k in xrange(top)])
+                c_jj = np.array([np.outer(v_j[k],v_j[k])/self.e_val[k+6] for k in xrange(top)])
+                c_ij = np.array([np.outer(v_i[k],v_j[k])/self.e_val[k+6] for k in xrange(top)])
+                c_ji = np.array([np.outer(v_j[k],v_i[k])/self.e_val[k+6] for k in xrange(top)])
             
-            c_ii = np.array([np.outer(v_i[k],v_i[k])/self.e_val[k+6] for k in xrange(top)])
-            c_jj = np.array([np.outer(v_j[k],v_j[k])/self.e_val[k+6] for k in xrange(top)])
-            c_ij = np.array([np.outer(v_i[k],v_j[k])/self.e_val[k+6] for k in xrange(top)])
-            c_ji = np.array([np.outer(v_j[k],v_i[k])/self.e_val[k+6] for k in xrange(top)])
-            
-            # sum contributions from all eigenvectors
-            tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
-            sigma.append(np.dot(diff,np.dot(tensor,diff)))
+                # sum contributions from all eigenvectors
+                tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in xrange(top)],axis=0)
+                sigma.append(np.dot(diff,np.dot(tensor,diff)))
         return sigma, self.seq_c2
 
 
