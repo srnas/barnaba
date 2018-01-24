@@ -14,15 +14,29 @@
 
 import numpy as np
 from scipy.linalg import eigh
+import scipy.sparse as sp
+from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import eigsh
 from scipy.spatial import distance
 import mdtraj as md
 import definitions
 
 
 class Enm:
-
-    def __init__(self,pdb,sele_atoms,cutoff=8.0,sparse=False,ntop=10):
-
+    '''Creates an elastic network model and diagonalizes the interaction matrix to find the 
+    principal modes.
+    See Pinamonti et al., NAR 2015 for a more detailed description.
+    ------------
+     parameters
+    ------------
+    pdb        : mdtraj trajectory object (TODO: what happens with multiple frames?)
+    sele_atoms : atoms to use as beads (default=["C1\'","C2","P"])
+    cutoff     : cutoff radius in nm (default=0.9)
+    sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
+    ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
+    '''
+    def __init__(self,pdb,sele_atoms=["C1\'","C2","P"],cutoff=0.9,sparse=False,ntop=10):
+        
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
         if(sele_atoms=="AA"):
@@ -49,22 +63,41 @@ class Enm:
         
         # difference
         diff = [coords[ii]-coords[jj] for ii,jj in m_idx]
-        
         if sparse:
             # construct matrix
-            mat = sp.lil_matrix((ll*3,ll*3))
-            #mat = dok_matrix((ll*3,ll*3)) ### slower
-            for kk in xrange(len(c_idx)):
-                ii = m_idx[kk][0]
-                jj = m_idx[kk][1]
-                ###
+            ele_up=np.zeros(len(c_idx)*9)
+            idx_up=np.zeros((2,len(c_idx)*9))
+            ele_diag=np.zeros(ll*9)
+            idx_diag=np.zeros((2,ll*9))
+            kkk=0
+            for i in range(ll):
                 for mu in range(3):
                     for nu in range(3):
-                        temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
-                        mat[3*ii+mu,3*jj+nu]+=-temp
-                        mat[3*jj+mu,3*ii+nu]+=-temp
-                        mat[3*ii+mu,3*ii+nu]+=temp
-                        mat[3*jj+mu,3*jj+nu]+=temp
+                        idx_diag[:,kkk]=(3*i+mu,3*i+nu)
+                        kkk+=1
+            kkk=0
+            for k in xrange(len(c_idx)):
+                i = m_idx[k][0]
+                j = m_idx[k][1]
+                for mu in range(3):
+                    for nu in range(3):
+                        temp=k_elast[k]*diff[k][mu]*diff[k][nu]
+                        # filling off-diagonal elements
+                        #mat[3*i+mu,3*j+nu]+=-temp
+                        #mat[3*j+mu,3*i+nu]+=-temp
+                        ele_up[kkk]=-temp
+                        idx_up[:,kkk]=(3*i+mu,3*j+nu)
+                        kkk+=1
+                        # filling diagonal elements
+                        #mat[3*i+mu,3*i+nu]+=temp
+                        #mat[3*j+mu,3*j+nu]+=temp
+                        ele_diag[9*i+3*mu+nu]+=temp
+                        ele_diag[9*j+3*mu+nu]+=temp
+            idx_down=np.array((idx_up[1],idx_up[0]))
+            idx_tot=np.concatenate([idx_up,idx_down,idx_diag],axis=1)
+            ele_tot=np.concatenate([ele_up,ele_up,ele_diag])
+            mat=sp.csc_matrix((ele_tot,idx_tot))
+            
             # diagonalise
             print '# Using sparse matrix diagonalization'
             e_val,e_vec=eigsh(mat, k=ntop+6,sigma=definitions.tol)
@@ -74,12 +107,16 @@ class Enm:
             for kk in xrange(len(c_idx)):
                 ii = m_idx[kk][0]
                 jj = m_idx[kk][1]
-                for mu in range(3):
-                    for nu in range(3):
-                        temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
-                        mat[3*ii+mu,3*jj+nu]=-temp
-                        mat[3*ii+mu,3*ii+nu]+=temp
-                        mat[3*jj+mu,3*jj+nu]+=temp
+                #for mu in range(3):
+                #    for nu in range(3):
+                #        temp=k_elast[kk]*diff[kk][mu]*diff[kk][nu]
+                #        mat[3*ii+mu,3*jj+nu]=-temp
+                #        mat[3*ii+mu,3*ii+nu]+=temp
+                #        mat[3*jj+mu,3*jj+nu]+=temp
+                mat[3*ii:3*ii+3,3*jj:3*jj+3] = -k_elast[kk]*np.outer(diff[kk],diff[kk])
+                mat[3*ii:3*ii+3,3*ii:3*ii+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])
+                mat[3*jj:3*jj+3,3*jj:3*jj+3] += k_elast[kk]*np.outer(diff[kk],diff[kk])
+                
             # diagonalise
             e_val,e_vec=eigh(mat.T,lower=True)
         ### check here:

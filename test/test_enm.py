@@ -45,8 +45,8 @@ def test_enm_2():
     '''Tests different bead choices'''
     
     # initialize class. Only PDB are accepted
-    S_enm = enm.Enm(fname,sele_atoms=["C1\'"])
-    AA_enm = enm.Enm(fname,sele_atoms="AA")
+    S_enm = enm.Enm(fname,sele_atoms=["C1\'"],cutoff=1.5)
+    SB_enm = enm.Enm(fname,sele_atoms=["C2","C1/'"],cutoff=1.1)
     
     # print eigenvalues S-ENM 
     evals = S_enm.print_eval()
@@ -54,8 +54,8 @@ def test_enm_2():
     fh.write(evals)
     fh.close()
 
-    # print eigenvalues AA-ENM
-    evecs = AA_enm.print_eval()
+    # print eigenvalues SB-ENM
+    evals = SB_enm.print_eval()
     fh = open("%s/enm_05.test.dat" % outdir,'w')    
     fh.write(evals)
     fh.close()
@@ -63,23 +63,23 @@ def test_enm_2():
     comp("%s/enm_04.test.dat" % refdir)
     comp("%s/enm_05.test.dat" % refdir)
 
-#def test_enm_3():
-#    '''Tests sparse diagonalization'''
-#    
-#    # initialize class. Only PDB are accepted
-#    SBP_enm = enm.Enm(fname,sele_atoms=["C1\',P,C2"],sparse=True)
-#    
-#    # print eigenvalues 
-#    evals = SBP_enm.print_eval()
-#    fh = open("%s/enm_06.test.dat" % outdir,'w')    
-#    fh.write(evals)
-#    fh.close()
-#
-#    # print eigenvectors
-#    evecs = A_enm.print_evec(3)
-#    fh = open("%s/enm_07.test.dat" % outdir,'w')    
-#    fh.write(evecs)
-#    fh.close()
-#    
-#    comp("%s/enm_06.test.dat" % refdir)
-#    comp("%s/enm_07.test.dat" % refdir)
+def test_enm_3():
+    '''Tests sparse diagonalization'''
+    
+    # initialize class. Only PDB are accepted
+    AA_enm = enm.Enm(fname,sele_atoms="AA",sparse=True,cutoff=0.7)
+    
+    # print eigenvalues 
+    evals = AA_enm.print_eval()
+    fh = open("%s/enm_06.test.dat" % outdir,'w')    
+    fh.write(evals)
+    fh.close()
+
+    # print eigenvectors
+    evecs = AA_enm.print_evec(3)
+    fh = open("%s/enm_07.test.dat" % outdir,'w')    
+    fh.write(evecs)
+    fh.close()
+    
+    comp("%s/enm_06.test.dat" % refdir)
+    comp("%s/enm_07.test.dat" % refdir)
