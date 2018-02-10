@@ -12,12 +12,17 @@
 
 """ scoring function for RNA structure prediction """
 
+from __future__ import absolute_import, division, print_function
+
+# Make sure that range returns an iterator also in python2 (using future module)
+from builtins import range
+
 import mdtraj as md
-import calc_mats as ff
-import nucleic
 import numpy as np
-import kde as kde
 import sys
+from . import kde
+from . import calc_mats as ff
+from . import nucleic
 
 class Escore:
 
@@ -53,7 +58,7 @@ class Escore:
         
         nn = nucleic.Nucleic(traj.topology,modified=False)
         scores = []
-        for j in xrange(traj.n_frames):
+        for j in range(traj.n_frames):
             coords = traj.xyz[j,nn.indeces_lcs]
             mat = ff.calc_scoremat(coords,self.cutoff+0.2)
             scores.append(np.sum(self.kernel(10.0*mat)))

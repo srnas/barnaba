@@ -11,11 +11,16 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+
+# Make sure that range returns an iterator also in python2 (using future module)
+from builtins import range
+
 import numpy as np
 from scipy.spatial import distance
-import residue as rd
-import definitions
 import sys
+from . import residue as rd
+from . import definitions
 
 
 class Model:
@@ -37,7 +42,7 @@ class Model:
         self.residues = []
         resi_tmp = []
 
-        for i in xrange(ll):
+        for i in range(ll):
             if(i==ll-1):
                 next_resid = "XXX"
             else:
@@ -69,10 +74,10 @@ class Model:
         
         bb_idx_tmp = []
         chi_idx = []
-        for i in xrange(len(self.sequence)):
+        for i in range(len(self.sequence)):
             residue = self.residues[i]
             atoms = [residue.get_idx(at_type) for at_type in definitions.rna_backbone]
-            for jj in xrange(len(atoms)):
+            for jj in range(len(atoms)):
                 # flag when meissing
                 if(atoms[jj]==None):
                     nos = [x for x in range(6*i+jj-3,6*i+jj+1) if x>-1]
@@ -96,7 +101,7 @@ class Model:
 
         # handle missing atoms
         bb_idx = []
-        for ii in xrange(len(bb_idx_tmp)-3):
+        for ii in range(len(bb_idx_tmp)-3):
             idxs = bb_idx_tmp[ii:ii+4]
             if(None not in idxs):
                 bb_idx.append(idxs)

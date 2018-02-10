@@ -39,10 +39,11 @@ If you use baRNAba in your work,  please cite the following paper::
 Requirements
 -------------
 baRNAba requires:
-   - Python 2.7.x
+   - Python 2.7.x or > 3.3
    - Numpy
    - Scipy
    - Mdtraj
+   - future
      
 baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories
 To perform cluster analysis, scikit-learn is required too.

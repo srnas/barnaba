@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 def comp(filename):
 
     def readfile(ff):
@@ -12,9 +14,13 @@ def comp(filename):
                     if(el=="nan"):
                         vv.append(el)
                     else:
+                        print(el, type(el), isinstance(el, bytes), bytes(el))
                         try:
                             vv.append(float(el))
                         except:
+                            if isinstance(el, bytes):
+                                el = el.decode("utf8")
+                                print("CONVERTING!")
                             vv.append(el)
                 data.append(vv)
         fh.close()

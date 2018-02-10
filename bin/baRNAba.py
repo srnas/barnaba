@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 #   This is baRNAba, a tool for analysis of nucleic acid 3d structure
 #   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
@@ -13,7 +13,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+from __future__ import absolute_import, division, print_function
 import sys
 import glob
 import os
@@ -241,7 +241,7 @@ def ss_motif(args):
                 dd = bb.ss_motif(args.query,args.pdbs[i],out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
                 stri += " ".join([" %20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
             except:
-                print "# not able to load %s" % args.pdbs[i]
+                print("# not able to load %s" % args.pdbs[i])
                 continue
     else:
         dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
@@ -542,10 +542,10 @@ def main():
             if(len(ll)!=0):
                 sys.stderr.write('# Creating backup file:  %s \n' % (outfile + ".backup." + str(len(ll))))
                 os.system("cp " + outfile + " " + outfile + ".backup." + str(len(ll)))
-            print "# No name specified. Your output will be written to",outfile
+            print("# No name specified. Your output will be written to", outfile)
         else:
             outfile = args.name + "." + args.subparser_name
-            print "# Your output will be written to",outfile
+            print ("# Your output will be written to", outfile)
             args.name = outfile
     
 

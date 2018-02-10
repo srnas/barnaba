@@ -12,9 +12,9 @@
 """
 di' qualcosa di sinistra! d'Alema di' qualcosa!
 """
-
+from __future__ import absolute_import, division, print_function
 from scipy.spatial import distance
-import definitions
+from . import definitions
 import numpy as np
 
 

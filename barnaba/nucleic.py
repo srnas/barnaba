@@ -12,9 +12,10 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ BBBBB """
 
-import definitions
+from __future__ import absolute_import, division, print_function
 import numpy as np
 import sys
+from . import definitions
 
 class Nucleic:
 
@@ -296,4 +297,4 @@ class Nucleic:
                     
         return idxs, rr
 
- 
+

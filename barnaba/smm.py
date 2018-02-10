@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import sys
 import numpy as np
 from scipy.spatial.distance import cdist,squareform
@@ -13,27 +14,27 @@ class SMM:
         if(len(weights)==0):
             weights = np.ones(gvecs.shape[0])
         else:
-            print "#not fully tested w non-uniform weights"
+            print("#not fully tested w non-uniform weights")
             weights = np.array(weights)
             assert weights.shape[0] == gvecs.shape[0]
             
         # infer lenght        
         slen = np.sqrt(gvecs.shape[1]/4)
         if((slen).is_integer()):
-            print "# Sequence lenght =",slen
+            print("# Sequence lenght =",slen)
             self.slen = slen
         else:
-            print "# Error - check your gmat file"
+            print("# Error - check your gmat file")
             sys.exit(1)
 
         # calculate distance matrix
         dmat_sq = cdist(gvecs,gvecs,'sqeuclidean')
         small = (dmat_sq<0.001).nonzero()
-        print "# Number of identical elements...",len(small[0])/2-self.slen
+        print("# Number of identical elements...",len(small[0])/2-self.slen)
 
         kmat= np.exp(-(0.5*dmat_sq)/(eps*eps*self.slen))
         
-        print "# Iterative normalization"
+        print("# Iterative normalization")
         tol = 1000
         tolerance = 1.0E-10
         it = 1
@@ -48,11 +49,11 @@ class SMM:
             sqmat = np.outer(degree_sinv,degree_sinv) 
             kmat *= sqmat
             it += 1
-        print "# Done", it , "iterations"
+        print("# Done", it , "iterations")
 
         mat = np.multiply(kmat,weights[:,np.newaxis])
 
-        print "# calculated transition matrix mat"
+        print("# calculated transition matrix mat")
         
 
 

@@ -11,11 +11,11 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import definitions
-import model as md
+from __future__ import absolute_import, division, print_function
 import sys
 import numpy as np
-
+from . import definitions
+from . import model as md
 
 class Names:
 
@@ -75,7 +75,7 @@ class Pdb:
         self.fh = open(filename,'r')
         self.natoms = 0
         self.model = None
-        print "# Initializing file", filename
+        print("# Initializing file", filename)
         
         self.parse(permissive)
 
@@ -127,7 +127,7 @@ class Pdb:
                 #    sys.stderr.write("# Warning: skipping insertion residue %s \n" % (line[17:27]))
                 #    continue
 
-                #print readline(line)
+                #print(readline(line))
                 tmp_data.append(readline(line))
                 self.natoms += 1
             if(at=="ENDMDL"):
