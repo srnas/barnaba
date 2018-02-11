@@ -932,7 +932,7 @@ def annotate_traj(traj):
         # now I have found all stackings.
         #stacked_pairs = [[nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]]] for k in stacked]
         stacked_pairs = [[pairs[k,0],pairs[k,1]] for k in stacked]
-        stacked_annotation = np.chararray((len(stacked_pairs),2))
+        stacked_annotation = np.chararray((len(stacked_pairs),2), unicode='True')
         stacked_annotation[:] = ">"
         
         # revert where z_ij is negative
@@ -942,7 +942,7 @@ def annotate_traj(traj):
         rev2 = np.where(vectors[stacked,1,2]>0)
         stacked_annotation[rev2[0],1] = "<"
 
-        stacked_annotation = [b"".join(el) for el in stacked_annotation]
+        stacked_annotation = ["".join(el) for el in stacked_annotation]
         ######################################################
 
         # find paired bases  (z_ij < 2 AA AND z_j1 < 2 AA)
@@ -964,7 +964,7 @@ def annotate_traj(traj):
         edge_2 = np.digitize(edge_angles_2,bins)-1
 
         
-        paired_annotation = np.chararray((len(paired_pairs),3))
+        paired_annotation = np.chararray((len(paired_pairs),3), unicode=True)
         paired_annotation[:] = "X"
         
         # now explicit loop, a bit messy. sorry, Guido.
@@ -1009,7 +1009,7 @@ def annotate_traj(traj):
                     paired_annotation[j][2] = "c"
                 
             # if is WWc, check for Watson-crick and GU
-            if(b"".join(paired_annotation[j]) == "WWc"):
+            if("".join(paired_annotation[j]) == "WWc"):
                 r1 =  nn.rna_seq_id[index1]
                 r2 =  nn.rna_seq_id[index2]
                 ll = "".join(sorted([r1,r2]))
@@ -1019,7 +1019,7 @@ def annotate_traj(traj):
                     if(ll=="GU" and n_hbonds > 1):
                         paired_annotation[j] = ["G","U","c"]
                     
-        paired_annotation = [b"".join(el) for el in paired_annotation]
+        paired_annotation = ["".join(el) for el in paired_annotation]
 
         
         stackings.append([stacked_pairs,stacked_annotation])

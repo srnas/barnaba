@@ -14,13 +14,9 @@ def comp(filename):
                     if(el=="nan"):
                         vv.append(el)
                     else:
-                        print(el, type(el), isinstance(el, bytes), bytes(el))
                         try:
                             vv.append(float(el))
                         except:
-                            if isinstance(el, bytes):
-                                el = el.decode("utf8")
-                                print("CONVERTING!")
                             vv.append(el)
                 data.append(vv)
         fh.close()
