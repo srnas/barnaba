@@ -902,7 +902,11 @@ def annotate_traj(traj):
 
         # find bases in close contact (within ellipsoid w radius 1.7)
         pairs,vectors,angles = ff.calc_mat_annotation(coords)
-
+        if(len(pairs)==0):
+            stackings.append([[],[]])
+            pairings.append([[],[]])
+            continue
+        
         # calculate rho
         rho_12 = vectors[:,0,0]**2 + vectors[:,0,1]**2
         rho_21 = vectors[:,1,0]**2 + vectors[:,1,1]**2

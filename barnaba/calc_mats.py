@@ -157,7 +157,7 @@ def calc_mat_annotation(coords):
     m_idx = np.array(np.where((dmat<max_r) & (dmat>0.001))).T
     
     if(len(m_idx)==0):
-        return [],[]
+        return [],[], []
     
     # calculate scaled distances
     diff = origo[m_idx[:,1]]-origo[m_idx[:,0]]
