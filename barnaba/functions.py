@@ -1172,7 +1172,8 @@ def snippet(pdb,sequence,outdir=None):
             
             name_pref = pdb[0:-4].split("/")[-1]
             new_pdb = "%s/%s_%s_%05d.pdb" % (outdir,name_pref,cur_pdb.model.sequence_id[index[0]],ii)
-         
+            sys.stderr.write("# Writing PDB %s\n" % new_pdb.split("/")[-1])
+
             fh_pdb = open(new_pdb,'w')
             fh_pdb.write(cur_pdb.model.string_pdb(index,noP=True,center=True))
             fh_pdb.close()
