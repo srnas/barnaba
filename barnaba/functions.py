@@ -1181,4 +1181,4 @@ def snippet(pdb,sequence,outdir=None):
             ii += 1
         idx = cur_pdb.read()
       
-    return 0
+    

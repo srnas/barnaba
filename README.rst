@@ -127,9 +127,9 @@ Alternatively, the command-line interface can be found in the bin directory. Her
 
 10. Extract fragments from structures with a given sequence. NB: only works with PDB.  
 
-   ./baRNAba.py SNIPPET --pdb ../test/data/1S72.pdb  --seq NNGNRANN
+    ./baRNAba.py SNIPPET --pdb ../test/data/1S72.pdb  --seq NNGNRANN
  
-11. Calculate ESCORE
+11. Calculate ESCORE  
     
    ./baRNAba.py ESCORE --ff ../test/data/1S72.pdb --pdb ../test/data/sample1.pdb
 
