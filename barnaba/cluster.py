@@ -11,6 +11,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
@@ -53,8 +54,8 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
     print("#  silhouette score: %0.4f"
           % metrics.silhouette_score(gvecs, cluster_labels)),
     non_l = np.where(cluster_labels!=-1)
-    print "# Avg silhouette: %0.4f " % (np.average(metrics.silhouette_samples(gvecs, cluster_labels)[non_l]))
-    print "# assigned samples :%d total samples:%d " % (len(non_l[0]), len(cluster_labels))
+    print("# Avg silhouette: %0.4f " % (np.average(metrics.silhouette_samples(gvecs, cluster_labels)[non_l])))
+    print("# assigned samples :%d total samples:%d " % (len(non_l[0]), len(cluster_labels)))
         
     cluster_members = [[] for x in range(n_clusters_-1)]
 
@@ -64,7 +65,7 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
             cluster_members[ii1].append(j)
 
     scenters = np.argsort([len(x) for x in cluster_members])[::-1]
-    print "# %2s %4s %20s %20s %20s %20s %s " % ("N","size","max eRMSD (IC)","med eRMSD (IC)","max eRMSD (centroid)","med eRMSD (centroid)","center")
+    print("# %2s %4s %20s %20s %20s %20s %s " % ("N","size","max eRMSD (IC)","med eRMSD (IC)","max eRMSD (centroid)","med eRMSD (centroid)","center"))
 
     labels_map = [None]*n_clusters_
     labels_map[-1] = 0
@@ -76,7 +77,7 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
         labels_tmp = [labels[k] for k in cluster_members[ii1]]               
         dd = np.sum(dists,axis=1)
         min_idx = np.argmin(dd)
-        print "# %02d %04d %20.3f %20.3f %20.3f %20.3f %02d %s" % (o,len(cluster_members[ii1]), np.max(dists), np.median(dists),np.max(dists[min_idx]),np.median(dists[min_idx]),ii1,labels_tmp[min_idx])
+        print("# %02d %04d %20.3f %20.3f %20.3f %20.3f %02d %s" % (o,len(cluster_members[ii1]), np.max(dists), np.median(dists),np.max(dists[min_idx]),np.median(dists[min_idx]),ii1,labels_tmp[min_idx]))
         labels_map[ii1] = o+1
         center_idx.append(labels.index(labels_tmp[min_idx]))
     new_labels = [labels_map[cluster_labels[k]] for k in range(len(cluster_labels))]

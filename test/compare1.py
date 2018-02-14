@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import sys
 mmap = {"0":"0","9":"1"}
 # read new

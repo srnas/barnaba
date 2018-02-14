@@ -5,7 +5,8 @@ Introduction
 ============
 
 BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. BaRNAba uses MDtraj to read/write topology and trajectory files, as such it supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more.  
-BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi and Giovanni Pinamonti.  
+BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi, Giovanni Pinamonti and Wouter Boomsma.   
+
 This is what you can do with baRNAba:  
 
 1. Calculate eRMSD [1]
@@ -14,10 +15,9 @@ This is what you can do with baRNAba:
 4. Annotate PDB structures and trajectories with the Leontis-Westhof classification
 5. Cluster nucleic acids structures using the eRMSD as a metric distance
 6. Calculate elastic network models for nucleic acids and nucleic acids/protein complexes [2]
-7. Perform a stop-motion modeling analysis [3]
-8. Calculate backbone and pucker torsion angles in a PDB structure or trajectory
-9. Back-calculate 3J scalar couplings from PDB structure or trajectory
-10. Score three-dimensional structures using eSCORE [1]
+7. Calculate backbone and pucker torsion angles in a PDB structure or trajectory
+8. Back-calculate 3J scalar couplings from PDB structure or trajectory
+9. Score three-dimensional structures using eSCORE [1]
 
 For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat) gmail dot com
 
@@ -39,12 +39,13 @@ If you use baRNAba in your work,  please cite the following paper::
 Requirements
 -------------
 baRNAba requires:
-   - Python 2.7.x
+   - Python 2.7.x or > 3.3
    - Numpy
    - Scipy
    - Mdtraj
+   - future
      
-baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories
+baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories. 
 To perform cluster analysis, scikit-learn is required too.
 
 MDtraj can be installed using pip:
@@ -65,11 +66,16 @@ then move to barnaba directory and run the command
 
    pip install -e .
 
+Some users might experience issues installing MDtraj using pip. If this is the case, we recommend installing MDtraj using conda:
 
+   conda install --channel omnia mdtraj
+    
 Usage
 ------------
 BaRNAba can be either used as a Python library or as a commandline tool.
-A number of Notebook examples can be found in the examples directory. Alternatively, the command-line interface can be found in the bin directory. Here's a minimal how-to
+A number of Notebook examples can be found in the examples_ directory.
+
+Alternatively, the command-line interface can be found in the bin directory. Here's a minimal how-to
 
 0.  minimal help:
     ./baRNAba.py --help  
@@ -111,20 +117,22 @@ A number of Notebook examples can be found in the examples directory. Alternativ
 
    ./baRNAba.py JCOUPLING --pdb ../test/data/sample1.pdb 
 
-9. Calculate elastic network models for RNA and predict SHAPE reactivity. NB: only works with PDB.
+8. Calculate elastic network models for RNA and predict SHAPE reactivity. NB: only works with PDB.
    
    ./baRNAba.py ENM --pdb ../test/data/GNRA.pdb --shape
 
-10. Calculate relative positions between bases R_ij  ang G vectors for pairs within ellipsoidal cutoff  
+9. Calculate relative positions between bases R_ij  ang G vectors for pairs within ellipsoidal cutoff  
 
    ./baRNAba.py DUMP --pdb ../test/data/GNRA.pdb --dumpG --dumpR  
 
-11. Extract fragments from structures with a given sequence. NB: only works with PDB.  
+10. Extract fragments from structures with a given sequence. NB: only works with PDB.  
 
     ./baRNAba.py SNIPPET --pdb ../test/data/1S72.pdb  --seq NNGNRANN
  
-12. Calculate ESCORE  
-    ./baRNAba.py ESCORE --ff ../test/data/1S72.pdb --pdb ../test/data/sample1.pdb
+11. Calculate ESCORE  
+    
+   ./baRNAba.py ESCORE --ff ../test/data/1S72.pdb --pdb ../test/data/sample1.pdb
+
 
 References
 ------------
@@ -137,6 +145,4 @@ References
    "Elastic network models for RNA: a comparative assessment with molecular dynamics and SHAPE experiments."  
    Nucleic acids research 43.15 (2015): 7260-7269.
 
-[3] Bottaro, Sandro, Alejandro Gil-Ley, and Giovanni Bussi.
-    "RNA folding pathways in stop motion."
-    Nucleic acids research 44.12 (2016): 5883-5891.
+.. _examples: https://github.com/srnas/barnaba/tree/master/examples

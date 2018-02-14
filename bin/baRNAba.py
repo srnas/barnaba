@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 #   This is baRNAba, a tool for analysis of nucleic acid 3d structure
 #   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
@@ -13,7 +13,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+from __future__ import absolute_import, division, print_function
 import sys
 import glob
 import os
@@ -237,17 +237,17 @@ def ss_motif(args):
 
     stri = "# %s \n" % (" ".join(sys.argv[:]))
     if(args.top==None):
-        stri += "#%20s %10s %s \n" % ("PDB","eRMSD","Sequence")
+        stri += "#%-20s %10s %s \n" % ("PDB","eRMSD","Sequence")
         for i in range(len(args.pdbs)):
             try:
                 dd = bb.ss_motif(args.query,args.pdbs[i],out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
-                stri += " ".join([" %20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+                stri += "".join([" %-20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
             except:
-                print "# not able to load %s" % args.pdbs[i]
+                print("# not able to load %s" % args.pdbs[i])
                 continue
     else:
         dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
-        stri += " ".join([" %20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+        stri += "".join([" %-20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
 
     fh = open(args.name + ".out",'w')
     fh.write(stri)
@@ -263,16 +263,16 @@ def ds_motif(args):
 
     stri = "# %s \n" % (" ".join(sys.argv[:]))
     if(args.top==None):
-        stri += "#%20s %10s %s \n" % ("PDB","eRMSD","Sequence")
+        stri += "#%-20s %10s %s \n" % ("PDB","eRMSD","Sequence")
         for i in range(len(args.pdbs)):
             dd = bb.ds_motif(args.query,args.pdbs[i],out=out,l1=args.l1,l2=args.l2,\
                              bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
-            stri += " ".join([" %20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+            stri += "".join([" %-20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
     else:
         stri += "#%20s %10s %s \n" % ("frame","eRMSD","Sequence")
         dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,l1=args.l1,l2=args.l2,\
                          bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
-        stri += " ".join([" %20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
+        stri += "".join([" %-20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
 
     fh = open(args.name + ".out",'w')
     fh.write(stri)
@@ -284,10 +284,10 @@ def ds_motif(args):
 def annotate(args):
 
     stri_p = "# %s \n" % (" ".join(sys.argv[:]))
-    stri_p += "#%15s %15s %4s \n" % ("RES1","RES2","ANNO")
+    stri_p += "#%-10s %-10s %4s \n" % ("RES1","RES2","ANNO")
     
     stri_s = "# %s \n" % (" ".join(sys.argv[:]))
-    stri_s += "#%15s %15s %4s \n" % ("RES1","RES2","ANNO")
+    stri_s += "#%-10s %-10s %4s \n" % ("RES1","RES2","ANNO")
 
     stri_dot = "# %s \n" % (" ".join(sys.argv[:]))
 
@@ -295,10 +295,10 @@ def annotate(args):
         for i in range(len(args.pdbs)):
             st, pair, res = bb.annotate(args.pdbs[i])
             stri_p += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
-            stri_p += "".join([ " %15s %15s %4s \n " % (res[pair[0][0][e][0]],res[pair[0][0][e][1]],pair[0][1][e]) for e in range(len(pair[0][0]))])
+            stri_p += "".join([ "%-10s %-10s %4s \n" % (res[pair[0][0][e][0]],res[pair[0][0][e][1]],pair[0][1][e]) for e in range(len(pair[0][0]))])
             
             stri_s += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
-            stri_s += "".join([ " %15s %15s %4s \n " % (res[st[0][0][e][0]],res[st[0][0][e][1]],st[0][1][e]) for e in range(len(st[0][0]))])
+            stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[0][0][e][0]],res[st[0][0][e][1]],st[0][1][e]) for e in range(len(st[0][0]))])
 
             if(args.dotbr):
                 dotbr = bb.dot_bracket(pair,res)
@@ -313,10 +313,10 @@ def annotate(args):
             
         for k in range(len(st)):
             stri_p += "# Frame %d \n" % k
-            stri_p += "".join([ " %15s %15s %4s \n " % (res[pair[k][0][e][0]],res[pair[k][0][e][1]],pair[k][1][e]) for e in range(len(pair[k][0]))])
+            stri_p += "".join([ "%-10s %-10s %4s \n" % (res[pair[k][0][e][0]],res[pair[k][0][e][1]],pair[k][1][e]) for e in range(len(pair[k][0]))])
         
             stri_s += "# Frame %d \n" % k
-            stri_s += "".join([ " %15s %15s %4s \n " % (res[st[k][0][e][0]],res[st[k][0][e][1]],st[k][1][e]) for e in range(len(st[k][0]))])
+            stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[k][0][e][0]],res[st[k][0][e][1]],st[k][1][e]) for e in range(len(st[k][0]))])
             
             
         
@@ -393,19 +393,19 @@ def torsion(args):
     if(args.backbone):
         
         stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
-        stri_b += "#%15s  %11s %11s %11s %11s %11s %11s %11s\n" % ("RESIDUE","alpha","beta","gamma","delta","eps","zeta","chi")
+        stri_b += "#%-12s  %11s %11s %11s %11s %11s %11s %11s\n" % ("RESIDUE","alpha","beta","gamma","delta","eps","zeta","chi")
 
         if(args.top==None):
             for i in range(len(args.pdbs)):
                 stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
                 angles_b,rr = bb.backbone_angles(args.pdbs[i],residues=args.res)
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join([" %-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
         else:
             
             angles_b,rr = bb.backbone_angles(args.trj,topology=args.top,residues=args.res)
             for i in range(angles_b.shape[0]):
                 stri_b += "# Frame %d \n" % i
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join([" %-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
             
             
         fh = open(args.name + ".backbone.out",'w')
@@ -415,19 +415,19 @@ def torsion(args):
     if(args.sugar):
         
         stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
-        stri_b += "#%15s  %11s %11s %11s %11s %11s \n" % ("RESIDUE","nu0","nu1","nu2","nu3","nu4")
+        stri_b += "#%-12s  %11s %11s %11s %11s %11s \n" % ("RESIDUE","nu0","nu1","nu2","nu3","nu4")
 
         if(args.top==None):
             for i in range(len(args.pdbs)):
                 stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
                 angles_b,rr = bb.sugar_angles(args.pdbs[i],residues=args.res)
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join([" %-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
         else:
             
             angles_b,rr = bb.sugar_angles(args.trj,topology=args.top,residues=args.res)
             for i in range(angles_b.shape[0]):
                 stri_b += "# Frame %d \n" % i
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join([" %-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
             
             
         fh = open(args.name + ".sugar.out",'w')
@@ -437,19 +437,19 @@ def torsion(args):
     if(args.pucker):
         
         stri_b = "# %s \n" % (" ".join(sys.argv[:]))        
-        stri_b += "#%15s  %11s %11s \n" % ("RESIDUE","Phase","Amplitude")
+        stri_b += "#%-12s  %11s %11s \n" % ("RESIDUE","Phase","Amplitude")
 
         if(args.top==None):
             for i in range(len(args.pdbs)):
                 stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
                 angles_b,rr = bb.pucker_angles(args.pdbs[i],residues=args.res)
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join(["%-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
         else:
             
             angles_b,rr = bb.pucker_angles(args.trj,topology=args.top,residues=args.res)
             for i in range(angles_b.shape[0]):
                 stri_b += "# Frame %d \n" % i
-                stri_b += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+                stri_b += "".join(["%-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
                         
         fh = open(args.name + ".pucker.out",'w')
         fh.write(stri_b)
@@ -460,18 +460,18 @@ def couplings(args):
 
     from  barnaba import definitions
     stri = "# %s \n" % (" ".join(sys.argv[:]))
-    stri += "#%15s %s\n" % ("RESIDUE","".join([" %11s" % (k) for k in  definitions.couplings_idx.keys()]))
+    stri += "#%-12s %s\n" % ("RESIDUE","".join([" %11s" % (k) for k in  definitions.couplings_idx.keys()]))
     
     if(args.top==None):
         for i in range(len(args.pdbs)):
             stri += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
             angles_b,rr = bb.jcouplings(args.pdbs[i],residues=args.res,raw=args.raw)
-            stri += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+            stri += "".join(["%-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
     else:
         angles_b,rr = bb.jcouplings(args.trj,topology=args.top,residues=args.res,raw=args.raw)
         for i in range(angles_b.shape[0]):
             stri += "# Frame %d \n" % i
-            stri += "".join([" %15s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
+            stri += "".join([" %-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
 
     fh = open(args.name + ".couplings.out",'w')
     fh.write(stri)
@@ -504,18 +504,18 @@ def enm(args):
         if("B" in args.type):
             sele.append("C2")
 
-    net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop)
+    net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop,cutoff=args.cutoff)
 
     # print eigenvectors 
-    evecs = net.print_evec(args.ntop)
-    fh = open(args.name + ".evecs.out",'w')
-    fh.write(evecs)
+    eigvecs = net.print_evec(args.ntop)
+    fh = open(args.name + ".eigvecs.out",'w')
+    fh.write(eigvecs)
     fh.close()
 
     # print eigenvalues 
-    evals = net.print_eval()
-    fh = open(args.name + ".evals.out",'w')
-    fh.write(evals)
+    eigvals = net.print_eval()
+    fh = open(args.name + ".eigvals.out",'w')
+    fh.write(eigvals)
     fh.close()
 
     if(args.shape):
@@ -539,17 +539,10 @@ def main():
         # create output filename
         if(args.name == None):
             outfile = 'outfile.' + args.subparser_name 
-            ll = glob.glob(outfile + "*")
-            args.name = outfile
-            if(len(ll)!=0):
-                sys.stderr.write('# Creating backup file:  %s \n' % (outfile + ".backup." + str(len(ll))))
-                os.system("cp " + outfile + " " + outfile + ".backup." + str(len(ll)))
-            print "# No name specified. Your output will be written to",outfile
         else:
             outfile = args.name + "." + args.subparser_name
-            print "# Your output will be written to",outfile
-            args.name = outfile
-    
+        args.name = outfile
+        print("# your output will be written to files with prefix %s" % outfile)
 
     # Parse options
     args = parse()

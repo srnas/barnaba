@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import barnaba.escore as escore
 import os
 from comp_mine import comp

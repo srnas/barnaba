@@ -12,9 +12,9 @@
 """
 di' qualcosa di sinistra! d'Alema di' qualcosa!
 """
-
+from __future__ import absolute_import, division, print_function
 from scipy.spatial import distance
-import definitions
+from . import definitions
 import numpy as np
 
 
@@ -157,7 +157,7 @@ def calc_mat_annotation(coords):
     m_idx = np.array(np.where((dmat<max_r) & (dmat>0.001))).T
     
     if(len(m_idx)==0):
-        return [],[]
+        return [],[], []
     
     # calculate scaled distances
     diff = origo[m_idx[:,1]]-origo[m_idx[:,0]]

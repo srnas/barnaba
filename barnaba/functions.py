@@ -10,15 +10,20 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+
+# Make sure that range returns an iterator also in python2 (using future module)
+from builtins import range
+
 import sys
 import mdtraj as md
 from scipy.spatial import distance
 import itertools
 import numpy as np
-import definitions
-import nucleic
-import calc_mats as ff
 import os
+from . import definitions
+from . import nucleic
+from . import calc_mats as ff
     
 def ermsd(reference,target,cutoff=2.4,topology=None):
     
@@ -72,7 +77,7 @@ def ermsd_traj(reference,traj,cutoff=2.4):
     ref_mat = ff.calc_gmat(coords_ref,cutoff).reshape(-1)
     #rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
     gmats = []
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
         coords_lcs = traj.xyz[i,nn_traj.indeces_lcs]
         gmats.append(ff.calc_gmat(coords_lcs,cutoff).reshape(-1))
     dd = distance.cdist([ref_mat],gmats)/np.sqrt(len(nn_traj.ok_residues))
@@ -117,7 +122,7 @@ def dump_rvec_traj(traj,cutoff=2.4):
     top = traj.topology
     nn = nucleic.Nucleic(top)
     rvecs = []
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
         rvecs.append(ff.calc_rmat(coords_lcs,cutoff))
         
@@ -163,7 +168,7 @@ def dump_gvec_traj(traj,cutoff=2.4):
     top = traj.topology
     nn = nucleic.Nucleic(top)
     gvecs = []
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
         coords_lcs = traj.xyz[i,nn.indeces_lcs]
         gvecs.append(ff.calc_gmat(coords_lcs,cutoff))
     return np.asarray(gvecs), nn.rna_seq
@@ -250,7 +255,7 @@ def rmsd_traj(reference,traj,out=None):
                         idx_ref.append(at.index)
                         idx_target.append(((res2.atom(at.name)).index))
             
-    print "# found ",len(idx_ref), "atoms in common"
+    print("# found ",len(idx_ref), "atoms in common")
     
     if(len(idx_ref)<3):
         warn =  "# Only  %d atoms in common. abort.\n" % len(idx_ref)
@@ -628,7 +633,7 @@ def ss_motif_traj(ref,traj,threshold=0.8,cutoff=2.4,sequence=None,bulges=0,out=N
     lcs_idx = nn_traj.indeces_lcs
     results = []
     count = 1
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
         
         gmats = [ ff.calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1)  for j in res_idxs]
             
@@ -765,7 +770,7 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
     idxs_combo = []
     results = []
     count = 1
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
 
         # calculate eRMSD for strand1 
         gmats1 = [ff.calc_gmat(traj.xyz[i,lcs_idx[:,j]],cutoff).reshape(-1) for j in all_idx1]
@@ -890,14 +895,18 @@ def annotate_traj(traj):
     stackings = []
     pairings = []
     
-    for i in xrange(traj.n_frames):
+    for i in range(traj.n_frames):
 
         # calculate LCS
         coords = traj.xyz[i,nn.indeces_lcs]
 
         # find bases in close contact (within ellipsoid w radius 1.7)
         pairs,vectors,angles = ff.calc_mat_annotation(coords)
-
+        if(len(pairs)==0):
+            stackings.append([[],[]])
+            pairings.append([[],[]])
+            continue
+        
         # calculate rho
         rho_12 = vectors[:,0,0]**2 + vectors[:,0,1]**2
         rho_21 = vectors[:,1,0]**2 + vectors[:,1,1]**2
@@ -927,7 +936,7 @@ def annotate_traj(traj):
         # now I have found all stackings.
         #stacked_pairs = [[nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]]] for k in stacked]
         stacked_pairs = [[pairs[k,0],pairs[k,1]] for k in stacked]
-        stacked_annotation = np.chararray((len(stacked_pairs),2))
+        stacked_annotation = np.chararray((len(stacked_pairs),2), unicode='True')
         stacked_annotation[:] = ">"
         
         # revert where z_ij is negative
@@ -941,8 +950,8 @@ def annotate_traj(traj):
         ######################################################
 
         # find paired bases  (z_ij < 2 AA AND z_j1 < 2 AA)
-        #paired = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) and (j not in stackz_21[0]))]
-        paired = [j for j in xrange(len(pairs)) if((j not in stackz_12[0]) or (j not in stackz_21[0]))]
+        #paired = [j for j in range(len(pairs)) if((j not in stackz_12[0]) and (j not in stackz_21[0]))]
+        paired = [j for j in range(len(pairs)) if((j not in stackz_12[0]) or (j not in stackz_21[0]))]
         #paired_pairs = [[nn.rna_seq[pairs[k,0]],nn.rna_seq[pairs[k,1]]] for k in paired]
         paired_pairs = [[pairs[k,0],pairs[k,1]] for k in paired]
         
@@ -959,11 +968,11 @@ def annotate_traj(traj):
         edge_2 = np.digitize(edge_angles_2,bins)-1
 
         
-        paired_annotation = np.chararray((len(paired_pairs),3))
+        paired_annotation = np.chararray((len(paired_pairs),3), unicode=True)
         paired_annotation[:] = "X"
         
         # now explicit loop, a bit messy. sorry, Guido.
-        for j in xrange(len(paired_pairs)):
+        for j in range(len(paired_pairs)):
 
             # if angle is larger than 60 deg, skip
             if(np.abs(angles[paired[j]]) < 0.5 ): continue
@@ -1072,21 +1081,21 @@ def dot_bracket(pairings,sequence):
         # check pseudoknots
         dotbr = ['.']*ll
         levels = [-1]*ll
-        for idx1 in xrange(len(openings)):
+        for idx1 in range(len(openings)):
             start1 = openings[idx1]
             end1 = closings[idx1]
             # up one level
             levels[start1] += 1
             levels[end1] += 1
         
-            for idx2 in xrange(len(closings)):
+            for idx2 in range(len(closings)):
                 end2 = closings[idx2]
                 if(levels[end2] == levels[start1]):
                     if(end2 > start1 and end2 < end1):
                         levels[start1] += 1
                         levels[end1] += 1
                         
-        for idx1 in xrange(len(openings)):
+        for idx1 in range(len(openings)):
             start1 = openings[idx1]
             end1 = closings[idx1]
             
@@ -1114,7 +1123,7 @@ def snippet(pdb,sequence,outdir=None):
 
     """
 
-    import reader as  reader
+    from . import reader
 
     if(outdir==None):
         outdir = os.getcwd()
@@ -1124,10 +1133,10 @@ def snippet(pdb,sequence,outdir=None):
     # check query sequence
     for item in sequence:
         if(item not in definitions.known_abbrev):
-            print "# FATAL Error. Symbol ", item, " not known. Use AUCG/NYRSWKMBDHV"
+            print("# FATAL Error. Symbol ", item, " not known. Use AUCG/NYRSWKMBDHV")
             return 1
         if(item == "%"):
-            print "# Fatal error. Single strand only"
+            print("# Fatal error. Single strand only")
             return 1
 
     ll = [len(el) for el in sequence]
@@ -1163,7 +1172,8 @@ def snippet(pdb,sequence,outdir=None):
             
             name_pref = pdb[0:-4].split("/")[-1]
             new_pdb = "%s/%s_%s_%05d.pdb" % (outdir,name_pref,cur_pdb.model.sequence_id[index[0]],ii)
-         
+            sys.stderr.write("# Writing PDB %s\n" % new_pdb.split("/")[-1])
+
             fh_pdb = open(new_pdb,'w')
             fh_pdb.write(cur_pdb.model.string_pdb(index,noP=True,center=True))
             fh_pdb.close()
@@ -1171,4 +1181,4 @@ def snippet(pdb,sequence,outdir=None):
             ii += 1
         idx = cur_pdb.read()
       
-    return 0
+    

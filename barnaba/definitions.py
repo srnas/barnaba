@@ -11,6 +11,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
 import re
 import itertools as its
 import collections
@@ -205,7 +206,7 @@ def get_idx(sequence,query,bulges=0):
         # create position of insertions
         comb= its.combinations(range(1,ll+b-1),b)
         for it1 in comb:
-            idx1 = range(ll+b)
+            idx1 = list(range(ll+b))
             # remove them from list
             for it2 in it1:
                 idx1.remove(it2)

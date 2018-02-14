@@ -11,8 +11,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+
+# Make sure that range returns an iterator also in python2 (using future module)
+from builtins import range
+
 import sys
-import definitions
+from . import definitions
 
 
 class Residue:
@@ -27,7 +32,7 @@ class Residue:
         self.atom_types = []
         self.atom_numbers = []
         self.atom_coords = []
-        for i in xrange(len(atoms_data)):
+        for i in range(len(atoms_data)):
             # make sure that atoms is not duplicated
             # this can happen with multiple occupancy
             if(atoms_data[i][1] in self.atom_types):
@@ -78,7 +83,7 @@ class Residue:
         occ = 1.0
         bfac = 1.0
 
-        for i in xrange(len(self.atom_types)):
+        for i in range(len(self.atom_types)):
 
             atype = self.atom_types[i]
             if(noP==True and atype in definitions.term_5prime):
