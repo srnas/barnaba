@@ -144,7 +144,7 @@ def parse():
     parser_10.add_argument("--pdb", dest="pdbs",help="PDB file",default=None,required=True)
 
     parser_10.add_argument("--cutoff", dest="cutoff",help="Cutoff distance in nm (default=0.9)",default=0.9,type=float)
-    parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SB','SP','BP','SBP','AA'], help='Type of ENM (default=SBP)')    
+    parser_10.add_argument("--type", dest="type",default='SBP',choices=['P','S','B','SB','SP','BP','SBP','SBPC','AA'], help='Type of ENM (default=SBP)')
     parser_10.add_argument("--ntop", dest="ntop",help="Number of top eigenvectors to write (default=10)",default=10,type=int)
     parser_10.add_argument("--sparse", dest="sparse",help="Use sparse matrix diagonalization algorithm. Recomended for large matrices.",action='store_true',default=False)
 
@@ -503,6 +503,8 @@ def enm(args):
             sele.append("C1\'")
         if("B" in args.type):
             sele.append("C2")
+        if("C" in args.type):
+            sele.append("CA")
 
     net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop,cutoff=args.cutoff)
 
