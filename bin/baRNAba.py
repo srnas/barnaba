@@ -502,7 +502,7 @@ def enm(args):
         if("B" in args.type):
             sele.append("C2")
 
-    net = enm.Enm(args.pdbs,sele_atoms=sele)
+    net = enm.Enm(args.pdbs,sele_atoms=sele,cutoff=args.cutoff)
 
     # print eigenvectors 
     eigvecs = net.print_evec(args.ntop)
