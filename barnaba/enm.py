@@ -26,7 +26,7 @@ from . import definitions
 
 class Enm:
 
-    def __init__(self,pdb,sele_atoms,cutoff=8.0):
+    def __init__(self,pdb,sele_atoms,cutoff=0.9):
 
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
@@ -44,6 +44,7 @@ class Enm:
         print("# Read ", coords.shape, "coordinates")
         # build distance matrix
         dmat = distance.pdist(coords)
+
         ll = len(coords)
 
         # find where distance is shorter than cutoff
