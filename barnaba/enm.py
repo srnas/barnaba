@@ -45,7 +45,7 @@ class Enm:
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
         if(sele_atoms=="AA"):
-            idxs = [atom.index for atom in topology.atoms if ("H" not in atom.name)]
+            idxs = [atom.index for atom in topology.atoms if (atom.name[0] != "H")]
         else:
             idxs = [atom.index for atom in topology.atoms if (atom.name in sele_atoms)]
         if(len(idxs)==0):
