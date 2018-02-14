@@ -225,8 +225,9 @@ class Enm:
         stri = ""
         # write eigenvectors (skip first 6)
         for i in range(6,ntop+6):
-            # check eigenvalue to be nonzero
-            assert(self.e_val[i] > definitions.tol)
+            if(self.e_val[i] < definitions.tol):
+               stri += "# skipping eigenvector %d (eigenvalue = %f )\n" % (i,self.e_val[i])
+               continue
             stri += "# eigenvector %d \n" % (i) 
             stri += "# beads index & x-component & y-component & z-component \n"
             
