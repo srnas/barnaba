@@ -1180,5 +1180,191 @@ def snippet(pdb,sequence,outdir=None):
          
             ii += 1
         idx = cur_pdb.read()
-      
+
+
+############# SEC_STRUCTURE ########################################
+
+
+def parse_annotations(file, residue_numbers, nucleotide):
+   # from sec_str_constants import *
+	import barnaba.sec_str_constants as secon
+   	import re 
+	print("Parsing file ", file)	
+	with open(file) as f:
+		annotation = f.readlines()
+		f.close()
+	
+	re_pdb = re.compile("^\s*#\s+PDB\s+.*$")
+	re_frame = re.compile("^\s*#\s+Frame.*$")
+	re_ann = re.compile("^\s*([AGCU])_([0-9]+)_([0-9]+)\s+([AGCU])_([0-9]+)_([0-9]+)\s+.*$")
+	chains = []
+	old_C = "X"
+	ann_lists = []
+	ann_list = {}
+	n_frames = 0
+
+	for line in annotation:
+		pdb = re_pdb.match(line)
+		if pdb:
+			n_frames += 1
+			continue
+		frame = re_frame.match(line)
+		if frame:
+			n_frames += 1
+			continue
+		ann = re_ann.match(line)
+		if ann:
+			cols = line.split()
+			ri = int(cols[0].split("_")[1])
+			i_N = cols[0].split("_")[0]
+			i_C = cols[0].split("_")[2]
+			rj = int(cols[1].split("_")[1])
+			j_N = cols[1].split("_")[0]
+			j_C = cols[1].split("_")[2]
+			ann_ij = cols[2]
+			if ann_ij == "GUc": ann_ij = "WWc"
+			if ri not in residue_numbers:
+				sys.exit("Residue %d found, but not in list. Please check --first_id and --missing\n" % ri)
+			elif rj not in residue_numbers:
+				sys.exit("Residue %d found, but not in list. Please check --first_id and --missing\n" % rj)
+			if ann_ij not in secon.list_ann and not ann_ij == "XXX":
+				sys.exit("Cannot understand annotation in this line:\n%s\n" % line) 
+			if ann_ij == "XXX":
+				continue
+			if nucleotide[ri] != i_N or nucleotide[rj] != j_N:
+				sys.exit("Sequence-number mapping not correct in line:\n%s\nCheck for missing residue numbers (--missing)\n" % line)
+			i = residue_numbers.index(ri)
+			j = residue_numbers.index(rj)
+			if old_C != "X" and (i_C != j_C or i_C != old_C):
+				ann_lists.append(ann_list)
+				ann_list = {}
+			if i_C not in chains:
+				chains.append(i_C)
+			old_C = i_C
+			try:
+				ann_list[i, j, ann_ij]
+			except:
+				ann_list[i, j, ann_ij] = 1.
+			else: 
+				ann_list[i, j, ann_ij] += 1.
+		
+	ann_lists.append(ann_list)
+	pairs = []
+	for c, ann_list in enumerate(ann_lists):
+		p = []
+		for ann, value in ann_list.items():
+			ann_list[ann] /= n_frames
+			if ann_list[ann] > secon.threshold and [ann[0], ann[1]] not in p:
+				p.append([ann[0], ann[1]])
+		pairs.append(p)
+	return chains, ann_lists, pairs, n_frames
     
+
+def parameters(pairs, ann_list, n, tertiary_contacts=True):
+	import barnaba.sec_str_constants as secon
+
+	# parameters:
+	# potential type 0: harmonic potential
+	# potential type 1: semiharmonic potential to reject bases
+	# potential type 2: angular potential to keep ds regions in order
+
+	param_seq = []
+	for i in range(n-1):
+		param_seq.append([0, i, i+1, secon.k_seq, secon.d_seq])
+	param_bp = []
+	param_wc = []
+	param_stack = []
+	for ann, value in ann_list.items():
+		i = ann[0]
+		j = ann[1]
+		ann_ij = ann[2]
+		if ann_ij in secon.list_bp_ct and value > secon.threshold:
+			if ann_ij in secon.list_wc_pairs: 
+				param_wc.append([0, i, j, secon.k_bp*value, secon.d_bp])
+			else:
+				value*= 1.
+				param_bp.append([0, i, j, secon.k_bp*value, secon.d_bp])
+		if ann_ij in secon.list_stackings and value > secon.threshold:
+			if abs(i-j) != 1:
+				param_stack.append([0, i, j, secon.k_stack2, secon.d_stack2])
+        
+	sums = {}
+	param_ang = []
+	for p in param_wc:
+		sum_i = p[1] + p[2]
+		if sum_i not in sums:
+			same_sum = sum([1 for pi in param_wc if pi[1] + pi[2] == sum_i])
+			sums[sum_i] = same_sum
+
+	for sum_i, same_sum in sums.items():
+		pmax = 0
+		pmin = n
+		for diag_sum in [sum_i+1, sum_i-1]:
+			if diag_sum in sums:
+				sdiag_sum = sums[diag_sum]
+				if sdiag_sum < same_sum:
+					print("Resetting distance for sum ", diag_sum)
+					for pi in param_wc:
+						if pi[1] + pi[2] == diag_sum:
+							pi[4] = secon.d_bp2
+			
+		if same_sum > 1:
+			for pi in param_wc:
+				if pi[1] + pi[2] == sum_i:
+					pi[3] *= 1.2**(same_sum-1)
+					if same_sum > 1:
+						if pi[1] > pmax:
+							pmax = pi[1]
+						if pi[1] < pmin:
+							pmin = pi[1]
+		#	print("min pair ", pmin, sum_i-pmin)
+		#	print("max pair ", pmax, sum_i-pmax)
+			for pi in param_wc:
+				if pi[1] + pi[2] == sum_i:
+					if pi[1] == pmin:
+						pi[3] *= 3
+					if pi[1] == pmax:
+						pi[3] *= 3
+					if pi[1] > pmin:
+						param_ang.append([2, pmin, pi[1], pi[2], same_sum * secon.k_ang, secon.angle])
+						param_ang.append([2, pi[1], pi[2], sum_i-pmin, same_sum * secon.k_ang, secon.angle])
+					if pi[1] < pmax:
+						param_ang.append([2, pi[2], pi[1], pmax, same_sum * secon.k_ang, secon.angle])
+						param_ang.append([2, sum_i-pmax, pi[2], pi[1], same_sum * secon.k_ang, secon.angle])
+	sums = []
+	for p in param_wc+param_bp:
+		sum_i = p[1] + p[2]
+		if sum_i not in sums:
+			sums.append(sum_i)
+			same_sum = sum([1 for pi in param_wc+param_bp if pi[1] + pi[2] == sum_i])
+			if not tertiary_contacts and same_sum == 1:
+				for pi in param_wc:
+					if pi[1] + pi[2] == sum_i:
+					# without tertiary contacts
+						pi[3] = 0
+				for pi in param_bp:
+					if pi[1] + pi[2] == sum_i:
+					# without tertiary contacts
+						pi[3] = 0
+							
+	param_rep = []
+	for i1 in range(n-2):
+		for i2 in range(i1+2, n):
+			rep = True
+			for p in param_bp + param_wc + param_stack:
+				if p[1:3] == [i1, i2] and p[3] > 0:
+					rep = False
+			if rep:
+				param_rep.append([1, i1, i2, secon.k_rep1, secon.d_rep1])
+	for i1 in range(n-2):
+		for i2 in range(i1+1, n):
+			param_rep.append([1, i1, i2, secon.k_rep2, secon.d_rep2])
+
+	param = []
+	param += param_seq
+	param += param_bp
+	param += param_wc
+	param += param_stack
+	param += param_rep
+	param += param_ang
+	return param    

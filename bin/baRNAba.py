@@ -96,6 +96,20 @@ def parse():
     parser_05.add_argument("--top", dest="top",help="Topology file",required=False)
     parser_05.add_argument("--dotbracket", dest="dotbr",help="write dot-bracket annotation",action='store_true',default=False)
 
+
+    # SEC_STRUCTURE
+    parser_11 = subparsers.add_parser('SEC_STRUCTURE', help='Draw secondary structure from annotation')
+    parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
+    parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
+    parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s)", nargs="+",default=None,required=True)
+    parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
+    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", nargs="+", default=None, required=False)
+    parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
+    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
+    parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=500)
+    parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
+    parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
+
     
     # DUMP
     parser_06 = subparsers.add_parser('DUMP', help='DUMP structural parameters')
@@ -333,11 +347,161 @@ def annotate(args):
         fh3.write(stri_dot)
         fh3.close()
 
+
+####################### SEC_STRUCTURE #####################
+
+def sec_structure(args):
+
+	import barnaba.sec_str_svg as sesvg
+	import barnaba.sec_str_ff as seff
+	import barnaba.sec_str_constants as secon
+#	from barnaba.sec_str_ff import *
+#	from barnaba.sec_str_constants import *
+
+	output = "# %s \n" % (" ".join(sys.argv[:]))
+
+	if args.missing:
+		missing_index = [int(i) for i in args.missing]
+		residue_numbers = []
+		args.first_id = int(args.first_id)
+		j = args.first_id
+		for i in args.sequence:
+			while j in missing_index:
+				j +=1 
+			residue_numbers.append(j)	
+			j += 1
+	else:
+		residue_numbers = range(int(args.first_id), int(args.first_id)+len(args.sequence))
+	nucleotide = {}
+	for key, i in enumerate(residue_numbers):
+		nucleotide[i] = args.sequence[key]
+
+	ann_lists = []
+	ann_list = {}
+	chains = []
+	pairs_list = []
+	n_frames = 0
+	for f in args.f_anns: 
+		i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(f, residue_numbers, nucleotide)
+		if len(ann_lists) == 0:
+			ann_lists = list(i_ann_lists)
+		else:
+			for c, ann_list in enumerate(ann_lists):
+				ann_list.update(i_ann_lists[c])
+		if len(pairs_list) == 0:
+			pairs_list = i_pairs
+		else:
+			for c, p in enumerate(i_pairs):
+				for pi in p:
+					if pi not in pairs_list[c]:
+						pairs_list[c].append(pi)
+		if n_frames == 0:
+			n_frames = i_n_frames
+		else:
+			if n_frames != i_n_frames:
+				sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
+		if len(chains) == 0:
+			chains = i_chains
+		elif chains != i_chains:
+			sys.exit("Different chains in files.")
+
+	for c, ann_list in enumerate(ann_lists):
+		pairs = pairs_list[c]
+		n = len(args.sequence)
+		param = bb.parameters(pairs, ann_list, n, args.tertiary_contacts)    
+		
+		dimensions = secon.d_seq*(n-1)*.7
+		length = n*secon.d_seq
+		import numpy as np
+		angle = 2*np.pi/n
+		start = np.zeros((n, 2))
+		for i in range(n):
+			start[i][0] = -length * 0.5/np.pi * np.sin(i*angle + .5*angle) + dimensions * 0.5
+			start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
+		pos = start
+		h = 5
+		print_snapshots = 20
+		print_snapshots = min([int(args.nsteps), print_snapshots])
+	
+		ds = int(float(args.nsteps)/print_snapshots)
+		dt = float(args.T_init)/int(args.nsteps)*3/2
+		T = args.T_init
+		output += "Chain %d\n" % c 
+		output += "%8s%10s%10s%6s%10s\n" % ("Step", "energy", "F_max", "T", "h") 
+		print("%8s%10s%10s%6s%10s" % ("Step", "energy", "F_max", "T", "h")) 
+		ki = 0
+		added_ang = False
+		write_force = False 
+		for i in range(int(args.nsteps)+1):
+			E = seff.energy(pos, param)
+			F = seff.force(pos, param, write_force)
+			max_F = abs(F).max()
+			if i % ds == 0:
+				print("%8d%10.3e%10.3e%6.1f%10.2e" % (i, E, max_F, T, h))
+				output += "%8d%10.2e%10.2e%6.1f%10.2e\n" % (i, E, max_F, T, h) 
+				write_force = False
+				if T > 0: 
+					T -= ds*dt
+					if T < 0: T = 0 
+				j = i/ds
+				output_svg = sesvg.draw_structure(pos, pairs, ann_list, args.sequence, residue_numbers, dimensions, args.output_ids)
+				if len(chains) > 1:
+					fh1 = open(args.name + "_%d_%03d.svg" % (c, j),'w')
+				else:
+					fh1 = open(args.name + "_%03d.svg" % j,'w')
+				fh1.write(output_svg)
+				fh1.close()
+
+			else:
+				write_force = False
+			if h < 1e-4:
+				output += "Converged at %d steps. You can play with the temperature (-T).\n" % i
+				print("Converged at %d steps. You can play with the temperature (-T).\n" % i)
+				break
+			if i == int(args.nsteps):
+				output += "Reached maximum number of %d steps\n" % i
+				print("Reached maximum number of %d steps\n" % i)
+				break	
+			if T > 0:
+				r = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos])
+				new_pos = pos + F/max_F * h + r * T
+			else:
+				new_pos = pos + F/max_F * h 
+			
+			new_E = seff.energy(new_pos, param)
+			if new_E < E:
+				pos = new_pos
+				h *= 1.2
+			else:
+				h *= 0.2
+		E = seff.energy(pos, param, False) 
+		print("%8d%10.2e%10.2e%6.1f%10.2e" % (i, E, max_F, T, h))
+		output += "%8d%10.2e%10.2e%6.1f%.2e\n" % (i, E, max_F, T, h) 
+		print( i, " steps of minmization")	
+		output += "%d steps of minmization\n" % (i) 
+		output_svg = sesvg.draw_structure(pos, pairs, ann_list, args.sequence, residue_numbers, dimensions, args.output_ids)
+		if len(chains) > 1:
+			fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
+		else:
+			fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
+		fh1.write(output_svg)
+		fh1.close()
+
+
+	fh2 = open(args.name + ".out",'w')
+	fh2.write(output)
+	fh2.close()
+
+	
+					 
+
+
+
 ##################### DUMP #######################
 
 def dump(args):
 
-    assert args.dumpR or args.dumpG, "# ERROR. choose --dumpR and/or --dumpR"
+    assert args.dumpR or args.dumpG, "# ERROR. choose --dumpR and/or --dumpG"
     
 
     if(args.dumpR):
@@ -552,12 +716,13 @@ def main():
         outfile = filename(args)
 
     # check
-    if(args.pdbs==None):
-        assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file (--trj)"
-        assert args.top != None, "# Please provide a topology file"
-    else:
-        if(args.subparser_name != "ENM" and args.subparser_name!="SNIPPET"):
-            assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory+topology files, not both"
+	if(args.subparser_name!="SEC_STRUCTURE"):
+		if(args.pdbs==None):
+			assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file (--trj)"
+			assert args.top != None, "# Please provide a topology file"
+		else:
+			if(args.subparser_name != "ENM" and args.subparser_name!="SNIPPET"):
+				assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory+topology files, not both"
             
     
     # call appropriate function
@@ -567,6 +732,7 @@ def main():
                'SS_MOTIF' : ss_motif,\
                'DS_MOTIF' : ds_motif,\
                'ANNOTATE' : annotate,\
+               'SEC_STRUCTURE' : sec_structure,\
                'DUMP' : dump,\
                'TORSION':torsion,\
                'JCOUPLING':couplings,\
