@@ -122,7 +122,6 @@ class Enm:
         ###    Sigma has to be >zero to avoid extra null modes to pop out
         ###    if sigma > 10x smallest eval => wrong results
         ###    I set sigma=tol. This should work if tol makes sense
-
         self.check_null_modes(e_val,ntop)
 
         
@@ -143,7 +142,7 @@ class Enm:
         if N_NULL>6:
             print("WARNING: there are %d null modes. \
             Normally there should be only 6 corresponding to rotational and translational invariance.\
-            This can lead to unpredictable results.")
+            This can lead to unpredictable results." % N_NULL)
         
     def get_eval(self):
         return self.e_val
