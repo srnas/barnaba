@@ -497,12 +497,15 @@ def enm(args):
         sele = "AA"
     else:
         sele = []
+        sele.append("CA")
         if("P" in args.type):
             sele.append("P")
         if("S" in args.type):
             sele.append("C1\'")
         if("B" in args.type):
             sele.append("C2")
+        if(args.type=="SBP"):
+            sele.append("CB")
 
     net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop,cutoff=args.cutoff)
 

@@ -35,12 +35,12 @@ class Enm:
      parameters
     ------------
     pdb        : mdtraj trajectory object (TODO: what happens with multiple frames?)
-    sele_atoms : atoms to use as beads (default=["C1\'","C2","P"])
+    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"])
     cutoff     : cutoff radius in nm (default=0.9)
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
-    def __init__(self,pdb,sele_atoms=["C1\'","C2","P"],cutoff=0.9,sparse=False,ntop=10):
+    def __init__(self,pdb,sele_atoms=["C1\'","C2","P","CA","CB"],cutoff=0.9,sparse=False,ntop=10):
         self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
