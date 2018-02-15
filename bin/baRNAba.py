@@ -25,7 +25,8 @@ def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
-
+    subparsers.required = True
+    
     # ERMSD PARSER
     parser_01 = subparsers.add_parser('ERMSD', help='calculate eRMSD')
     parser_01.add_argument("-o", dest="name",help="output_name",default=None,required=False)
