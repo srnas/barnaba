@@ -47,7 +47,7 @@ def test_enm_2():
     
     # initialize class. Only PDB are accepted
     S_enm = enm.Enm(fname,sele_atoms=["C1\'"],cutoff=1.5)
-    SB_enm = enm.Enm(fname,sele_atoms=["C2","C1/'"],cutoff=1.1)
+    SB_enm = enm.Enm(fname,sele_atoms=["C2","C1\'"],cutoff=1.1)
     
     # print eigenvalues S-ENM 
     evals = S_enm.print_eval()
