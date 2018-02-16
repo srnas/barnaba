@@ -1188,7 +1188,7 @@ def snippet(pdb,sequence,outdir=None):
 def parse_annotations(file, residue_numbers, nucleotide):
    # from sec_str_constants import *
 	import barnaba.sec_str_constants as secon
-   	import re 
+	import re 
 	print("Parsing file ", file)	
 	with open(file) as f:
 		annotation = f.readlines()
