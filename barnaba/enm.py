@@ -24,6 +24,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import eigsh
 from scipy.spatial import distance
 import mdtraj as md
+import sys
 from . import definitions
 
 
@@ -35,12 +36,12 @@ class Enm:
      parameters
     ------------
     pdb        : mdtraj trajectory object (TODO: what happens with multiple frames?)
-    sele_atoms : atoms to use as beads (default=["C1\'","C2","P"])
+    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"])
     cutoff     : cutoff radius in nm (default=0.9)
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
-    def __init__(self,pdb,sele_atoms=["C1\'","C2","P"],cutoff=0.9,sparse=False,ntop=10):
+    def __init__(self,pdb,sele_atoms=["C1\'","C2","P","CA","CB"],cutoff=0.9,sparse=False,ntop=10):
         self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
@@ -122,6 +123,8 @@ class Enm:
         ###    Sigma has to be >zero to avoid extra null modes to pop out
         ###    if sigma > 10x smallest eval => wrong results
         ###    I set sigma=tol. This should work if tol makes sense
+        self.check_null_modes(e_val,ntop)
+
         
         self.e_val = e_val ### GP Is there a particular reason for not doing this before
         self.e_vec = e_vec
@@ -132,6 +135,16 @@ class Enm:
         self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
 
 
+    def check_null_modes(self,e_val,ntop):
+        N_NULL=6
+        for i in range(6,ntop+6):
+            if(e_val[i] < definitions.tol):
+                N_NULL+=1
+        if N_NULL>6:
+            sys.stderr.write("WARNING: there are %d null modes. \
+            Normally there should be only 6 corresponding to rotational and translational invariance.\
+            This can lead to unpredictable results." % N_NULL)
+        
     def get_eval(self):
         return self.e_val
 

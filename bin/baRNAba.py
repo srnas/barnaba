@@ -25,7 +25,8 @@ def parse():
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
-
+    subparsers.required = True
+    
     # ERMSD PARSER
     parser_01 = subparsers.add_parser('ERMSD', help='calculate eRMSD')
     parser_01.add_argument("-o", dest="name",help="output_name",default=None,required=False)
@@ -673,12 +674,15 @@ def enm(args):
         sele = "AA"
     else:
         sele = []
+        sele.append("CA")
         if("P" in args.type):
             sele.append("P")
         if("S" in args.type):
             sele.append("C1\'")
         if("B" in args.type):
             sele.append("C2")
+        if(args.type=="SBP"):
+            sele.append("CB")
 
     net = enm.Enm(args.pdbs,sele_atoms=sele,sparse=args.sparse,ntop=args.ntop,cutoff=args.cutoff)
 

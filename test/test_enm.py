@@ -47,7 +47,7 @@ def test_enm_2():
     
     # initialize class. Only PDB are accepted
     S_enm = enm.Enm(fname,sele_atoms=["C1\'"],cutoff=1.5)
-    SB_enm = enm.Enm(fname,sele_atoms=["C2","C1/'"],cutoff=1.1)
+    SB_enm = enm.Enm(fname,sele_atoms=["C2","C1\'"],cutoff=1.1)
     
     # print eigenvalues S-ENM 
     evals = S_enm.print_eval()
@@ -90,9 +90,54 @@ def test_enm_3():
         stri +=  "%10s/%-10s %.6e \n" % (res[i],res[i+1],fluc[i])
     fh.write(stri)
     fh.close()
-
-
     
     comp("%s/enm_06.test.dat" % refdir)
     comp("%s/enm_07.test.dat" % refdir)
     comp("%s/enm_08.test.dat" % refdir)
+
+    
+
+def test_enm_4():
+    '''Tests RNA+protein complex'''
+
+    # initialize class. Only PDB are accepted                                                                                                                                             
+    SBP_enm = enm.Enm(fname,sparse=False)
+
+    # print eigenvalues
+    evals = SBP_enm.print_eval()
+    fh = open("%s/enm_09.test.dat" % outdir,'w')
+    fh.write(evals)
+    fh.close()
+
+    # print eigenvectors
+    evecs = SBP_enm.print_evec(3)
+    fh = open("%s/enm_10.test.dat" % outdir,'w')
+    fh.write(evecs)
+    fh.close()
+
+    # print C2'-C2' fluctuations
+    fluc,res =  SBP_enm.c2_fluctuations()
+    fh = open("%s/enm_11.test.dat" % outdir,'w')
+    stri = "# %19s %s \n" % ("Residues","Fluctuations")
+    for i in range(len(fluc)):
+        stri +=  "%10s/%-10s %.6e \n" % (res[i],res[i+1],fluc[i])
+    fh.write(stri)
+    fh.close()
+
+def test_enm_5():
+    '''Tests RNA+protein complex (sparse)'''
+
+    # initialize class. Only PDB are accepted
+    AA_enm = enm.Enm(fname,sele_atoms="AA",sparse=True,cutoff=0.7)
+
+    # print eigenvalues
+    evals = AA_enm.print_eval()
+    fh = open("%s/enm_12.test.dat" % outdir,'w')
+    fh.write(evals)
+    fh.close()
+
+    # print eigenvectors
+    evecs = AA_enm.print_evec(3)
+    fh = open("%s/enm_13.test.dat" % outdir,'w')
+    fh.write(evecs)
+    fh.close()
