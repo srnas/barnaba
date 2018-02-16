@@ -24,6 +24,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import eigsh
 from scipy.spatial import distance
 import mdtraj as md
+import sys
 from . import definitions
 
 
@@ -140,7 +141,7 @@ class Enm:
             if(e_val[i] < definitions.tol):
                 N_NULL+=1
         if N_NULL>6:
-            print("WARNING: there are %d null modes. \
+            sys.stderr.write("WARNING: there are %d null modes. \
             Normally there should be only 6 corresponding to rotational and translational invariance.\
             This can lead to unpredictable results." % N_NULL)
         
