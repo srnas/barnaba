@@ -102,6 +102,7 @@ def parse():
     parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
     parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
     parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s)", nargs="+",default=None,required=True)
+    parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
     parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
     parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", nargs="+", default=None, required=False)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
@@ -420,19 +421,28 @@ def sec_structure(args):
 			start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
 		pos = start
 		h = 5
-		print_snapshots = 20
-		print_snapshots = min([int(args.nsteps), print_snapshots])
-	
-		ds = int(float(args.nsteps)/print_snapshots)
+		print_snapshots = min([int(args.nsteps), int(args.draw_interm)])
+		print_energy = 20	
+		print_energy = min([int(args.nsteps), print_energy])
+		ds = int(float(args.nsteps)/print_energy)
+		if print_snapshots > 0:
+			ds_draw = int(float(args.nsteps)/print_energy)
+		else:
+			ds_draw = 0	
+		print(print_snapshots, ds_draw)
 		dt = float(args.T_init)/int(args.nsteps)*3/2
-		T = args.T_init
-		output += "Chain %d\n" % c 
+		T = float(args.T_init)
+		if len(chains) > 1:
+			output += "------------------\nChain %d\n" % c
+			print("------------------\nChain %d\n" % c)
 		output += "%8s%10s%10s%6s%10s\n" % ("Step", "energy", "F_max", "T", "h") 
 		print("%8s%10s%10s%6s%10s" % ("Step", "energy", "F_max", "T", "h")) 
 		ki = 0
 		added_ang = False
 		write_force = False 
 		for i in range(int(args.nsteps)+1):
+			if i == 50:
+				param = bb.parameters(pairs, ann_list, n, True)    
 			E = seff.energy(pos, param)
 			F = seff.force(pos, param, write_force)
 			max_F = abs(F).max()
@@ -444,6 +454,10 @@ def sec_structure(args):
 					T -= ds*dt
 					if T < 0: T = 0 
 				j = i/ds
+
+			else:
+				write_force = False
+			if ds_draw > 0 and i % ds_draw == 0:
 				output_svg = sesvg.draw_structure(pos, pairs, ann_list, args.sequence, residue_numbers, dimensions, args.output_ids)
 				if len(chains) > 1:
 					fh1 = open(args.name + "_%d_%03d.svg" % (c, j),'w')
@@ -451,9 +465,7 @@ def sec_structure(args):
 					fh1 = open(args.name + "_%03d.svg" % j,'w')
 				fh1.write(output_svg)
 				fh1.close()
-
-			else:
-				write_force = False
+				
 			if h < 1e-4:
 				output += "Converged at %d steps. You can play with the temperature (-T).\n" % i
 				print("Converged at %d steps. You can play with the temperature (-T).\n" % i)

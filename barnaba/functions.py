@@ -1303,7 +1303,7 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
 			if diag_sum in sums:
 				sdiag_sum = sums[diag_sum]
 				if sdiag_sum < same_sum:
-					print("Resetting distance for sum ", diag_sum)
+				#	print("Resetting distance for sum ", diag_sum)
 					for pi in param_wc:
 						if pi[1] + pi[2] == diag_sum:
 							pi[4] = secon.d_bp2
