@@ -5,7 +5,6 @@ def readme():
         return f.read()
     
 setup(name='barnaba',
-      version='0.1.2',
       description='analyze nucleic acid 3D structures and MD trajectories',
       long_description=readme(),
       classifiers=[
