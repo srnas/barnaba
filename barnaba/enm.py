@@ -36,8 +36,10 @@ class Enm:
      parameters
     ------------
     pdb        : mdtraj trajectory object (TODO: what happens with multiple frames?)
-    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"])
+    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"]).
+                 Use "AA" to select all heavy (non-hydrogen) atoms. 
     cutoff     : cutoff radius in nm (default=0.9)
+                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al. for an overview.
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
@@ -119,8 +121,8 @@ class Enm:
             # diagonalise
             e_val,e_vec=eigh(mat.T,lower=True)
         ### check here:
-        ### 2) MAXVEC has to be obtained from args.ntop
-        ###    Done. Do I want to print the 0 modes or not?
+        ### 1) do we want to store the interaction matrix?
+        ### 2) what about the covariance matrix?
         ### 4) EIGSH IS GIVIN EXTRA ZERO-MODES!
         ###    Sigma has to be >zero to avoid extra null modes to pop out
         ###    if sigma > 10x smallest eval => wrong results
