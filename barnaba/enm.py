@@ -146,13 +146,17 @@ class Enm:
             This can lead to unpredictable results." % N_NULL)
         
     def get_eval(self):
+        """ Return eigenvalues of the interaction matrix of the ENM"""
         return self.e_val
 
     def get_evec(self):
+        """ Returns eigenvectors of the interaction matrix of the ENM"""
         return self.e_vec
 
     def c2_fluctuations(self):
-
+        """ Computes the C2-C2 fluctuations of an RNA ENM.
+        Return:
+        numpy array containing C2-C2 fluctuations"""
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
@@ -226,6 +230,7 @@ class Enm:
 
 
     def print_eval(self):
+        """ Return a string containint the eigenvalues of the interaction matrix of the ENM"""
         stri = "# Eigenvalues \n"
         for i in range(len(self.e_val)):
             vv = self.e_val[i]
@@ -234,7 +239,7 @@ class Enm:
         return stri
     
     def print_evec(self,ntop):
-
+        """ Return a string containing the firt NTOP eigenvectors of the interaction matric of the ENM"""
         stri = ""
         # write eigenvectors (skip first 6)
         for i in range(6,ntop+6):
