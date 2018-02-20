@@ -61,7 +61,9 @@ class Enm:
         dmat = distance.pdist(coords)
 
         ll = len(coords)
-
+        self.n_beads=ll
+        self.ntop=ntop
+        
         # find where distance is shorter than cutoff
         c_idx = (dmat<cutoff).nonzero()[0]
         m_idx = np.array(np.triu_indices(ll,1)).T[c_idx]
@@ -123,28 +125,30 @@ class Enm:
         ###    Sigma has to be >zero to avoid extra null modes to pop out
         ###    if sigma > 10x smallest eval => wrong results
         ###    I set sigma=tol. This should work if tol makes sense
-        self.check_null_modes(e_val,ntop)
 
-        
         self.e_val = e_val ### GP Is there a particular reason for not doing this before
         self.e_vec = e_vec
         self.coords = coords
+
+
+        self._check_null_modes()
         #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
         # get C2 indexes for future C2-C2 fluctuations
         self.idx_c2 = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
         self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
 
 
-    def check_null_modes(self,e_val,ntop):
+    def _check_null_modes(self):
         N_NULL=6
-        for i in range(6,ntop+6):
-            if(e_val[i] < definitions.tol):
+        for i in range(6,self.ntop+6):
+            if(self.e_val[i] < definitions.tol):
                 N_NULL+=1
         if N_NULL>6:
             sys.stderr.write("WARNING: there are %d null modes. \
             Normally there should be only 6 corresponding to rotational and translational invariance.\
             This can lead to unpredictable results." % N_NULL)
-        
+        self.n_null_modes=N_NULL
+            
     def get_eval(self):
         """ Return eigenvalues of the interaction matrix of the ENM"""
         return self.e_val
@@ -153,6 +157,16 @@ class Enm:
         """ Returns eigenvectors of the interaction matrix of the ENM"""
         return self.e_vec
 
+    def get_MSF(self):
+        """ Return mean squared fluctuations of each bead"""
+        e_vec=self.get_evec()
+        e_val=self.get_eval()
+        cacca=np.sum(e_vec.reshape(self.n_beads,3,e_vec.shape[1])**2,axis=1)
+        msf=np.sum(cacca[:,self.n_null_modes:]*(1/e_val[self.n_null_modes:]),axis=1)
+        return msf
+    
+    
+    
     def c2_fluctuations(self):
         """ Computes the C2-C2 fluctuations of an RNA ENM.
         Return:
