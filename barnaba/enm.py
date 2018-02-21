@@ -47,17 +47,24 @@ class Enm:
         self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
-        if(sele_atoms=="AA"):
-            idxs = [atom.index for atom in topology.atoms if (atom.name[0] != "H" and not ( atom.name[0].isdigit() and atom.name[1] == "H") )]
+        if(sele_atoms=="AA" or sele_atoms==["AA"]):
+            #idxs = [atom.index for atom in topology.atoms if (atom.name[0] != "H" and not ( atom.name[0].isdigit() and atom.name[1] == "H") )]
+            idxs = topology.select("not type H")
         else:
-            idxs = [atom.index for atom in topology.atoms if (atom.name in sele_atoms)]
+            #idxs = [atom.index for atom in topology.atoms if (atom.name in sele_atoms)]
+            sele_string='name "'+'" "'.join(sele_atoms)+'"'
+            idxs=topology.select(sele_string)
         if(len(idxs)==0):
             print("# Error. no atoms found.")
             exit(1)
             
         # define atoms
-        coords = cur_pdb.xyz[0,idxs]
-
+        native_pdb=cur_pdb.atom_slice(idxs)
+        #coords = cur_pdb.xyz[0,idxs]
+        coords=native_pdb.xyz[0]
+        #self.top=cur_pdb.topology.subset(idxs)
+        self.top=native_pdb.topology
+        
         print("# Read ", coords.shape, "coordinates")
         # build distance matrix
         dmat = distance.pdist(coords)
