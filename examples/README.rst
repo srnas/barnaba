@@ -5,11 +5,11 @@ along with installation suggestions
 
 Jupyter:
 --------
-conda install jupyter
+pip install jupyter
 
 Seaborn:
 --------
-conda install seaborn
+pip install seaborn
 
 Py3Dmol:
 ----------
