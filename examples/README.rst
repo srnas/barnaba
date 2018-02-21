@@ -5,11 +5,11 @@ along with installation suggestions
 
 Jupyter:
 --------
-conda install jupyter
+pip install jupyter
 
 Seaborn:
 --------
-conda install seaborn
+pip install seaborn
 
 Py3Dmol:
 ----------
@@ -18,3 +18,4 @@ pip install py3Dmol
 nglview:
 ---------
 pip install nglview==1.0
+
