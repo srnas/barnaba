@@ -276,3 +276,13 @@ class Enm:
             stri += "\n"
             stri += "\n"
         return stri
+
+    def get_mode_traj(self,i_mode,amp=1.0,nframes=50):
+        t=np.arange(0,nframes)
+        prefac=amp*np.cos((2.*np.pi*t)/nframes)
+        x_0=self.coords
+        e_vec=self.e_vec[:,i_mode].reshape(self.n_beads,3)
+        dx=prefac[:,np.newaxis,np.newaxis]*e_vec[np.newaxis,:,:]
+        x_t=x_0+dx
+        mode_traj=md.Trajectory(x_t,self.top)
+        return mode_traj
