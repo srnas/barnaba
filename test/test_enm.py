@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import barnaba.enm as enm
 import os
 from comp_mine import comp
+import numpy as np
 
 cwd = os.getcwd()
 outdir = "%s/test/tmp" % cwd
@@ -28,6 +29,10 @@ def test_enm_1():
     fh = open("%s/enm_02.test.dat" % outdir,'w')    
     fh.write(evals)
     fh.close()
+
+    # print mean square fluctuations
+    fluc = SBP_enm.get_MSF()
+    np.savetxt("%s/enm_03b.test.dat" % outdir,fluc,fmt='%.6e')
     
     # print C2'-C2' fluctuations
     fluc,res =  SBP_enm.c2_fluctuations()
@@ -41,6 +46,7 @@ def test_enm_1():
     comp("%s/enm_01.test.dat" % refdir)
     comp("%s/enm_02.test.dat" % refdir)
     comp("%s/enm_03.test.dat" % refdir)
+    comp("%s/enm_03b.test.dat" % refdir)
 
 def test_enm_2():
     '''Tests different bead choices'''
