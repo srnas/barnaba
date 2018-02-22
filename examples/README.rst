@@ -14,3 +14,8 @@ pip install seaborn
 Py3Dmol:
 ----------
 pip install py3Dmol
+
+nglview:
+---------
+pip install nglview==1.0
+

@@ -47,17 +47,20 @@ class Enm:
         self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
-        if(sele_atoms=="AA"):
-            idxs = [atom.index for atom in topology.atoms if (atom.name[0] != "H" and not ( atom.name[0].isdigit() and atom.name[1] == "H") )]
+        if(sele_atoms=="AA" or sele_atoms==["AA"]):
+            idxs = topology.select("not type H")
         else:
-            idxs = [atom.index for atom in topology.atoms if (atom.name in sele_atoms)]
+            sele_string='name "'+'" "'.join(sele_atoms)+'"'
+            idxs=topology.select(sele_string)
         if(len(idxs)==0):
             print("# Error. no atoms found.")
             exit(1)
             
         # define atoms
-        coords = cur_pdb.xyz[0,idxs]
-
+        native_pdb=cur_pdb.atom_slice(idxs)
+        coords=native_pdb.xyz[0]
+        self.top=native_pdb.topology
+        
         print("# Read ", coords.shape, "coordinates")
         # build distance matrix
         dmat = distance.pdist(coords)
@@ -273,3 +276,13 @@ class Enm:
             stri += "\n"
             stri += "\n"
         return stri
+
+    def get_mode_traj(self,i_mode,amp=1.0,nframes=50):
+        t=np.arange(0,nframes)
+        prefac=amp*np.cos((2.*np.pi*t)/nframes)
+        x_0=self.coords
+        e_vec=self.e_vec[:,i_mode].reshape(self.n_beads,3)
+        dx=prefac[:,np.newaxis,np.newaxis]*e_vec[np.newaxis,:,:]
+        x_t=x_0+dx
+        mode_traj=md.Trajectory(x_t,self.top)
+        return mode_traj
