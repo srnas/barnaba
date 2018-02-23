@@ -282,6 +282,8 @@ class Enm:
         prefac=amp*np.cos((2.*np.pi*t)/nframes)
         x_0=self.coords
         e_vec=self.e_vec[:,i_mode].reshape(self.n_beads,3)
+        # check phase (this makes tests reproducible)
+        if(e_vec[0,0]<definitions.tol): e_vec*= -1.0
         dx=prefac[:,np.newaxis,np.newaxis]*e_vec[np.newaxis,:,:]
         x_t=x_0+dx
         mode_traj=md.Trajectory(x_t,self.top)
