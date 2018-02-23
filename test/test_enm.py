@@ -161,7 +161,8 @@ def test_enm_5():
 def test_enm_6():
     """Tests modes output"""
     # initialize class. Only PDB are accepted                                                                                                                                                          
-    SBP_enm = enm.Enm(fname,sele_atoms="SBP",sparse=True)
+    #SBP_enm = enm.Enm(fname,sparse=True)
+    SBP_enm = enm.Enm(fname,sparse=True)
 
     import mdtraj as md
     traj_mode=SBP_enm.get_mode_traj(6)
