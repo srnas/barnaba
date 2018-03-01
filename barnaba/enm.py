@@ -36,8 +36,10 @@ class Enm:
      parameters
     ------------
     pdb        : mdtraj trajectory object (TODO: what happens with multiple frames?)
-    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"])
+    sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"]).
+                 Use "AA" to select all heavy (non-hydrogen) atoms. 
     cutoff     : cutoff radius in nm (default=0.9)
+                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al. for an overview.
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
@@ -45,23 +47,28 @@ class Enm:
         self.sparse=sparse
         cur_pdb = md.load_pdb(pdb)
         topology = cur_pdb.topology
-        if(sele_atoms=="AA"):
-            idxs = [atom.index for atom in topology.atoms if (atom.name[0] != "H" and not ( atom.name[0].isdigit() and atom.name[1] == "H") )]
+        if(sele_atoms=="AA" or sele_atoms==["AA"]):
+            idxs = topology.select("not type H")
         else:
-            idxs = [atom.index for atom in topology.atoms if (atom.name in sele_atoms)]
+            sele_string='name "'+'" "'.join(sele_atoms)+'"'
+            idxs=topology.select(sele_string)
         if(len(idxs)==0):
             print("# Error. no atoms found.")
             exit(1)
             
         # define atoms
-        coords = cur_pdb.xyz[0,idxs]
-
+        native_pdb=cur_pdb.atom_slice(idxs)
+        coords=native_pdb.xyz[0]
+        self.top=native_pdb.topology
+        
         print("# Read ", coords.shape, "coordinates")
         # build distance matrix
         dmat = distance.pdist(coords)
 
         ll = len(coords)
-
+        self.n_beads=ll
+        self.ntop=ntop
+        
         # find where distance is shorter than cutoff
         c_idx = (dmat<cutoff).nonzero()[0]
         m_idx = np.array(np.triu_indices(ll,1)).T[c_idx]
@@ -117,42 +124,58 @@ class Enm:
             # diagonalise
             e_val,e_vec=eigh(mat.T,lower=True)
         ### check here:
-        ### 2) MAXVEC has to be obtained from args.ntop
-        ###    Done. Do I want to print the 0 modes or not?
+        ### 1) do we want to store the interaction matrix?
+        ### 2) what about the covariance matrix?
         ### 4) EIGSH IS GIVIN EXTRA ZERO-MODES!
         ###    Sigma has to be >zero to avoid extra null modes to pop out
         ###    if sigma > 10x smallest eval => wrong results
         ###    I set sigma=tol. This should work if tol makes sense
-        self.check_null_modes(e_val,ntop)
 
-        
         self.e_val = e_val ### GP Is there a particular reason for not doing this before
         self.e_vec = e_vec
         self.coords = coords
+
+
+        self._check_null_modes()
         #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
         # get C2 indexes for future C2-C2 fluctuations
         self.idx_c2 = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
         self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
 
 
-    def check_null_modes(self,e_val,ntop):
+    def _check_null_modes(self):
         N_NULL=6
-        for i in range(6,ntop+6):
-            if(e_val[i] < definitions.tol):
+        for i in range(6,self.ntop+6):
+            if(self.e_val[i] < definitions.tol):
                 N_NULL+=1
         if N_NULL>6:
             sys.stderr.write("WARNING: there are %d null modes. \
             Normally there should be only 6 corresponding to rotational and translational invariance.\
             This can lead to unpredictable results." % N_NULL)
-        
+        self.n_null_modes=N_NULL
+            
     def get_eval(self):
+        """ Return eigenvalues of the interaction matrix of the ENM"""
         return self.e_val
 
     def get_evec(self):
+        """ Returns eigenvectors of the interaction matrix of the ENM"""
         return self.e_vec
 
+    def get_MSF(self):
+        """ Return mean squared fluctuations of each bead"""
+        e_vec=self.get_evec()
+        e_val=self.get_eval()
+        cacca=np.sum(e_vec.reshape(self.n_beads,3,e_vec.shape[1])**2,axis=1)
+        msf=np.sum(cacca[:,self.n_null_modes:]*(1/e_val[self.n_null_modes:]),axis=1)
+        return msf
+    
+    
+    
     def c2_fluctuations(self):
-
+        """ Computes the C2-C2 fluctuations of an RNA ENM.
+        Return:
+        numpy array containing C2-C2 fluctuations"""
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
@@ -226,6 +249,7 @@ class Enm:
 
 
     def print_eval(self):
+        """ Return a string containint the eigenvalues of the interaction matrix of the ENM"""
         stri = "# Eigenvalues \n"
         for i in range(len(self.e_val)):
             vv = self.e_val[i]
@@ -234,7 +258,7 @@ class Enm:
         return stri
     
     def print_evec(self,ntop):
-
+        """ Return a string containing the firt NTOP eigenvectors of the interaction matric of the ENM"""
         stri = ""
         # write eigenvectors (skip first 6)
         for i in range(6,ntop+6):
@@ -252,3 +276,15 @@ class Enm:
             stri += "\n"
             stri += "\n"
         return stri
+
+    def get_mode_traj(self,i_mode,amp=1.0,nframes=50):
+        t=np.arange(0,nframes)
+        prefac=amp*np.cos((2.*np.pi*t)/nframes)
+        x_0=self.coords
+        e_vec=self.e_vec[:,i_mode].reshape(self.n_beads,3)
+        # check phase (this makes tests reproducible)
+        if(e_vec[0,0]<definitions.tol): e_vec*= -1.0
+        dx=prefac[:,np.newaxis,np.newaxis]*e_vec[np.newaxis,:,:]
+        x_t=x_0+dx
+        mode_traj=md.Trajectory(x_t,self.top)
+        return mode_traj
