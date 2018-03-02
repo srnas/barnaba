@@ -42,7 +42,7 @@ baRNAba requires:
    - Python 2.7.x or > 3.3
    - Numpy
    - Scipy
-   - Mdtraj
+   - Mdtraj 1.9
    - future
      
 baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories. 
