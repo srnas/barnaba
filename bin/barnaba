@@ -112,6 +112,7 @@ def parse():
     parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
     parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
     parser_11.add_argument("--dotbracket", dest="dotbracket", help="Use dotbracket annotation to draw (needs --ann file.ANNOTATE.dotbracket.out)", action='store_true',default=False)
+    parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
 
     
     # DUMP
@@ -501,7 +502,7 @@ def sec_structure(args):
    #         i_wcds += 1
         i_pair = 0
        # print(param)
-        if cotranscript:   
+        if cotranscript and len(sorted_params) > 0:   
             print("Cotranscriptional folding")
             print("Added ", sorted_params[i_pair])
             param.append(sorted_params[i_pair])
@@ -547,7 +548,7 @@ def sec_structure(args):
             else:
                 write_force = False
             if ds_draw > 0 and i % ds_draw == 0:
-                output_svg = sesvg.draw_structure(pos, pairs, ann_list, args.sequence, residue_numbers, dimensions, args.output_ids)
+                output_svg = sesvg.draw_structure(pos, pairs, ann_list, int(args.chi_conf), args.sequence, residue_numbers, dimensions, args.output_ids)
                 if len(chains) > 1:
                     fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
                 else:
@@ -603,7 +604,7 @@ def sec_structure(args):
         output += "%8d%10.2e%10.2e%6.1f%.2e%8s\n" % (i, E, max_F, T, h, r_i) 
         print( i, " steps of minmization")    
         output += "%d steps of minmization\n" % (i)
-        output_svg = sesvg.draw_structure(pos, pairs, ann_list, args.sequence, residue_numbers, dimensions, args.output_ids)
+        output_svg = sesvg.draw_structure(pos, pairs, ann_list, int(args.chi_conf), args.sequence, residue_numbers, dimensions, args.output_ids)
         if len(chains) > 1:
             fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
         else:
