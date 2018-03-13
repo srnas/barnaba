@@ -48,28 +48,31 @@ baRNAba requires:
 baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories. 
 To perform cluster analysis, scikit-learn is required too.
 
-MDtraj can be installed using pip:
+Required packages can be installed using `pip`, e.g.:
 
     pip install mdtraj
 
 Installation
 -------------
 
-You can obtain barnaba using pip:
+You can obtain the latest tagged version of barnaba using pip:
 
     pip install barnaba
 
-alternatively, you can find the code on Github:
+Alternatively, you can find the most recent version of the code on Github:
 
     git clone git://github.com/srnas/barnaba.git
 
 then move to the barnaba directory and run the command
 
-   pip install -e .
+    pip install -e .
+
+Notice that barnaba is installed using `setuptools_scm` that is not compatible with git archives. Thus,
+you would not be able to install barnaba from a git tarball.
 
 Some users might experience issues installing MDtraj using pip. If this is the case, we recommend installing MDtraj using conda:
 
-   conda install --channel omnia mdtraj
+    conda install --channel omnia mdtraj
     
 Usage
 ------------
