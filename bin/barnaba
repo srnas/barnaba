@@ -113,6 +113,7 @@ def parse():
     parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
     parser_11.add_argument("--dotbracket", dest="dotbracket", help="Use dotbracket annotation to draw (needs --ann file.ANNOTATE.dotbracket.out)", action='store_true',default=False)
     parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
+    parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
 
     
     # DUMP
@@ -360,11 +361,18 @@ def sec_structure(args):
     import barnaba.sec_str_svg as sesvg
     import barnaba.sec_str_ff as seff
     import barnaba.sec_str_constants as secon
-#    from barnaba.sec_str_ff import *
-#    from barnaba.sec_str_constants import *
 
     output = "# %s \n" % (" ".join(sys.argv[:]))
-
+    weights = []
+    if args.f_weights:
+        with open(args.f_weights) as f:
+            content = f.readlines()
+            f.close()
+        for line in content:
+            if not line.startswith("#"):
+                weights.append(float(line.split()[-1]))
+    #    weights = np.array(weights)    
+    n_weights = len(weights)
     if args.missing:
         missing_index = [int(i) for i in args.missing]
         residue_numbers = []
@@ -389,13 +397,13 @@ def sec_structure(args):
     for f in args.f_anns:
         if args.dotbracket:
             if f.endswith("ANNOTATE.dotbracket.out"):
-                chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, len(args.sequence))
+                chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, len(args.sequence, weights))
                 pairs_list = pairs 
             if len(args.f_anns) > 1:
                 print("Using input file %s, ignoring other annotation file(s)" % f)
             break
         else:    
-            i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(f, residue_numbers, nucleotide)
+            i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(f, residue_numbers, nucleotide, weights)
         if len(ann_lists) == 0:
             ann_lists = list(i_ann_lists)
         else:
@@ -413,6 +421,8 @@ def sec_structure(args):
         else:
             if n_frames != i_n_frames:
                 sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
+            if n_weights > 0 and n_weights != n_frames:
+                sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
         if len(chains) == 0:
             chains = i_chains
         elif chains != i_chains:
@@ -424,7 +434,7 @@ def sec_structure(args):
     for c, ann_list in enumerate(ann_lists):
         pairs = pairs_list[c]
         n = len(args.sequence)
-        param, param_wc_ds, sorted_params, param_angle = bb.parameters(pairs, ann_list, n, args.tertiary_contacts)     
+        param, param_wc_ds, sorted_params, param_angle = bb.parameters(pairs, ann_list, n,  args.tertiary_contacts)     
         dimensions = secon.d_seq*(n-1)*.7
         length = n*secon.d_seq
         import numpy as np

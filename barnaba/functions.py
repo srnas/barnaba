@@ -329,7 +329,7 @@ def backbone_angles_traj(traj,residues=None,angles=None):
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
     
-    torsions = md.compute_dihedrals(traj,idxs,opt=False)
+    torsions = md.compute_dihedrals(traj,idxs,opt=True)
     
     # set to NaN where atoms are missing
     torsions[:,np.where(np.sum(idxs,axis=1)==0)[0]] = np.nan
@@ -1202,7 +1202,7 @@ def parse_dotbr(dotbra):
                     break
     return basepairs            
     
-def parse_dotbracket(file, n):
+def parse_dotbracket(file, n, weights):
     import barnaba.sec_str_constants as secon
     import re 
     print("Parsing file ", file)    
@@ -1248,19 +1248,28 @@ def parse_dotbracket(file, n):
                         try:
                             ann_list[bp[0], bp[1], "WCc"]
                         except:
-                            ann_list[bp[0], bp[1], "WCc"] = 1.
+                            if len(weights) == 0:
+                                ann_list[bp[0], bp[1], "WCc"] = 1.
+                            else:
+                                ann_list[bp[0], bp[1], "WCc"] = weights[n_frames-1]
                         else: 
-                            ann_list[bp[0], bp[1], "WCc"] += 1.
+                            if len(weights) == 0:
+                                ann_list[bp[0], bp[1], "WCc"] += 1.
+                            else:    
+                                ann_list[bp[0], bp[1], "WCc"] += weights[n_frames-1]
     if len(list_base_pairs) == 0:
         sys.exit("No basepairs found.")
     if traj:
         for ann, value in ann_list.items():
-            ann_list[ann] /= n_frames
+            if len(weights) == 0:
+                ann_list[ann] /= n_frames
+            else:
+                ann_list[ann] /= sum(weights)
         ann_lists.append(ann_list)
     chains = [0]    
     return chains, ann_lists, list_base_pairs, n_frames    
 
-def parse_annotations(file, residue_numbers, nucleotide):
+def parse_annotations(file, residue_numbers, nucleotide, weights):
     import barnaba.sec_str_constants as secon
     import re 
     print("Parsing file ", file)    
@@ -1276,7 +1285,7 @@ def parse_annotations(file, residue_numbers, nucleotide):
     ann_lists = []
     ann_list = {}
     n_frames = 0
-
+    print("Using %d weights" % len(weights))
     for line in annotation:
         pdb = re_pdb.match(line)
         if pdb:
@@ -1318,16 +1327,25 @@ def parse_annotations(file, residue_numbers, nucleotide):
             try:
                 ann_list[i, j, ann_ij]
             except:
-                ann_list[i, j, ann_ij] = 1.
+                if len(weights) == 0:
+                    ann_list[i, j, ann_ij] = 1.
+                else:    
+                    ann_list[i, j, ann_ij] = weights[n_frames-1]
             else: 
-                ann_list[i, j, ann_ij] += 1.
+                if len(weights) == 0:
+                    ann_list[i, j, ann_ij] += 1.
+                else:    
+                    ann_list[i, j, ann_ij] += weights[n_frames-1]
         
     ann_lists.append(ann_list)
     pairs = []
     for c, ann_list in enumerate(ann_lists):
         p = []
         for ann, value in ann_list.items():
-            ann_list[ann] /= n_frames
+            if len(weights) == 0:
+                ann_list[ann] /= n_frames
+            else:
+                ann_list[ann] /= sum(weights)
             if ann_list[ann] > secon.threshold and [ann[0], ann[1]] not in p:
                 p.append([ann[0], ann[1]])
         pairs.append(p)
@@ -1376,13 +1394,14 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
     for p in param_wc:
         sum_i = p[1] + p[2]
         if sum_i not in sums:
-            same_sum = sum([1 for pi in param_wc if pi[1] + pi[2] == sum_i])
+            a = np.array(param_wc)[:,1:3][np.sum(np.array(param_wc)[:,1:3], axis=1)==sum_i]
+            same_sum = len(a)
             sums[sum_i] = same_sum
         if sums[sum_i] == 1:
             param_wc_no_ds.append(p)
     import operator
+    
     sums = sorted(sums.items(), key=operator.itemgetter(1), reverse=True)
-    print(sums)
     sums_k = zip(*sums)[0]
     sums_v = zip(*sums)[1]
     for sum_i, same_sum in sums:
@@ -1392,16 +1411,24 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
             if diag_sum in sums_k:
                 sdiag_sum = sums_v[sums_k.index(diag_sum)]
                 if sdiag_sum < same_sum:
-                    print("Resetting distance for sum ", diag_sum)
-                    for pi in param_wc:
-                        if pi[1] + pi[2] == diag_sum:
-                            pi[4] = secon.d_bp2
+                    for pi in param_wc + param_bp:
+                        if sum(pi[1:3]) == diag_sum:
+                            for pj in param_wc:
+                                if (pi[1] in pj[1:3] or pi[2] in pj[1:3]) and sum(pj[1:3]) == sum_i:
+                                    print("Resetting distance for sum ", diag_sum)
+                                    pi[4] = secon.d_bp2
+            else:                
+                for pi in param_bp:
+                    if pi[1] + pi[2] == diag_sum:
+                        print("Resetting distance for sum ", diag_sum)
+                        pi[4] = secon.d_bp2
             
         if same_sum > 1:
             param_ds = []
             print("%d pairs with sum %d" % (same_sum, sum_i))
             for pi in param_wc:
-                if pi[1] + pi[2] == sum_i:
+                if sum(pi[1:3]) == sum_i:
+                    print(pi)
                     param_ds.append(pi)
                     pi[3] *= 1.2**(same_sum-1)
                     if same_sum > 1:
@@ -1410,12 +1437,8 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
                         if pi[1] < pmin:
                             pmin = pi[1]
             param_wc_ds.append(param_ds)                
-            for pi in param_wc:
-                if pi[1] + pi[2] == sum_i:
-                #    if pi[1] == pmin:
-                #        pi[3] *= 3
-                #    if pi[1] == pmax:
-                #        pi[3] *= 3
+            for pi in param_wc + param_bp:
+                if sum(pi[1:3]) == sum_i:
                     if pi[1] > pmin:
                         param_ang.append([2, pmin, pi[1], pi[2], same_sum * secon.k_ang, secon.angle])
                         param_ang.append([2, pi[1], pi[2], sum_i-pmin, same_sum * secon.k_ang, secon.angle])
