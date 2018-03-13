@@ -21,7 +21,7 @@ import argparse
 import barnaba as bb
 import itertools as its
 
-def parse():
+def parse(arguments):
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
     subparsers = parser.add_subparsers(title="Subcommands",dest='subparser_name')
@@ -183,7 +183,7 @@ def parse():
     #parser_13.add_argument("--eps", dest="eps",help="epsilon used for DBSCAN clustering. default=0.7",default=0.7,type=float)
     #parser_13.add_argument("--mins", dest="mins",help="minsample for DBSCAN clustering, Default=50",default=50,type=float)
     
-    args = parser.parse_args()
+    args = parser.parse_args(arguments)
 
     # CLUSTER
     
@@ -969,7 +969,17 @@ def enm(args):
 
 ####################### MAIN #########################
 
-def main():
+def main(arguments=None):
+    """
+    Use barnaba command line tool
+
+    Parameters
+    ----------
+    arguments :
+         List of command line arguments. If not provided, positional arguments will be used.
+
+    Returns error code. 0 means no error.
+    """
 
     def filename(args):
         # create output filename
@@ -981,7 +991,12 @@ def main():
         print("# your output will be written to files with prefix %s" % outfile)
 
     # Parse options
-    args = parse()
+    # In order to avoid python to crash when wrong arguments are used, it is
+    # necessary to intercept the exception.
+    try:
+        args = parse(arguments)
+    except:
+        return sys.exc_info()[0]
 
     # create filename
     if(args.subparser_name!="SNIPPET"):
