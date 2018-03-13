@@ -397,7 +397,7 @@ def sugar_angles_traj(traj,residues=None,angles=None):
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
 
-    torsions = md.compute_dihedrals(traj,idxs,opt=False)
+    torsions = md.compute_dihedrals(traj,idxs,opt=True)
     # set to NaN where atoms are missing
     torsions[:,missing[0]] = np.nan
     torsions = torsions.reshape((traj.n_frames,all_idx.shape[0],len(idx_angles)))
@@ -518,7 +518,7 @@ def jcouplings_traj(traj,residues=None,couplings=None,raw=False):
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
     
-    torsions = md.compute_dihedrals(traj,idxs,opt=False)
+    torsions = md.compute_dihedrals(traj,idxs,opt=True)
     
     # set to NaN where atoms are missing
     torsions[:,np.where(np.sum(idxs,axis=1)==0)[0]] = np.nan
