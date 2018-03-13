@@ -17,6 +17,8 @@ def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, di
     output_svg = ""
 
     output_svg += draw_header(dimensions)
+    output_foreground = ""
+    output_background = ""
     for i in range(n-1):
         search = [i, i+1]
         try:
@@ -60,7 +62,7 @@ def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, di
                         y2 += dy
                     k += 1
                 if ann in secon.list_stackings:
-                    output_svg += draw_stack([x1, y1], [x2, y2], ann, color)
+                    output_foreground += draw_stack([x1, y1], [x2, y2], ann, color)
                 else:
                     if ann == "GUc":
                         t_ann = "WWc"
@@ -76,7 +78,13 @@ def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, di
                         sys.exit("Left-over WC annotation. This should not happen, maybe something wrong with numbering, check for missing residue numbers.")
                     if binary and ann in list_wc_pairs:
                         color = "#ff0000"
-                    output_svg += draw_basepair([x1, y1], [x2, y2], t_ann, color)
+                    if t_ann in ["-c", "=c"] or t_ann[2] == "t":
+                        output_foreground += draw_basepair([x1, y1], [x2, y2], t_ann, color)
+                    else:
+                        output_background += draw_basepair([x1, y1], [x2, y2], t_ann, color)
+
+    output_svg += output_background
+    output_svg += output_foreground
              
     for i, p in enumerate(pos):
         try: syn[i]
