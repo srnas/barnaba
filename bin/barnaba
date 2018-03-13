@@ -150,6 +150,7 @@ def parse():
     parser_10.add_argument("--sparse", dest="sparse",help="Use sparse matrix diagonalization algorithm. Recomended for large matrices.",action='store_true',default=False)
 
     parser_10.add_argument("--shape", dest="shape",help="calculate C2/C2 fluctuations",action='store_true',default=False)
+    parser_10.add_argument("--modes", dest="modes",help="dump top modes on a trajectory",action='store_true',default=False)
 
     
     # CLUSTERING
@@ -531,8 +532,10 @@ def enm(args):
         fh.write(stri)
         fh.close()
 
-
-
+    if(args.modes):
+        for i in range(6,args.ntop+6):
+           mode=net.get_mode_traj(i)
+           mode.save_pdb(args.name + ".mode_" + str(i) + ".pdb")
 
 
 ####################### MAIN #########################
