@@ -59,7 +59,13 @@ You can obtain the latest tagged version of barnaba using pip:
 
     pip install barnaba
 
-Alternatively, you can find the most recent version of the code on Github:
+On MacOS, you can install the same tagged version using the python distributed with MacPorts:
+
+    sudo port install py36-barnaba
+
+Just replace 36 with the python version that you prefer to use.
+  
+Alternatively, you can find the most recent version of barnaba on Github:
 
     git clone git://github.com/srnas/barnaba.git
 
