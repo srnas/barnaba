@@ -1,5 +1,10 @@
 .. image:: https://travis-ci.org/srnas/barnaba.svg?branch=regression-tests
     :target: https://travis-ci.org/srnas/barnaba
+.. image:: https://badge.fury.io/py/barnaba.svg
+    :target: https://badge.fury.io/py/barnaba
+.. image:: https://repology.org/badge/version-for-repo/macports/python:barnaba.svg
+    :target: https://repology.org/metapackage/python:barnaba
+
 
 Introduction
 ============
