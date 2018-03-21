@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/srnas/barnaba.svg?branch=regression-tests
+.. image:: https://travis-ci.org/srnas/barnaba.svg
     :target: https://travis-ci.org/srnas/barnaba
 .. image:: https://badge.fury.io/py/barnaba.svg
     :target: https://badge.fury.io/py/barnaba
