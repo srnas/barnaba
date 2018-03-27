@@ -279,7 +279,7 @@ class Enm:
             # Computing the fluctuations
             fluc_mat=np.zeros((len(self.idx_c2),len(self.idx_c2)))
             for n1 in range(len(self.idx_c2)):
-                for n2 in range(len(self.idx_c2)):
+                for n2 in range(n1+1,len(self.idx_c2)):
                     i = 3*n1
                     j = 3*n2
                     diff = self.coords[self.idx_c2[n1]]-self.coords[self.idx_c2[n2]] 
@@ -302,7 +302,7 @@ class Enm:
         else:
             fluc_mat=np.zeros((len(self.idx_c2),len(self.idx_c2)))
             for n1 in range(len(self.idx_c2)):
-                for n2 in range(len(self.idx_c2)):
+                for n2 in range(n1+1,len(self.idx_c2)):
                     i = 3*self.idx_c2[n1]
                     j = 3*(self.idx_c2[n2])
                     diff = self.coords[self.idx_c2[n1]]-self.coords[self.idx_c2[n2]] 
