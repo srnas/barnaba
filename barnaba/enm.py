@@ -55,7 +55,7 @@ class Enm:
         if(len(idxs)==0):
             print("# Error. no atoms found.")
             exit(1)
-            
+
         # define atoms
         native_pdb=cur_pdb.atom_slice(idxs)
         coords=native_pdb.xyz[0]
@@ -137,11 +137,6 @@ class Enm:
 
 
         self._check_null_modes()
-        #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-        # get C2 indexes for future C2-C2 fluctuations
-        self.idx_c2 = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
-        self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-
 
     def _check_null_modes(self):
         N_NULL=6
@@ -176,6 +171,10 @@ class Enm:
         """ Computes the C2-C2 fluctuations of an RNA ENM.
         Return:
         numpy array containing C2-C2 fluctuations"""
+        # get C2 indexes for future C2-C2 fluctuations
+        self.idx_c2 = np.array([x for x in range(self.n_beads) if(self.top.atom(x).name=="C2")])
+        self.seq_c2 = [str(self.top.atom(x).residue) for x in range(self.n_beads) if(self.top.atom(x).name=="C2")]
+
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
@@ -247,10 +246,17 @@ class Enm:
                 sigma.append(np.dot(diff,np.dot(tensor,diff)))
         return sigma, self.seq_c2
 
-    def get_c2_fluc_mat(self):
-        """ Computes the C2-C2 fluctuations matrix of an RNA ENM.
+    def get_dist_fluc_mat(self,beads_name="C2"):
+        """ Computes the distance fluctuations matrix of an ENM.
         Return:
-        numpy array containing all pairwise C2-C2 fluctuations"""
+        numpy array containing all pairwise distance fluctuations between selected residues.
+
+        Arguments:
+        beads_name (default="C2") ONLY ACCEPTS A SINGLE ATOM NAME
+        """
+        self.idx_c2 = np.array([x for x in range(self.n_beads) if(self.top.atom(x).name==beads_name)])
+        self.seq_c2 = [str(self.top.atom(x).residue) for x in range(self.n_beads) if(self.top.atom(x).name==beads_name)]
+
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
