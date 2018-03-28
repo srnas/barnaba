@@ -170,7 +170,8 @@ class Enm:
     def c2_fluctuations(self):
         """ Computes the C2-C2 fluctuations of an RNA ENM.
         Return:
-        numpy array containing C2-C2 fluctuations"""
+        - numpy array containing C2-C2 fluctuations
+        - list of residue indexes and names"""
         # get C2 indexes for future C2-C2 fluctuations
         self.idx_c2 = np.array([x for x in range(self.n_beads) if(self.top.atom(x).name=="C2")])
         self.seq_c2 = [str(self.top.atom(x).residue) for x in range(self.n_beads) if(self.top.atom(x).name=="C2")]
@@ -249,7 +250,8 @@ class Enm:
     def get_dist_fluc_mat(self,beads_name="C2"):
         """ Computes the distance fluctuations matrix of an ENM.
         Return:
-        numpy array containing all pairwise distance fluctuations between selected residues.
+        - numpy array containing all pairwise distance fluctuations between selected residues.
+        - list of residue indexes and names
 
         Arguments:
         beads_name (default="C2") ONLY ACCEPTS A SINGLE ATOM NAME
