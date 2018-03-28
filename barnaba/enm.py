@@ -39,7 +39,7 @@ class Enm:
     sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"]).
                  Use "AA" to select all heavy (non-hydrogen) atoms. 
     cutoff     : cutoff radius in nm (default=0.9)
-                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al. for an overview.
+                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al., NAR, 2015 for an overview.
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
@@ -187,7 +187,7 @@ class Enm:
             ll=len(self.coords)
             if len(self.idx_c2)*3==ll :
                 #skip effective interaction computation if there are only C2 beads
-                M_new=mat
+                M_new=self.mat
             else:
                 # submatrices
                 idx_a=np.sort(np.concatenate([3*self.idx_c2+i for i in range(3)]))
@@ -270,7 +270,7 @@ class Enm:
             ll=len(self.coords)
             if len(self.idx_c2)*3==ll :
                 #skip effective interaction computation if there are only C2 beads
-                M_new=mat
+                M_new=self.mat
             else:
                 # submatrices
                 idx_a=np.sort(np.concatenate([3*self.idx_c2+i for i in range(3)]))
