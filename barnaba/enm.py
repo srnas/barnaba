@@ -245,7 +245,7 @@ class Enm:
                 # sum contributions from all eigenvectors
                 tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in range(top)],axis=0)
                 sigma.append(np.dot(diff,np.dot(tensor,diff)))
-        return sigma, self.seq_c2
+        return np.array(sigma), self.seq_c2
 
     def get_dist_fluc_mat(self,beads_name="C2"):
         """ Computes the distance fluctuations matrix of an ENM.
