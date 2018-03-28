@@ -185,7 +185,7 @@ class Enm:
             # To deal with big matrices the effective interaction matrix
             # of the C2 beads is computed (see Pinamonti et al. NAR 2015)
             ll=len(self.coords)
-            if len(self.idx_c2)*3==ll :
+            if len(self.idx_c2)==ll :
                 #skip effective interaction computation if there are only C2 beads
                 M_new=self.mat
             else:
@@ -268,7 +268,7 @@ class Enm:
             # To deal with big matrices the effective interaction matrix
             # of the C2 beads is computed (see Pinamonti et al. NAR 2015)
             ll=len(self.coords)
-            if len(self.idx_c2)*3==ll :
+            if len(self.idx_c2)==ll :
                 #skip effective interaction computation if there are only C2 beads
                 M_new=self.mat
             else:
