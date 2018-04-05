@@ -34,16 +34,24 @@ def energy(pos, param, write_energy=False):
                     E_array.append(0)
             else:
                 E_array.append(0)
-        elif _type == 2:
-            p3 = pos[p[3]]
-            k = p[4]
+        elif _type in [2, 4]:
+            if _type == 2:
+                i3 = p[3]
+                p3 = pos[i3]
+                k = p[4]
+                a0 = p[5]
+            elif _type == 4:
+                k = p[3]
+                p3 = [p2[0]+30, 0.5*(p1[1]+p2[1])]
+                a0 = 0
             if k == 0:
                 E_array.append(0)
                 continue
-            a0 = p[5]
             arg = np.dot(p2-p1, p3-p2)/norm(p2-p1)/norm(p3-p2)
             if arg >= 1.:
                 arg = 1.-1e-6
+            elif arg <= -1.:    
+                arg = -1.+1e-6
             angle = np.arccos(arg)
             E_i = 0.5 * k * (angle - a0)**2
             E_array.append(E_i)
@@ -105,26 +113,31 @@ def force(pos, param, write_force):
                             print "Repulsive_F(%d_%d): " % (i1, i2),
                             print f
                         
-        elif _type == 2:
+        elif _type in [2, 4]:
             i1 = p[1]
             i2 = p[2]
             p1 = pos[i1]
             p2 = pos[i2]
-            i3 = p[3]
-            p3 = pos[i3]
-            k = p[4]
+            if _type == 2:
+                i3 = p[3]
+                p3 = pos[i3]
+                k = p[4]
+                a0 = p[5]
+            elif _type == 4:
+                k = p[3]
+                p3 = [p2[0]+30, 0.5*(p1[1]+p2[1])]
+                a0 = 0
             if k == 0:
                 continue
-            a0 = p[5]
             n_p12 = norm(p2-p1)
             n_p23 = norm(p3-p2)
             arg = np.dot(p2-p1, p3-p2)/n_p12/n_p23
             if arg >= 1.:
                 arg = 1.-1e-6
+            elif arg <= -1.:    
+                arg = -1.+1e-6
             angle = np.arccos(arg)
             _f = - k * (angle - a0) * (-1./np.sqrt(1.-(arg)**2))
-            
-    #        print "%d %d %d %.0f %.2e" % (i1, i2, i3, angle/np.pi*180,  _f)
             for comp in range(2):
                 f1 = _f * ( (p2[comp]-p3[comp])/n_p12/n_p23 + (p2[comp]-p1[comp])*arg/n_p12**2 )
                 F[i1][comp] += f1
@@ -149,7 +162,7 @@ def force(pos, param, write_force):
                         print "%d %d %d %.1f" % (i1, i2, i3, angle/np.pi*180)
                         
                     else:
-                        print 
+                        print
     end = datetime.datetime.now()
     return F
 
