@@ -10,7 +10,7 @@ def hexcolor(value):
     rgb = cmap(int(value*n_colors)) 
     return matplotlib.colors.rgb2hex(rgb)
 
-def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, dimensions, output_ids):
+def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, residue_numbers, dimensions, output_ids):
     binary = False
     syn = np.fromstring(np.binary_repr(chi_conf), dtype='S1').astype(int)[::-1]
     n = len(pos)
@@ -28,7 +28,7 @@ def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, di
             xy2 = pos[i+1]
             output_svg += draw_dummy(xy1, xy2)
     for i, pair in enumerate(pairs):
-        n = sum([1 for key, value in ann_list.items() if pair[0] in key and pair[1] in key and value > secon.threshold])
+        n = sum([1 for key, value in ann_list.items() if pair[0] in key and pair[1] in key and value > threshold])
         if n > 1:
             k = 0
             d = (n-1)*1.6
@@ -38,7 +38,7 @@ def draw_structure(pos, pairs, ann_list, chi_conf, sequence, residue_numbers, di
             if not pair[0] in key or not pair[1] in key:
                 continue
             ann = key[2]
-            if value > secon.threshold:
+            if value > threshold:
                 color = hexcolor(value)
                 r1 = pair[0] 
                 r2 = pair[1]
