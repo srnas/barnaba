@@ -235,7 +235,8 @@ def rmsd_traj(reference,traj,out=None):
         resname2 = nn_traj.rna_seq_id[ii]
         
         # if the nucleotide is the same, use all atoms
-        if(res1.name == res2.name):
+       # if(res1.name == res2.name):
+        if(res1.name == "crap"):
             
             name2 = [at.name for at in res2.atoms if  at.name in definitions.nt_atoms[resname2]]
             #name1 = [at.name for at in res1.atoms if  at.name in definitions.nb_atoms[res1.name]]
@@ -1269,7 +1270,7 @@ def parse_dotbracket(file, n, weights):
     chains = [0]    
     return chains, ann_lists, list_base_pairs, n_frames    
 
-def parse_annotations(file, residue_numbers, nucleotide, weights):
+def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
     import barnaba.sec_str_constants as secon
     import re 
     print("Parsing file ", file)    
@@ -1346,13 +1347,52 @@ def parse_annotations(file, residue_numbers, nucleotide, weights):
                 ann_list[ann] /= n_frames
             else:
                 ann_list[ann] /= sum(weights)
-            if ann_list[ann] > secon.threshold and [ann[0], ann[1]] not in p:
+            if ann_list[ann] > threshold and [ann[0], ann[1]] not in p:
                 p.append([ann[0], ann[1]])
         pairs.append(p)
     return chains, ann_lists, pairs, n_frames
     
+def stems(param_wc, param_bp, param_stack):
+    pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
+    pairs_all = np.unique(np.array(param_bp + param_stack + param_wc)[:,1:3], axis=0)
+    sums_all = np.unique( np.sum(pairs_all, axis=1))
+    ds_all = []
 
-def parameters(pairs, ann_list, n, tertiary_contacts=True):
+    for s in sums_all:        
+        pairs_s_all = pairs_all[np.where(np.sum(pairs_all, axis=1)==s)]
+        while len(pairs_s_all) > 0:
+            d = np.where(pairs_s_all[:,0][:] == range(pairs_s_all[:,0].min(), pairs_s_all[:,0].min()+len(pairs_s_all)))
+            ds_all.append(pairs_s_all[d])
+            pairs_s_all = np.delete(pairs_s_all, d, axis=0)
+
+    wc_per_ds = [[p for p in s if tuple(p) in set(tuple(x) for x in pairs_wc)] for s in ds_all]
+    # sort double strands first by number of wc pairs, then number of all pairs
+    sortkeys = np.lexsort((np.array([len(st) for st in ds_all]), np.array([len(wc) for wc in wc_per_ds])))
+    ds_all = np.array(ds_all)[sortkeys][::-1]
+
+    stems = []
+    diagonal_pairs = []
+    lonely_pairs = np.array([])
+    for k, d in enumerate(ds_all):
+        limits = np.array([[d[:,0].min(), d[:,1].max()], [d[:,0].max(), d[:,1].min()]])
+        add = True
+        for d2 in ds_all[:k]:
+            l2 = np.array([[d2[:,0].min(), d2[:,1].max()], [d2[:,0].max(), d2[:,1].min()]])
+            if ((l2[0][0] <= limits[0][0] <= l2[1][0] and l2[1][1] <= limits[0][1] <= l2[0][1]) or
+                    (l2[0][0] <= limits[1][0] <= l2[1][0] and l2[1][1] <= limits[1][1] <= l2[0][1])):
+                add = False
+                diagonal_pairs += list(d)        
+        if add:
+            if len(d) > 1:
+                stems.append(d)
+            else:
+                if len(lonely_pairs) == 0:
+                    lonely_pairs = np.array(d)
+                else:    
+                    lonely_pairs = np.append(lonely_pairs, np.array(d), axis=0)
+    return stems, diagonal_pairs, lonely_pairs
+
+def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
     import barnaba.sec_str_constants as secon
 
     # parameters:
@@ -1360,6 +1400,7 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
     # potential type 1: semiharmonic potential to reject bases
     # potential type 2: angular potential to keep ds regions in order
     # potential type 3: semiharmonic potential to reject terminal bases in x direction
+    # potential type 4: angular potential to keep largest ds vertical 
 
     param_pull = []
     param_pull.append([3, 0, n-1, secon.k_pull, secon.d_pull])
@@ -1377,83 +1418,74 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
         i = ann[0]
         j = ann[1]
         ann_ij = ann[2]
-        if ann_ij in secon.list_bp_ct and value > secon.threshold:
+        if ann_ij in secon.list_bp_ct and value > threshold:
             if ann_ij in secon.list_wc_pairs: 
-                param_wc.append([0, i, j, secon.k_bp*value, secon.d_bp])
+                param_wc.append([0, i, j, secon.k_wc*value, secon.d_short])
             else:
-                value *= 1.
-                param_bp.append([0, i, j, secon.k_bp*value, secon.d_bp])
-        if ann_ij in secon.list_stackings and value > secon.threshold:
-            if abs(i-j) != 1:
-                param_stack.append([0, i, j, secon.k_stack2, secon.d_stack2])
-        
-    sums = {}
+                param_bp.append([0, i, j, secon.k_bp*value, secon.d_short])
+        if ann_ij in secon.list_stackings and value > threshold:
+            if abs(i-j) == 2:    
+                param_stack.append([0, i, j, secon.k_stack*value, secon.d_stack])
+            elif abs(i-j) > 2:
+                param_stack.append([0, i, j, secon.k_stack*value, secon.d_short])
+
+    pairs_stems, diagonal_pairs, lonely_pairs = stems(param_wc, param_stack, param_bp)
+    print("stems", pairs_stems)
+    print("diagonal_pairs", diagonal_pairs)
+    print("lonely_pairs", lonely_pairs)
     param_ang = []
-    param_wc_no_ds = []
     param_wc_ds = []
-    for p in param_wc:
-        sum_i = p[1] + p[2]
-        if sum_i not in sums:
-            a = np.array(param_wc)[:,1:3][np.sum(np.array(param_wc)[:,1:3], axis=1)==sum_i]
-            same_sum = len(a)
-            sums[sum_i] = same_sum
-        if sums[sum_i] == 1:
-            param_wc_no_ds.append(p)
-    import operator
     
-    sums = sorted(sums.items(), key=operator.itemgetter(1), reverse=True)
-    sums_k = zip(*sums)[0]
-    sums_v = zip(*sums)[1]
-    for sum_i, same_sum in sums:
-        pmax = 0
-        pmin = n
-        for diag_sum in [sum_i+1, sum_i-1]:
-            if diag_sum in sums_k:
-                sdiag_sum = sums_v[sums_k.index(diag_sum)]
-                if sdiag_sum < same_sum:
-                    for pi in param_wc + param_bp:
-                        if sum(pi[1:3]) == diag_sum:
-                            for pj in param_wc:
-                                if (pi[1] in pj[1:3] or pi[2] in pj[1:3]) and sum(pj[1:3]) == sum_i:
-                                    print("Resetting distance for sum ", diag_sum)
-                                    pi[4] = secon.d_bp2
-            else:                
-                for pi in param_bp:
-                    if pi[1] + pi[2] == diag_sum:
-                        print("Resetting distance for sum ", diag_sum)
-                        pi[4] = secon.d_bp2
-            
-        if same_sum > 1:
-            param_ds = []
-            print("%d pairs with sum %d" % (same_sum, sum_i))
-            for pi in param_wc:
-                if sum(pi[1:3]) == sum_i:
-                    print(pi)
-                    param_ds.append(pi)
-                    pi[3] *= 1.2**(same_sum-1)
-                    if same_sum > 1:
-                        if pi[1] > pmax:
-                            pmax = pi[1]
-                        if pi[1] < pmin:
-                            pmin = pi[1]
-            param_wc_ds.append(param_ds)                
-            for pi in param_wc + param_bp:
-                if sum(pi[1:3]) == sum_i:
-                    if pi[1] > pmin:
-                        param_ang.append([2, pmin, pi[1], pi[2], same_sum * secon.k_ang, secon.angle])
-                        param_ang.append([2, pi[1], pi[2], sum_i-pmin, same_sum * secon.k_ang, secon.angle])
-                    if pi[1] < pmax:
-                        param_ang.append([2, pi[2], pi[1], pmax, same_sum * secon.k_ang, secon.angle])
-                        param_ang.append([2, sum_i-pmax, pi[2], pi[1], same_sum * secon.k_ang, secon.angle])
-    print(sums)
+    # Longest stem vertical
+    param_stem = []
+    if len(pairs_stems) > 0:
+        for pair in pairs_stems[0]:
+            if abs(pair[0]-pair[1]) > 1:
+                param_stem.append([4, int(pair[0:2].min()), int(pair[0:2].max()), secon.k_vertical])
+    else:
+        if len(lonely_pairs) > 0:
+            for pair in lonely_pairs:
+                if sum(pair) == sum(lonely_pairs[np.argsort(lonely_pairs[:,0])[0]]) and abs(pair[0]-pair[1]) > 1:
+                    print(pair)
+                    param_stem.append([4, int(pair[0:2].min()), int(pair[0:2].max()), secon.k_vertical])
+ #   sys.exit()
+    for pair in diagonal_pairs:
+        for pi in param_wc + param_bp + param_stack:
+            if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
+                print("Resetting distance for pair ", pi)
+                pi[4] = secon.d_long
+
+    param_ds = []
+    for k, stem in enumerate(pairs_stems):
+        stems_same_sum = stem.copy()
+        for k2, s in enumerate(pairs_stems):
+            if k!=k2 and sum(s[0]) == sum(stem[0]):
+                stems_same_sum = np.append(stems_same_sum, s, axis=0)
+        limits = np.array([[stems_same_sum[:,0].min(), stems_same_sum[:,1].max()], [stems_same_sum[:,0].max(), stems_same_sum[:,1].min()]]).astype(int)
+        n_stem = len(stem)
+        param_ds = []
+        t_stems = [tuple(s) for s in stem]
+        for pi in param_bp + param_stack + param_wc:
+            if tuple(pi[1:3]) in t_stems or tuple(pi[1:3][::-1]) in t_stems:
+                pi[3] *= 1.2**(n_stem-1)
+                if abs(pi[1]-pi[2]) > 1:
+                    if pi[1] > limits[0][0]:
+                        param_ang.append([2, limits[0][0], pi[1], pi[2], n_stem * secon.k_ang, secon.angle])
+                        param_ang.append([2, pi[1], pi[2], limits[0][1], n_stem * secon.k_ang, secon.angle])
+                    if pi[1] < limits[1][0]:
+                        param_ang.append([2, pi[2], pi[1], limits[1][0], n_stem * secon.k_ang, secon.angle])
+                        param_ang.append([2, limits[1][1], pi[2], pi[1], n_stem * secon.k_ang, secon.angle])
+        for pi in param_wc:
+            if pi[1:3] in stem or pi[1:3][::-1] in stem:
+                param_ds.append(pi)
+        param_wc_ds.append(param_ds)
     if not tertiary_contacts:
         print("Rem. tert. contacts")
-        par_list = [param_wc, param_bp, param_stack]
-        for param in par_list:
-            for p in param:
-                sum_i = p[1] + p[2]
-                if sum_i not in list(zip(*sums))[0] or ((sum_i, 1) in sums):
-                    p[3] = 0
+        for pair in lonely_pairs:
+            for pi in param_wc + param_bp + param_stack:
+                if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
+                    pi[3] = 0
+
     sorted_params = []
     for i in range(n):
         i_list = []
@@ -1472,16 +1504,21 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
         keys = np.argsort(diff)
         for k in keys:
             sorted_params.append(i_list[k])
-    print(sorted_params)        
+    print("len(sorted_params) ", len(sorted_params))
+    print("len(param_wc+param_bp+param_stack) ", len(param_wc+param_bp+param_stack))
     param_rep = []
     for i1 in range(n-2):
         for i2 in range(i1+2, n):
-            rep = True
+            k = secon.k_rep1
+            repel = True
             for p in param_bp + param_wc + param_stack:
-                if p[1:3] in [[i1, i2], [i2, i1]] and p[3] > 0:
-                    rep = False
-            if rep:
-                param_rep.append([1, i1, i2, secon.k_rep1, secon.d_rep1])
+                if tuple(p[1:3]) in [tuple([i1, i2]), tuple([i2, i1])] and p[3] > 0:
+                    repel = False
+                    break
+    #            if p[1:3] in [[i1-1, i2], [i2, i1-1], [i1, i2+1], [i2+1, i1]] and p[3] > 0:
+    #                k = secon.k_rep3
+            if repel:        
+                param_rep.append([1, i1, i2, k, secon.d_long])
     for i1 in range(n-2):
         for i2 in range(i1+1, n):
             param_rep.append([1, i1, i2, secon.k_rep2, secon.d_rep2])
@@ -1494,5 +1531,6 @@ def parameters(pairs, ann_list, n, tertiary_contacts=True):
 #    param += param_stack
     param += param_rep
     param += param_angle_180
+    param += param_stem
 #    param += param_pull
     return param, param_wc_ds, sorted_params, param_ang    
