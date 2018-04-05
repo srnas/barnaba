@@ -39,7 +39,7 @@ class Enm:
     sele_atoms : atoms to use as beads (default=["C1\'","C2","P","CA","CB"]).
                  Use "AA" to select all heavy (non-hydrogen) atoms. 
     cutoff     : cutoff radius in nm (default=0.9)
-                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al. for an overview.
+                 Optimal value changes for different bead choice (0.7 for AA, 1.5 for C1'). See Pinamonti et al., NAR, 2015 for an overview.
     sparse     : whether or not to use sparse matrices in the diagonalization (default=False)
     ntop       : number of eigenvectors to print, excluding the ones corresponding to null eigenvalues (default=10)
     '''
@@ -55,7 +55,7 @@ class Enm:
         if(len(idxs)==0):
             print("# Error. no atoms found.")
             exit(1)
-            
+
         # define atoms
         native_pdb=cur_pdb.atom_slice(idxs)
         coords=native_pdb.xyz[0]
@@ -137,11 +137,6 @@ class Enm:
 
 
         self._check_null_modes()
-        #self.idx_c2 = [cur_pdb.topology.atom(idxs[x]).index for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-        # get C2 indexes for future C2-C2 fluctuations
-        self.idx_c2 = np.array([x for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")])
-        self.seq_c2 = [str(cur_pdb.topology.atom(idxs[x]).residue) for x in range(len(idxs)) if(cur_pdb.topology.atom(idxs[x]).name=="C2")]
-
 
     def _check_null_modes(self):
         N_NULL=6
@@ -175,7 +170,12 @@ class Enm:
     def c2_fluctuations(self):
         """ Computes the C2-C2 fluctuations of an RNA ENM.
         Return:
-        numpy array containing C2-C2 fluctuations"""
+        - numpy array containing C2-C2 fluctuations
+        - list of residue indexes and names"""
+        # get C2 indexes for future C2-C2 fluctuations
+        self.idx_c2 = np.array([x for x in range(self.n_beads) if(self.top.atom(x).name=="C2")])
+        self.seq_c2 = [str(self.top.atom(x).residue) for x in range(self.n_beads) if(self.top.atom(x).name=="C2")]
+
         # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
         if(len(self.idx_c2)==0):
             print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
@@ -185,9 +185,9 @@ class Enm:
             # To deal with big matrices the effective interaction matrix
             # of the C2 beads is computed (see Pinamonti et al. NAR 2015)
             ll=len(self.coords)
-            if len(self.idx_c2)*3==ll :
+            if len(self.idx_c2)==ll :
                 #skip effective interaction computation if there are only C2 beads
-                M_new=mat
+                M_new=self.mat
             else:
                 # submatrices
                 idx_a=np.sort(np.concatenate([3*self.idx_c2+i for i in range(3)]))
@@ -245,9 +245,94 @@ class Enm:
                 # sum contributions from all eigenvectors
                 tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in range(top)],axis=0)
                 sigma.append(np.dot(diff,np.dot(tensor,diff)))
-        return sigma, self.seq_c2
+        return np.array(sigma), self.seq_c2
 
+    def get_dist_fluc_mat(self,beads_name="C2"):
+        """ Computes the distance fluctuations matrix of an ENM.
+        Return:
+        - numpy array containing all pairwise distance fluctuations between selected residues.
+        - list of residue indexes and names
 
+        Arguments:
+        beads_name (default="C2") ONLY ACCEPTS A SINGLE ATOM NAME
+        """
+        self.idx_c2 = np.array([x for x in range(self.n_beads) if(self.top.atom(x).name==beads_name)])
+        self.seq_c2 = [str(self.top.atom(x).residue) for x in range(self.n_beads) if(self.top.atom(x).name==beads_name)]
+
+        # check if there are C2 atoms in the structure (needed to compute C2-C2 fluctuations...)
+        if(len(self.idx_c2)==0):
+            print("# no C2 atoms in PDB: can't compute C2-C2 fluctuations")
+            exit(1)
+
+        if self.sparse:
+            # To deal with big matrices the effective interaction matrix
+            # of the C2 beads is computed (see Pinamonti et al. NAR 2015)
+            ll=len(self.coords)
+            if len(self.idx_c2)==ll :
+                #skip effective interaction computation if there are only C2 beads
+                M_new=self.mat
+            else:
+                # submatrices
+                idx_a=np.sort(np.concatenate([3*self.idx_c2+i for i in range(3)]))
+                M_a=self.mat[np.ix_(idx_a,idx_a)]
+                idx_b=np.delete(np.arange(3*ll),idx_a)
+                M_b=self.mat[np.ix_(idx_b,idx_b)]
+                W=self.mat[np.ix_(idx_a,idx_b)]
+                
+                X=spsolve(M_b.tocsc(),W.T.tocsc())
+                ### X is not a sparse matrix... Damn...
+                # effective interaction matrix between C2 beads
+                M_new=(M_a-sp.csc_matrix.dot(W.tocsc(),X)).toarray()
+                eval_new,evec_new=eigh(M_new)
+            # Computing the fluctuations
+            fluc_mat=np.zeros((len(self.idx_c2),len(self.idx_c2)))
+            for n1 in range(len(self.idx_c2)):
+                for n2 in range(n1+1,len(self.idx_c2)):
+                    i = 3*n1
+                    j = 3*n2
+                    diff = self.coords[self.idx_c2[n1]]-self.coords[self.idx_c2[n2]] 
+                    diff /= np.sqrt(np.sum(diff**2))
+                
+                    v_i = [evec_new[i:i+3,k] for k in range(6,len(eval_new))]
+                    v_j = [evec_new[j:j+3,k] for k in range(6,len(eval_new))]
+                
+                    top = len(eval_new)-6
+                
+                    c_ii = np.array([np.outer(v_i[k],v_i[k])/eval_new[k+6] for k in range(top)])
+                    c_jj = np.array([np.outer(v_j[k],v_j[k])/eval_new[k+6] for k in range(top)])
+                    c_ij = np.array([np.outer(v_i[k],v_j[k])/eval_new[k+6] for k in range(top)])
+                    c_ji = np.array([np.outer(v_j[k],v_i[k])/eval_new[k+6] for k in range(top)])
+                
+                    # sum contributions from all eigenvectors
+                    tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in range(top)],axis=0)
+                    fluc_mat[n1,n2]=fluc_mat[n2,n1]=np.dot(diff,np.dot(tensor,diff))
+
+        else:
+            fluc_mat=np.zeros((len(self.idx_c2),len(self.idx_c2)))
+            for n1 in range(len(self.idx_c2)):
+                for n2 in range(n1+1,len(self.idx_c2)):
+                    i = 3*self.idx_c2[n1]
+                    j = 3*(self.idx_c2[n2])
+                    diff = self.coords[self.idx_c2[n1]]-self.coords[self.idx_c2[n2]] 
+                    diff /= np.sqrt(np.sum(diff**2))
+                
+                    v_i = [self.e_vec[i:i+3,k] for k in range(6,len(self.e_val))]
+                    v_j = [self.e_vec[j:j+3,k] for k in range(6,len(self.e_val))]
+                
+                    top = len(self.e_val)-6
+                
+                    c_ii = np.array([np.outer(v_i[k],v_i[k])/self.e_val[k+6] for k in range(top)])
+                    c_jj = np.array([np.outer(v_j[k],v_j[k])/self.e_val[k+6] for k in range(top)])
+                    c_ij = np.array([np.outer(v_i[k],v_j[k])/self.e_val[k+6] for k in range(top)])
+                    c_ji = np.array([np.outer(v_j[k],v_i[k])/self.e_val[k+6] for k in range(top)])
+            
+                    # sum contributions from all eigenvectors
+                    tensor = np.sum([(c_ii[k]+c_jj[k] - c_ij[k] - c_ji[k]) for k in range(top)],axis=0)
+                    fluc_mat[n1,n2]=fluc_mat[n2,n1]=np.dot(diff,np.dot(tensor,diff))
+            
+        return fluc_mat, self.seq_c2
+
+    
     def print_eval(self):
         """ Return a string containint the eigenvalues of the interaction matrix of the ENM"""
         stri = "# Eigenvalues \n"
