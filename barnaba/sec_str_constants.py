@@ -9,21 +9,21 @@ list_ann = list_stackings + list_bp_ct
 threshold = 0.1
 
 factor = 100
-d_bp = 32.5
-k_bp = 200 * factor
+k_bp = 100 * factor
+k_wc = 300 *factor
+# horizontal interaction in stem
+d_short = 32.5
 
-# sequential stacking
-d_stack1 = 20.
-k_stack1 = 0
+# n, n+2 stacking 
+d_stack = 20.
+k_stack = 150 * factor
 
+# n, n+1
 d_seq = 20.
 k_seq = 2000 * factor 
 
-# non-sequential stacking
-d_stack2 = np.sqrt(d_bp**2+d_seq**2)
-# lonely basepair
-d_bp2 = d_stack2
-k_stack2 = 150 
+# diagonal interactions in stem
+d_long = np.sqrt(d_short**2+d_seq**2)
 
 #	k_stack = 0
 
@@ -31,20 +31,17 @@ angle = np.pi * .5
 k_ang = 200000 * factor
 
 k_angle_180 = 300000 * factor
+#k_vertical = 100000 * factor
+k_vertical = 200000 * factor
 
-
-
-d_rep1 = np.sqrt(d_bp**2+d_seq**2)
-#k_rep1 = k_bp
-#k_rep1 = 200 * factor
-k_rep1 = 0
 
 
 #d_rep2 = d_seq * .8
 d_rep2 = d_seq * .8
 k_rep2 = 5000 * factor 
 
-k_rep1 = k_rep2
+k_rep1 = k_rep2*.5
+k_rep3 = k_rep1*.01
 k_angle_180 = 0
 
 d_pull = 10*d_seq
