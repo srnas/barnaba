@@ -71,6 +71,7 @@ def force(pos, param, write_force):
     _shape = pos.shape
     F = np.zeros(_shape)
     for p in param:
+        i1 = i2 = i3 = None 
         _type = p[0]
         if _type in [0, 1, 3]:
             i1 = p[1]
@@ -144,8 +145,9 @@ def force(pos, param, write_force):
                 f2 = _f * ( (p1[comp]-2*p2[comp]+p3[comp])/n_p12/n_p23 + (p3[comp]-p2[comp])*arg/n_p23**2 -
                     (p2[comp]-p1[comp])*arg/n_p12**2 ) 
                 F[i2][comp] += f2
-                f3 = _f * ( (p2[comp]-p1[comp])/n_p12/n_p23 - (p3[comp]-p2[comp])*arg/n_p23**2 )
-                F[i3][comp] += f3
+                if _type == 2:
+                    f3 = _f * ( (p2[comp]-p1[comp])/n_p12/n_p23 - (p3[comp]-p2[comp])*arg/n_p23**2 )
+                    F[i3][comp] += f3
                 if write_force:
                     print "Angle_F1:", f1, 
                     if abs(f1) > 60000: 

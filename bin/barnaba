@@ -105,13 +105,12 @@ def parse():
     parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket)", nargs="+",default=None,required=True)
     parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
     parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
-    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", nargs="+", default=None, required=False)
+    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", default=None, required=False)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
-    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
+#    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
     parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
     parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
     parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
-    parser_11.add_argument("--dotbracket", dest="dotbracket", help="Use dotbracket annotation to draw (needs --ann file.ANNOTATE.dotbracket.out)", action='store_true',default=False)
     parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
     parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
     parser_11.add_argument("--threshold", dest="thresh", help="Threshold for interaction frequency (default 0.1)",default=0.1, required=False)
@@ -369,6 +368,7 @@ def sec_structure(args):
     output = "# %s \n" % (" ".join(sys.argv[:]))
     weights = []
     threshold = float(args.thresh)
+    sequence = args.sequence.replace(" ", "")
     if args.f_weights:
         with open(args.f_weights) as f:
             content = f.readlines()
@@ -376,257 +376,262 @@ def sec_structure(args):
         for line in content:
             if not line.startswith("#"):
                 weights.append(float(line.split()[-1]))
+        print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
     #    weights = np.array(weights)    
     n_weights = len(weights)
     if args.missing:
-        missing_index = [int(i) for i in args.missing]
+        missing_index = []
+        m = args.missing.split(",")
+        for mi in m:
+            m2 = mi.split("-")
+            if len(m2) == 2:
+                missing_index += range(int(m2[0]), int(m2[1]))
+            elif len(m2) == 1:    
+                missing_index.append(int(m2[0]))
+            else:
+                sys.exit("Please specify missing residue numbers like this: --missing 5,9,11-13")
+        print(missing_index)        
         residue_numbers = []
         args.first_id = int(args.first_id)
         j = args.first_id
-        for i in args.sequence:
+        for i in sequence:
             while j in missing_index:
                 j +=1 
             residue_numbers.append(j)    
             j += 1
     else:
-        residue_numbers = range(int(args.first_id), int(args.first_id)+len(args.sequence))
+        residue_numbers = range(int(args.first_id), int(args.first_id)+len(sequence))
     nucleotide = {}
     for key, i in enumerate(residue_numbers):
-        nucleotide[i] = args.sequence[key]
+        nucleotide[i] = sequence[key]
 
     ann_lists = []
     ann_list = {}
     chains = []
     pairs_list = []
     n_frames = 0
+    f_inp = {}
     for f in args.f_anns:
-        if args.dotbracket:
-            if f.endswith("ANNOTATE.dotbracket.out"):
-                chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, len(args.sequence, weights))
-                pairs_list = pairs 
-            if len(args.f_anns) > 1:
-                print("Using input file %s, ignoring other annotation file(s)" % f)
-            break
+        if f.endswith("ANNOTATE.dotbracket.out"):
+            f_inp['db'] = f
+        elif f.endswith("ANNOTATE.pairing.out"):
+            f_inp['pa'] = f
+        elif f.endswith("ANNOTATE.stacking.out"):
+            f_inp['st'] = f
+        else:
+            print("Cannot recognize annotation file, try pairing.")
+            f_inp['pa'] = f
+
+    if 'db' in f_inp:
+        if 'pa' in f_inp or 'st' in f_inp:
+            print("Found dotbracket file but also annotations, ignoring dotbracket")
+            del f_inp['db']
+
+    for k, f in f_inp.items():
+        if k == 'db':
+            chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, len(sequence), weights)
+            pairs_list.append(pairs)
+            dotbr = True
         else:    
             i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, residue_numbers, nucleotide, weights)
-        if len(ann_lists) == 0:
-            ann_lists = list(i_ann_lists)
-        else:
-            for c, ann_list in enumerate(ann_lists):
-                ann_list.update(i_ann_lists[c])
-        if len(pairs_list) == 0:
-            pairs_list = i_pairs
-        else:
-            for c, p in enumerate(i_pairs):
-                for pi in p:
-                    if pi not in pairs_list[c]:
-                        pairs_list[c].append(pi)
-        if n_frames == 0:
-            n_frames = i_n_frames
-        else:
-            if n_frames != i_n_frames:
-                sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
-            if n_weights > 0 and n_weights != n_frames:
-                sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
-        if len(chains) == 0:
-            chains = i_chains
-        elif chains != i_chains:
-            sys.exit("Different chains in files.")
+            if len(ann_lists) == 0:
+                ann_lists = list(i_ann_lists)
+            else:
+                for c, ann_list in enumerate(ann_lists):
+                    ann_list.update(i_ann_lists[c])
+            if len(pairs_list) == 0:
+                pairs_list = i_pairs
+            else:
+                for c, p in enumerate(i_pairs):
+                    for pi in p:
+                        if pi not in pairs_list[c]:
+                            pairs_list[c].append(pi)
+            if n_frames == 0:
+                n_frames = i_n_frames
+            else:
+                if n_frames != i_n_frames:
+                    sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
+                if n_weights > 0 and n_weights != n_frames:
+                    sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
+            if len(chains) == 0:
+                chains = i_chains
+            elif chains != i_chains:
+                sys.exit("Different chains in files.")
     if len(ann_lists) == 0:
-        sys.exit("No ANNOTATE.dotbracket.out file given")
+        sys.exit("No annotations found.")
 
+    if len(chains) > 1:
+        output += "# Found >1 chains, but can draw only single strand.\n# Drawing first chain.\n"
+        print("# Found >1 chains, but can draw only single strand.\n# Drawing first chain.")
 
-    for c, ann_list in enumerate(ann_lists):
-        pairs = pairs_list[c]
-        n = len(args.sequence)
-        param, param_wc_ds, sorted_params, param_angle = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)     
-        dimensions = secon.d_seq*(n-1)*.7
-        length = n*secon.d_seq
-        import numpy as np
-        angle = 2*np.pi/n
-        start = np.zeros((n, 2))
-        min_pair = []
-        max_pair = []
-        i_min = n-1
-        i_max = 0
-        for p in sorted_params:
-            if p[1] < i_min or p[2] < i_min: 
-                if p[1] < i_min: i_min = p[1]
-                if p[2] < i_min: i_min = p[2]
-                min_pair = [p]
-            elif p[1] == i_min or p[2] == i_min:
-                min_pair.append(p)
-            if p[1] > i_max or p[2] > i_max: 
-                if p[1] < i_max: i_max = p[1]
-                if p[2] < i_max: i_max = p[2]
-                max_pair = [p]
-            elif p[1] == i_min or p[2] == i_min:
-                max_pair.append(p)
-        print(min_pair, max_pair)
-        circle = False
-        cotranscript = True
-        for p in min_pair:
-            if p in max_pair:
-                circle = True
-                cotranscript = False
+    c = 0
+    ann_list = ann_lists[c]
+    pairs = pairs_list[c]
+    n = len(sequence)
+    param, sorted_params, param_stem_ang, param_angle_180 = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)     
+    if len(sorted_params) == 0:
+        sys.exit("No annotations found. Exiting.")        
+    dimensions = secon.d_seq*(n-1)*.7
+    length = n*secon.d_seq
+    import numpy as np
+    angle = 2*np.pi/n
+    start = np.zeros((n, 2))
+    i_min = n-1
+    i_max = 0
+    for p in sorted_params:
+        if min(p[1:3]) < i_min and max(p[1:3]) > i_max:
+            i_min = min(p[1:3])
+            i_max = max(p[1:3])
+            term_pair = p
+    cotranscript = False
+    for p in sorted_params:
+            if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
+                 ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
+                cotranscript = True
                 break
-        if cotranscript:
-            print("Co-transcriptional folding")
-        if not circle:
-            print("Start on almost straight line")
-        else:    
-            print("Start on circle")
-        for i in range(n):
-            if not circle:
-           # start on straight slightly perturbed line 
-                start[i][0] = i*secon.d_seq
-                start[i][1] = .1*(-1)**i + dimensions/2 
-            else:    
-           # start as circle
-                start[i][0] = -length * 0.5/np.pi * np.sin(i*angle + .5*angle) + dimensions * 0.5
-                start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
-           # start on half circle
-           # start[i][0] = length * 1./np.pi * np.sin(i*angle*.5 + .5*angle) + dimensions * 0.5
-           # start[i][1] = length * 1./np.pi * np.cos(i*angle*.5 + .5*angle) + dimensions * 0.5
-        pos = start
-        h = 2
-        print_snapshots = min([int(args.nsteps), int(args.draw_interm)])
-        print_energy = 20    
-        print_energy = min([int(args.nsteps), print_energy])
-        ds = int(float(args.nsteps)/print_energy)
-        if print_snapshots > 0:
-            ds_draw = int(float(args.nsteps)/print_snapshots)
-        else:
-            ds_draw = 0    
-        dt = float(args.T_init)/int(args.nsteps)*3/2
-        T = float(args.T_init)
-        if len(chains) > 1:
-            output += "------------------\nChain %d\n" % c
-            print("------------------\nChain %d\n" % c)
-            
-        output += "%8s%10s%10s%6s%10s%8s\n" % ("Step", "energy", "F_max", "T", "h", "res(max_F)") 
-        print("%8s%10s%10s%6s%10s%8s" % ("Step", "energy", "F_max", "T", "h", "res(max_F)")) 
-        ki = 0
-        added_ang = False
-        write_force = False
-        i_wcds = 0
-       # param += param_angle
-   #     if len(param_wc_ds) > 0:
-   #         print("Adding largest double strand")
-   #         param += param_wc_ds[0]
-   #         i_wcds += 1
-        i_pair = 0
-       # print(param)
-        if cotranscript and len(sorted_params) > 0:   
-            print("Cotranscriptional folding")
-            print("Added ", sorted_params[i_pair])
-            param.append(sorted_params[i_pair])
-        else:
-            param += sorted_params
-          #  print(sorted_params)
-            param += param_angle
-            print("Added all pair interactions and angle (90deg) potential")
-        i_pair += 1
-        wait = True
-        t_wait = 20
-        i_wait = 0
-        for i in range(int(args.nsteps)+1):
-            i_wait += 1
-            if i_wait == t_wait:
-                wait = False
-            if cotranscript:    
-                if  i % t_wait == 0 and not wait:
-                    if i_pair < len(sorted_params):
-                       # t_wait = 50
-                        param.append(sorted_params[i_pair])
-                        print(i, " Added ", sorted_params[i_pair])
-                        if sum(sorted_params[i_pair]) != sum(sorted_params[i_pair-1]):
-                            wait = True
-                            i_wait = 0
-                        i_pair += 1
-                    elif i_pair == len(sorted_params):
-                        param += param_angle
-                        print(i, " Added 90 degree angles")
-                        wait = True
-            E, E_array = seff.energy(pos, param)
-            F = seff.force(pos, param, write_force)
-            max_F = abs(F).max()
-            if i % ds == 0:
-                r_i = unravel_index(F.argmax(), F.shape)
-                print("%8d%10.3e%10.3e%6.1f%10.2e%8s" % (i, E, max_F, T, h,  r_i))
-                output += "%8d%10.2e%10.2e%6.1f%10.2e%8s\n" % (i, E, max_F, T, h, r_i) 
-                write_force = False
-                if T > 0: 
-                    T -= ds*dt
-                    if T < 0: T = 0 
-                j = i/ds
-
-            else:
-                write_force = False
-            if ds_draw > 0 and i % ds_draw == 0:
-                output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), args.sequence, residue_numbers, dimensions, args.output_ids)
-                if len(chains) > 1:
-                    fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
+    if cotranscript:    
+        param += param_angle_180
+        print("Co-transcriptional folding")
+        t_wait = 10
+        steps = t_wait * abs(sorted_params[0][1]-sorted_params[0][2]) 
+        for i_pair, p in enumerate(sorted_params):
+            if i_pair > 1:
+                if sum(p[1:3]) != sum(sorted_params[i_pair-1][1:3]):
+                    steps += t_wait * (abs(min(p[1:3])-min(sorted_params[i_pair-1][1:3]))+abs(max(p[1:3])-max(sorted_params[i_pair-1][1:3])))
                 else:
-                    fh1 = open(args.name + "_%03d.svg" % i,'w')
-                fh1.write(output_svg)
-                fh1.close()
-                
-            if h < 1e-4: # or (h < .5 and i_wcds < len(param_wc_ds)):
-              #  if i_wcds < len(param_wc_ds):
-              #      param += param_wc_ds[i_wcds]
-              #      i_wcds += 1
-              #      print("Adding double strand")
-              #      h = 2
-              #  else:
-                output += "Converged at %d steps. You can play with the temperature (-T).\n" % i
-                print("Converged at %d steps. You can play with the temperature (-T).\n" % i)
-                break
-            if i == int(args.nsteps):
-                output += "Reached maximum number of %d steps\n" % i
-                print("Reached maximum number of %d steps\n" % i)
-                break
-
-            if T > 0:
-                r = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos])
-               # new_pos = pos + F/max_F * h + r * T
-                if i > 0:
-                    v = (new_pos - pos)*T
-                else: 
-                    v = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos]) * T
-              #  v += r * T
-                new_pos = pos + F/max_F * h + v
-            else:
-                new_pos = pos + F/max_F * h
-            
-            new_E, new_E_array = seff.energy(new_pos, param)
-            if new_E < E:
-                pos = new_pos
-                h *= 1.2
-                if h > 2:
-                    h = 2
-            else:
-                h *= 0.2
-        E, E_array = seff.energy(pos, param, False) 
-        F = seff.force(pos, param, write_force)
-        r_i = unravel_index(F.argmax(), F.shape)
-    #    for p in param:
-    #        if p[0] != 2 and r_i[0] in p[1:3] or (p[0] == 2 and r_i[0] in p[1:4]):
-    #            print(p)
-    #    p_max_E = E_array.index(max(E_array))
-      #  print(p_max_E)
-      #  print(param[p_max_E], max(E_array))
-        print("%8d%10.2e%10.2e%6.1f%10.2e%8s" % (i, E, max_F, T, h, r_i))
-        output += "%8d%10.2e%10.2e%6.1f%.2e%8s\n" % (i, E, max_F, T, h, r_i) 
-        print( i, " steps of minmization")    
-        output += "%d steps of minmization\n" % (i)
-        output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), args.sequence, residue_numbers, dimensions, args.output_ids)
-        if len(chains) > 1:
-            fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
+                    steps += t_wait
+        steps +=  len(sorted_params) * t_wait + 10 * len(sequence)
+        if steps > int(args.nsteps):
+            print("Estimated number of steps: %d, overwriting nsteps" % steps)
         else:
-            fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
-        fh1.write(output_svg)
-        fh1.close()
+            steps = int(args.nsteps)
+    else:
+        param += sorted_params
+        param += param_stem_ang
+        print("Added ordering potential")
+        steps = int(args.nsteps)
+        print("Start on circle")
+   
+    for i in range(n):
+        if cotranscript:
+       # start on straight slightly perturbed line 
+            start[i][0] = i*secon.d_seq
+           # start[i][1] = np.random.random()*.1*(-1)**i + dimensions/2 
+            start[i][1] = .1*(-1)**i + dimensions/2 
+        else:    
+       # start as circle
+            start[i][0] = -length * 0.5/np.pi * np.sin(i*angle + .5*angle) + dimensions * 0.5
+            start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
+       # start on half circle
+       # start[i][0] = length * 1./np.pi * np.sin(i*angle*.5 + .5*angle) + dimensions * 0.5
+       # start[i][1] = length * 1./np.pi * np.cos(i*angle*.5 + .5*angle) + dimensions * 0.5
+    pos = start
+    h = 2
+    print_snapshots = min([steps, int(args.draw_interm)])
+    print_energy = 20    
+    print_energy = min([steps, print_energy])
+    ds = int(float(steps)/print_energy)
+    if print_snapshots > 0:
+        ds_draw = int(float(steps)/print_snapshots)
+    else:
+        ds_draw = 0    
+#       dt = float(args.T_init)/int(steps)*3/2
+#       T = float(args.T_init)
+        
+    output += "%8s%10s%10s%10s%8s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
+    print("%8s%10s%10s%10s%8s" % ("Step", "energy", "F_max",  "h", "res(max_F)")) 
+    write_force = False
+    i_pair = 0
+    E, E_array = seff.energy(pos, param)
+    F = seff.force(pos, param, write_force)
+    max_F = abs(F).max()
+    r_i = unravel_index(F.argmax(), F.shape)
+    for i in range(steps+1):
+        print_out = False
+        if cotranscript:    
+           # if  h<3e-1:
+            if i == 0 or (i>0 and (E-new_E)/E < 1e-3):
+                if i_pair < len(sorted_params):
+                    print_out = True
+                    p = sorted_params[i_pair]
+                    lp = sorted_params[i_pair-1]
+                    param.append(p)
+                    i_pair += 1
+                    print(i, " Added ", p)
+                elif i_pair == len(sorted_params):
+                    print_out = True
+                    param += param_stem_ang
+                    print(i, " Added ordering potential")
+                    cotranscript = False
+        E, E_array = seff.energy(pos, param)
+        F = seff.force(pos, param, write_force)
+        max_F = abs(F).max()
+        if i % ds == 0 or print_out:
+            r_i = unravel_index(F.argmax(), F.shape)
+            print(    "%8d%10.3e%10.2e%10.2e%8s" % (i, E, max_F, h,  r_i))
+            output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
+            write_force = False
+ #           if T > 0: 
+ #               T -= ds*dt
+ #               if T < 0: T = 0 
+#            j = i/ds
+
+        else:
+            write_force = False
+        if ds_draw > 0 and i % ds_draw == 0:
+            output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, residue_numbers, dimensions, args.output_ids)
+            if len(chains) > 1:
+                fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
+            else:
+                fh1 = open(args.name + "_%03d.svg" % i,'w')
+            fh1.write(output_svg)
+            fh1.close()
+            
+        if i == steps:
+            output += "Reached maximum number of %d steps\n" % i
+            print("Reached maximum number of %d steps\n" % i)
+            break
+
+#            if T > 0:
+#                r = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos])
+#                if i > 0:
+#                    v = (new_pos - pos)*T
+#                else: 
+#                    v = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos]) * T
+#                new_pos = pos + F/max_F * h + v
+#            else:
+#                new_pos = pos + F/max_F * h
+        new_pos = pos + F/max_F * h
+        new_E, new_E_array = seff.energy(new_pos, param)
+
+        while new_E >= E:
+            h *= 0.2
+            if h < 1e-4: break 
+            new_pos = pos + F/max_F * h
+            new_E, new_E_array = seff.energy(new_pos, param)
+        if h < 1e-4: 
+            output += "Converged at %d steps.\n" % i
+            print("Converged at %d steps.\n" % i)
+            break
+        pos = new_pos
+        h *= 1.2
+        if h > 2:
+            h = 2
+            
+    E, E_array = seff.energy(pos, param, False) 
+    F = seff.force(pos, param, write_force)
+    r_i = unravel_index(F.argmax(), F.shape)
+    print("%8d%10.2e%10.2e%10.2e%8s" % (i, E, max_F,  h, r_i))
+    output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
+    print( i, " steps of minmization")    
+    output += "%d steps of minmization\n" % (i)
+    output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, residue_numbers, dimensions, args.output_ids)
+    if len(chains) > 1:
+        fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
+    else:
+        fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
+    fh1.write(output_svg)
+    fh1.close()
 
 
     fh2 = open(args.name + ".out",'w')

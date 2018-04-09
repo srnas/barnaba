@@ -16,7 +16,8 @@ d_short = 32.5
 
 # n, n+2 stacking 
 d_stack = 20.
-k_stack = 150 * factor
+#k_stack = 150 * factor
+k_stack = 500 * factor
 
 # n, n+1
 d_seq = 20.
@@ -29,20 +30,22 @@ d_long = np.sqrt(d_short**2+d_seq**2)
 
 angle = np.pi * .5
 k_ang = 200000 * factor
+k_ang = 500000 * factor
 
-k_angle_180 = 300000 * factor
+#k_angle_180 = 300000 * factor
+k_angle_180 = 600000 * factor
 #k_vertical = 100000 * factor
 k_vertical = 200000 * factor
+#k_vertical = 600000 * factor
 
 
 
 #d_rep2 = d_seq * .8
-d_rep2 = d_seq * .8
+d_rep2 = d_seq #* .9
 k_rep2 = 5000 * factor 
 
 k_rep1 = k_rep2*.5
-k_rep3 = k_rep1*.01
-k_angle_180 = 0
+#k_angle_180 = 0
 
 d_pull = 10*d_seq
 k_pull = 0 * factor

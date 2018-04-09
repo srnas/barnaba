@@ -1198,7 +1198,7 @@ def parse_dotbr(dotbra):
             for k2 in range(k-1)[::-1]:
                 j = dotbra[k2]
                 if j == search and k2 not in res_bp:
-                    basepairs.append([k, k2])
+                    basepairs.append([k2, k])
                     res_bp.append(k2)
                     break
     return basepairs            
@@ -1225,10 +1225,10 @@ def parse_dotbracket(file, n, weights):
                 dotbr = l[1]
                 if len(dotbr) != n:
                     sys.exit("Dot-bracket length does not match sequence length")    
-                res_bp = parse_dotbr(dotbr)
-                for bp in res_bp:
+                base_pairs = parse_dotbr(dotbr)
+                for bp in base_pairs:
                     ann_list[bp[0], bp[1], "WCc"] = 1.
-                list_base_pairs.append(res_bp)    
+                list_base_pairs = base_pairs    
                 ann_lists.append(dict(ann_list))
                 ann_list = {}
             else:
@@ -1242,7 +1242,6 @@ def parse_dotbracket(file, n, weights):
                         sys.exit("Dot-bracket length does not match sequence length")    
                     n_frames += 1
                     base_pairs = parse_dotbr(dotbr)
-                    print(base_pairs)
                     for bp in base_pairs:
                         if bp not in list_base_pairs:
                             list_base_pairs.append(bp)
@@ -1267,7 +1266,8 @@ def parse_dotbracket(file, n, weights):
             else:
                 ann_list[ann] /= sum(weights)
         ann_lists.append(ann_list)
-    chains = [0]    
+    chains = [0]
+    print(list_base_pairs)
     return chains, ann_lists, list_base_pairs, n_frames    
 
 def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
@@ -1286,7 +1286,6 @@ def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
     ann_lists = []
     ann_list = {}
     n_frames = 0
-    print("Using %d weights" % len(weights))
     for line in annotation:
         pdb = re_pdb.match(line)
         if pdb:
@@ -1430,9 +1429,9 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 param_stack.append([0, i, j, secon.k_stack*value, secon.d_short])
 
     pairs_stems, diagonal_pairs, lonely_pairs = stems(param_wc, param_stack, param_bp)
-    print("stems", pairs_stems)
-    print("diagonal_pairs", diagonal_pairs)
-    print("lonely_pairs", lonely_pairs)
+#    print("stems", pairs_stems)
+#    print("diagonal_pairs", diagonal_pairs)
+#    print("lonely_pairs", lonely_pairs)
     param_ang = []
     param_wc_ds = []
     
@@ -1440,15 +1439,14 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
     param_stem = []
     if len(pairs_stems) > 0:
         for pair in pairs_stems[0]:
-            if abs(pair[0]-pair[1]) > 1:
+            if abs(pair[0]-pair[1]) > 2:
                 param_stem.append([4, int(pair[0:2].min()), int(pair[0:2].max()), secon.k_vertical])
     else:
         if len(lonely_pairs) > 0:
             for pair in lonely_pairs:
                 if sum(pair) == sum(lonely_pairs[np.argsort(lonely_pairs[:,0])[0]]) and abs(pair[0]-pair[1]) > 1:
-                    print(pair)
                     param_stem.append([4, int(pair[0:2].min()), int(pair[0:2].max()), secon.k_vertical])
- #   sys.exit()
+
     for pair in diagonal_pairs:
         for pi in param_wc + param_bp + param_stack:
             if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
@@ -1468,7 +1466,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
         for pi in param_bp + param_stack + param_wc:
             if tuple(pi[1:3]) in t_stems or tuple(pi[1:3][::-1]) in t_stems:
                 pi[3] *= 1.2**(n_stem-1)
-                if abs(pi[1]-pi[2]) > 1:
+                if abs(pi[1]-pi[2]) > 2:
                     if pi[1] > limits[0][0]:
                         param_ang.append([2, limits[0][0], pi[1], pi[2], n_stem * secon.k_ang, secon.angle])
                         param_ang.append([2, pi[1], pi[2], limits[0][1], n_stem * secon.k_ang, secon.angle])
@@ -1480,32 +1478,32 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 param_ds.append(pi)
         param_wc_ds.append(param_ds)
     if not tertiary_contacts:
-        print("Rem. tert. contacts")
+        print("Without tertiary contacts")
         for pair in lonely_pairs:
             for pi in param_wc + param_bp + param_stack:
                 if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
                     pi[3] = 0
 
     sorted_params = []
+    n_excl = 0
     for i in range(n):
         i_list = []
         for p in param_wc+param_bp+param_stack:
-            if p[3] == 0:
+            if i == max(p[1:3]) and p[3] == 0:
+                n_excl += 1
                 continue
-            if i in p[1:3]:
-                if not i-1 in p[1:3] and not i+1 in p[1:3]:
-                    if i == p[1]: j = p[2]
-                    if i == p[2]: j = p[1]
-                    if j < i: 
-                        i_list.append(p)
+            elif i == max(p[1:3]) and abs(p[1]-p[2])<2:
+                n_excl += 1
+            elif i == max(p[1:3]) and abs(p[1]-p[2])>1:
+                 i_list.append(p)
         if len(i_list) == 0:
             continue
         diff = np.array([abs(p[1]-p[2]) for p in i_list])
         keys = np.argsort(diff)
         for k in keys:
             sorted_params.append(i_list[k])
-    print("len(sorted_params) ", len(sorted_params))
-    print("len(param_wc+param_bp+param_stack) ", len(param_wc+param_bp+param_stack))
+    assert (len(sorted_params)+n_excl == len(param_wc+param_bp+param_stack))        
+
     param_rep = []
     for i1 in range(n-2):
         for i2 in range(i1+2, n):
@@ -1515,9 +1513,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 if tuple(p[1:3]) in [tuple([i1, i2]), tuple([i2, i1])] and p[3] > 0:
                     repel = False
                     break
-    #            if p[1:3] in [[i1-1, i2], [i2, i1-1], [i1, i2+1], [i2+1, i1]] and p[3] > 0:
-    #                k = secon.k_rep3
-            if repel:        
+            if repel:
                 param_rep.append([1, i1, i2, k, secon.d_long])
     for i1 in range(n-2):
         for i2 in range(i1+1, n):
@@ -1525,12 +1521,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
 
     param = []
     param += param_seq
-#    param += param_bp
-#    param += param_wc
-#    param += param_wc_no_ds
-#    param += param_stack
     param += param_rep
-    param += param_angle_180
-    param += param_stem
+    param_stem += param_ang
 #    param += param_pull
-    return param, param_wc_ds, sorted_params, param_ang    
+    return param, sorted_params, param_stem, param_angle_180    
