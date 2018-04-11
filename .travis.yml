@@ -10,8 +10,13 @@ install:
   - pip install sklearn
   - pip install mdtraj
   - pip install nose
+  - pip install coverage
   - pip install -e .
 
 script:
   # Your test script goes here
-  - nosetests -v
+  - nosetests --with-coverage -v
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
