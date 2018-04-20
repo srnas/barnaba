@@ -10,7 +10,7 @@ def hexcolor(value):
     rgb = cmap(int(value*n_colors)) 
     return matplotlib.colors.rgb2hex(rgb)
 
-def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, residue_numbers, dimensions, output_ids):
+def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensions, output_ids):
     binary = False
     syn = np.fromstring(np.binary_repr(chi_conf), dtype='S1').astype(int)[::-1]
     n = len(pos)
@@ -69,11 +69,11 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, residue_
                 else:
                     if ann == "GUc":
                         t_ann = "WWc"
-                    elif ann == "WCc" and ((sequence[r1] == "C" and sequence[r2] == "G") or
-                            (sequence[r1] == "G" and sequence[r2] == "C")):
+                    elif ann == "WCc" and ((sequence[r1][0] == "C" and sequence[r2][0] == "G") or
+                            (sequence[r1][0] == "G" and sequence[r2][0] == "C")):
                         t_ann = "=c"
-                    elif ann == "WCc" and ((sequence[r1] == "A" and sequence[r2] == "U") or
-                            (sequence[r1] == "U" and sequence[r2] == "A")):
+                    elif ann == "WCc" and ((sequence[r1][0] == "A" and sequence[r2][0] == "U") or
+                            (sequence[r1][0] == "U" and sequence[r2][0] == "A")):
                         t_ann = "-c"
                     else:
                         t_ann = ann
@@ -98,9 +98,9 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, residue_
             else:    
                 background = "#ffffff"
         if output_ids:
-            output_svg += draw_res(p, residue_numbers[i], background)
+            output_svg += draw_res(p, sequence[i][1], background)
         else:    
-            output_svg += draw_res(p, sequence[i], background)    
+            output_svg += draw_res(p, sequence[i][0], background)    
 
     output_svg += draw_footer()
     return output_svg

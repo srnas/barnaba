@@ -101,11 +101,11 @@ def parse():
     # SEC_STRUCTURE
     parser_11 = subparsers.add_parser('SEC_STRUCTURE', help='Draw secondary structure from annotation')
     parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
-    parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
+#    parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
     parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket)", nargs="+",default=None,required=True)
     parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
-    parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
-    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", default=None, required=False)
+#    parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
+#    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", default=None, required=False)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
 #    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
     parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
@@ -114,6 +114,7 @@ def parse():
     parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
     parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
     parser_11.add_argument("--threshold", dest="thresh", help="Threshold for interaction frequency (default 0.1)",default=0.1, required=False)
+    parser_11.add_argument("--not_order", dest="not_order", help="Don't try to make double strands rectangular", action='store_true',default=False)
 
     
     # DUMP
@@ -329,6 +330,9 @@ def annotate(args):
             
     else:
         st,pair,res = bb.annotate(args.trj,topology=args.top)
+        stri_s += "# sequence %s\n" % "-".join(res)    
+        stri_p += "# sequence %s\n" % "-".join(res)    
+        stri_dot += "# sequence %s\n" % "-".join(res)    
         if(args.dotbr):
             dotbr = bb.dot_bracket(pair,res)
             stri_dot += "".join(["%-10d %s\n" %(k,dotbr[k]) for k in range(len(pair))])
@@ -341,7 +345,6 @@ def annotate(args):
             stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[k][0][e][0]],res[st[k][0][e][1]],st[k][1][e]) for e in range(len(st[k][0]))])
             
             
-        
     fh1 = open(args.name + ".pairing.out",'w')
     fh1.write(stri_p)
     fh1.close()
@@ -368,6 +371,10 @@ def sec_structure(args):
 
     output = "# %s \n" % (" ".join(sys.argv[:]))
     weights = []
+    if args.not_order:
+        order = False
+    else:
+        order = True
     threshold = float(args.thresh)
     sequence = args.sequence.replace(" ", "")
     if args.f_weights:
@@ -380,32 +387,6 @@ def sec_structure(args):
         print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
     #    weights = np.array(weights)    
     n_weights = len(weights)
-    if args.missing:
-        missing_index = []
-        m = args.missing.split(",")
-        for mi in m:
-            m2 = mi.split("-")
-            if len(m2) == 2:
-                missing_index += range(int(m2[0]), int(m2[1])+1)
-            elif len(m2) == 1:    
-                missing_index.append(int(m2[0]))
-            else:
-                sys.exit("Please specify missing residue numbers like this: --missing 5,9,11-13")
-        residue_numbers = []
-        args.first_id = int(args.first_id)
-        j = args.first_id
-        for i in sequence:
-            while j in missing_index:
-                j +=1
-        #    print("%s_%d" % (i, j))    
-            residue_numbers.append(j)    
-            j += 1
-            
-    else:
-        residue_numbers = range(int(args.first_id), int(args.first_id)+len(sequence))
-    nucleotide = {}
-    for key, i in enumerate(residue_numbers):
-        nucleotide[i] = sequence[key]
 
     ann_lists = []
     ann_list = {}
@@ -431,11 +412,11 @@ def sec_structure(args):
 
     for k, f in f_inp.items():
         if k == 'db':
-            chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, len(sequence), weights)
+            sequence, chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, weights)
             pairs_list.append(pairs)
             dotbr = True
         else:    
-            i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, residue_numbers, nucleotide, weights)
+            sequence, i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, weights)
             if len(ann_lists) == 0:
                 ann_lists = list(i_ann_lists)
             else:
@@ -580,9 +561,10 @@ def sec_structure(args):
     i_stem = int(param_stem[int(param_stem.shape[0]/2)][1])
     i_stem = int(param_stem[0][1])
     print("Fix", i_stem)
-    order = False
-    reduce_straight_pot = False
-   # reduce_straight_pot = True
+    if order:
+        reduce_straight_pot = True
+    else:    
+        reduce_straight_pot = False
     for i in range(10000):
         print_out = False
         if (E-new_E)/E < E_thresh:
@@ -615,7 +597,7 @@ def sec_structure(args):
 #                if i_par == len(param_parall):
 #                    print("order=True")
 #                    order = True
-            elif (E-new_E)/E < E_thresh*1e-2 and i>0 and i_ang < len(param_ang) and not order:
+            elif (E-new_E)/E < E_thresh*1e-2 and i>0 and i_ang < len(param_ang) and  order:
                 print_out = True
                 param[2] = np.append(param[2], param_ang[i_ang:i_ang+2], axis=0)
                 if i_ang == 0: param[2] = np.append(param[2], param_bulge, axis=0)
@@ -623,9 +605,9 @@ def sec_structure(args):
                 print("Added ordering pot", param_ang[i_ang:i_ang+2,1:4])
                 i_ang += 2
                 if i_ang == len(param_ang): 
-                    order = True
+                    order = False
                     
-            elif (E-new_E)/E < E_thresh*1e-3 and  i>0 and order and not reduce_straight_pot:
+            elif (E-new_E)/E < E_thresh*1e-3 and  i>0 and not order and reduce_straight_pot:
                 print_out = True
                 p_tmp = param_angle_180
                 p_tmp[:,4] = secon.k_angle_straight_end
@@ -635,7 +617,7 @@ def sec_structure(args):
                 param[5] = param_bulge_rep
                 E = seff.energy(pos, param)
                 print("Reduced straight pot")
-                reduce_straight_pot = True
+                reduce_straight_pot = False
                 if steps-i < 200:
                     steps = i+200
                     print("Setting new step limit %d" % steps)
@@ -659,7 +641,7 @@ def sec_structure(args):
         else:
             write_force = False
         if ds_draw > 0 and i % ds_draw == 0:
-            output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, residue_numbers, dimensions, args.output_ids)
+            output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
             if len(chains) > 1:
                 fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
             else:
@@ -670,7 +652,7 @@ def sec_structure(args):
         if i == steps:
             output += "Reached maximum number of %d steps\n" % i
             print("Reached maximum number of %d steps\n" % i)
-            if not order or not reduce_straight_pot:
+            if order or reduce_straight_pot:
                 print("Ordering potential has not yet been added, ignoring step limit")
                 output += "Ordering potential has not yet been added, ignoring step limit\n"
             else:    
@@ -720,7 +702,7 @@ def sec_structure(args):
     trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
     pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
     pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
-    output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, residue_numbers, dimensions, args.output_ids)
+    output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
     if len(chains) > 1:
         fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
     else:

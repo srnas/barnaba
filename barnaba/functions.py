@@ -1203,7 +1203,7 @@ def parse_dotbr(dotbra):
                     break
     return basepairs            
     
-def parse_dotbracket(file, n, weights):
+def parse_dotbracket(file, weights):
     import barnaba.sec_str_constants as secon
     import re 
     print("Parsing file ", file)    
@@ -1218,12 +1218,15 @@ def parse_dotbracket(file, n, weights):
     n_pdbs = 0
     traj = False
     list_base_pairs = []
+    sequence = []
     for line in f_dotbracket:
+        if line.startswith("#") and line.split()[1] == "sequence":
+            sequence = [r.split("_") for r in line.split()[2].split("-")]
         if not line.startswith("#"):
             l = line.split()
             if "pdb" in l[0].lower():
                 dotbr = l[1]
-                if len(dotbr) != n:
+                if len(dotbr) != len(sequence):
                     sys.exit("Dot-bracket length does not match sequence length")    
                 base_pairs = parse_dotbr(dotbr)
                 for bp in base_pairs:
@@ -1238,7 +1241,7 @@ def parse_dotbracket(file, n, weights):
                 else:
                     traj = True
                     dotbr = l[1]
-                    if len(dotbr) != n:
+                    if len(dotbr) != len(sequence):
                         sys.exit("Dot-bracket length does not match sequence length")    
                     n_frames += 1
                     base_pairs = parse_dotbr(dotbr)
@@ -1267,9 +1270,9 @@ def parse_dotbracket(file, n, weights):
                 ann_list[ann] /= sum(weights)
         ann_lists.append(ann_list)
     chains = [0]
-    return chains, ann_lists, list_base_pairs, n_frames    
+    return sequence, chains, ann_lists, list_base_pairs, n_frames    
 
-def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
+def parse_annotations(threshold, file, weights):
     import barnaba.sec_str_constants as secon
     import re 
     print("Parsing file ", file)    
@@ -1286,6 +1289,8 @@ def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
     ann_list = {}
     n_frames = 0
     for line in annotation:
+        if line.startswith("#") and line.split()[1] == "sequence":
+            sequence = [r.split("_") for r in line.split()[2].split("-")]
         pdb = re_pdb.match(line)
         if pdb:
             n_frames += 1
@@ -1297,26 +1302,18 @@ def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
         ann = re_ann.match(line)
         if ann:
             cols = line.split()
-            ri = int(cols[0].split("_")[1])
             i_N = cols[0].split("_")[0]
+            ri = int(cols[0].split("_")[1])
             i_C = cols[0].split("_")[2]
-            rj = int(cols[1].split("_")[1])
             j_N = cols[1].split("_")[0]
+            rj = int(cols[1].split("_")[1])
             j_C = cols[1].split("_")[2]
             ann_ij = cols[2]
-            if ann_ij == "GUc": ann_ij = "WWc"
-            if ri not in residue_numbers:
-                sys.exit("Residue %d found, but not in list. Please check --first_id and --missing\n" % ri)
-            elif rj not in residue_numbers:
-                sys.exit("Residue %d found, but not in list. Please check --first_id and --missing\n" % rj)
-            if ann_ij not in secon.list_ann and not ann_ij == "XXX":
-                sys.exit("Cannot understand annotation in this line:\n%s\n" % line) 
             if ann_ij == "XXX":
                 continue
-            if nucleotide[ri] != i_N or nucleotide[rj] != j_N:
-                sys.exit("Sequence-number mapping not correct in line:\n%s\nCheck for missing residue numbers (--missing)\n" % line)
-            i = residue_numbers.index(ri)
-            j = residue_numbers.index(rj)
+            i = np.where(np.array(sequence)[:,1].astype(int) == ri)[0][0]
+            j = np.where(np.array(sequence)[:,1].astype(int) == rj)[0][0]
+            print(i, j)
             if old_C != "X" and (i_C != j_C or i_C != old_C):
                 ann_lists.append(ann_list)
                 ann_list = {}
@@ -1348,7 +1345,7 @@ def parse_annotations(threshold, file, residue_numbers, nucleotide, weights):
             if ann_list[ann] > threshold and [ann[0], ann[1]] not in p:
                 p.append([ann[0], ann[1]])
         pairs.append(p)
-    return chains, ann_lists, pairs, n_frames
+    return sequence, chains, ann_lists, pairs, n_frames
     
 def stems(param_wc, param_bp, param_stack):
     pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
