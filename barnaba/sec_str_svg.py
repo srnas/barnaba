@@ -78,7 +78,7 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
                     else:
                         t_ann = ann
                     if t_ann == "WCc":
-                        sys.exit("Left-over WC annotation. This should not happen, maybe something wrong with numbering, check for missing residue numbers.")
+                        print("Found WC annotation for pair ", r1, r2, sequence[r1], sequence[r2])
                     if binary and ann in list_wc_pairs:
                         color = "#ff0000"
                     if t_ann in ["-c", "=c"] or t_ann[2] == "t":

@@ -376,7 +376,6 @@ def sec_structure(args):
     else:
         order = True
     threshold = float(args.thresh)
-    sequence = args.sequence.replace(" ", "")
     if args.f_weights:
         with open(args.f_weights) as f:
             content = f.readlines()
@@ -451,7 +450,15 @@ def sec_structure(args):
     ann_list = ann_lists[c]
     pairs = pairs_list[c]
     n = len(sequence)
-    param_seq, param_rep, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180, param_parall = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)
+#    print("".join(sequence[:,0,-1]))
+    import numpy as np
+    __i1, __i2 = np.triu_indices(n, k=1)
+    __k_rep = np.full((int(n*(n-1)/2), 2), secon.k_rep2)
+    __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr)
+    __d_rep = np.full((int(n*(n-1)/2), 2), secon.d_rep2)
+    print("Calc parameters ...")
+    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180, param_parall = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)
+    print("... done")
  #   print(param_seq)
  #   print(param_rep)
  #   print(sorted_params)
@@ -463,65 +470,34 @@ def sec_structure(args):
         sys.exit("No annotations found. Exiting.")        
     dimensions = secon.d_seq*(n-1)*.7
     length = n*secon.d_seq
-    import numpy as np
     angle = 2*np.pi/n
-    start = np.zeros((n, 2))
+    start = np.column_stack((np.arange(0., n*secon.d_seq, secon.d_seq),  np.full((n), 0.5*dimensions)))
     i_min = n-1
     i_max = 0
-    for p in sorted_params:
-        if min(p[1:3]) < i_min and max(p[1:3]) > i_max:
-            i_min = min(p[1:3])
-            i_max = max(p[1:3])
-            term_pair = p
-    cotranscript = False
+
+#    term_pair = sorted_params[np.argmax(sorted_params[:,2]-sorted_params[:,1])]
+#    print("Term_pair", term_pair)        
+#    cotranscript = False
     param = {}
-    for p in sorted_params:
-        if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
-             ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
-            cotranscript = True
-            break
-#    cotranscript = True        
+#    for p in sorted_params:
+#        if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
+#             ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
+#            cotranscript = True
+#            break
+    cotranscript = True        
     param[0] = param_seq
     param[1] = param_rep
-    if cotranscript:    
-        print("Sequential folding")
-        t_wait = 15
-        steps = t_wait * abs(sorted_params[0][1]-sorted_params[0][2]) 
-        for i_pair, p in enumerate(sorted_params):
-            if i_pair > 1:
-                if sum(p[1:3]) != sum(sorted_params[i_pair-1][1:3]):
-                    steps += t_wait * (abs(min(p[1:3])-min(sorted_params[i_pair-1][1:3]))+abs(max(p[1:3])-max(sorted_params[i_pair-1][1:3])))
-                else:
-                    steps += t_wait
-        steps +=  len(sorted_params) * t_wait + 10 * len(sequence)
-        steps = int(steps)
-        if steps > int(args.nsteps):
-            print("Estimated number of steps: %d, overwriting nsteps" % steps)
-        else:
-            steps = int(args.nsteps)
-    else:
+    steps = int(args.nsteps)
+    if not cotranscript:
         param[0] = np.append(param[0], sorted_params, axis=0) 
- #       param = param_seq + sorted_params
-        steps = int(args.nsteps)
         print("Start on circle")
-
-    for i in range(n):
-        if cotranscript:
-       # start on straight slightly perturbed line 
-            start[i][0] = i*secon.d_seq
-            if i in np.arange(param_stem[0][1]+1, param_stem[0][2]):
-                if i in np.arange(sorted_params[0][1]+1, sorted_params[0][2]):
-                 #   print("first pair in main stem")
-                    start[i][1] = -2 + dimensions/2
-                else:    
-                    start[i][1] = -1 + dimensions/2
-            else:
-                if i in np.arange(sorted_params[0][1]+1, sorted_params[0][2]):
-                    start[i][1] = 1 + dimensions/2
-                else:
-               # start[i][1] = .1*(-1)**i + dimensions/2 
-                    start[i][1] =  dimensions/2 
-        else:    
+    print("Make starting config")
+    if cotranscript:
+       # start on straight slightly perturbed line
+       for i in np.arange(sorted_params[0][1]+1, sorted_params[0][2]):
+            start[int(i), 1] -= 2 
+    else:    
+        for i in range(n):
        # start as circle
             start[i][0] = -length * 0.5/np.pi * np.sin(i*angle + .5*angle) + dimensions * 0.5
             start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
@@ -529,7 +505,7 @@ def sec_structure(args):
        # start[i][0] = length * 1./np.pi * np.sin(i*angle*.5 + .5*angle) + dimensions * 0.5
        # start[i][1] = length * 1./np.pi * np.cos(i*angle*.5 + .5*angle) + dimensions * 0.5
     pos = start
-    h = 2
+    h = .7
     print_snapshots = min([steps, int(args.draw_interm)])
     print_energy = 20    
     print_energy = min([steps, print_energy])
@@ -548,24 +524,24 @@ def sec_structure(args):
     param[2] = param_angle_180
     E = seff.energy(pos, param)
     new_E = E
-    F = seff.force(pos, param, write_force)
+    F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
     max_F = abs(F).max()
     r_i = unravel_index(F.argmax(), F.shape)
     E_thresh = 5e-4
+ #   E_thresh = 1e-4
     output += "# E thresh: %.2e\n" % E_thresh
     print("# E thresh: %.2e" % E_thresh)
     output += "%8s%10s%10s%10s%8s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
     print("%8s%10s%10s%10s%8s" % ("Step", "energy", "F_max",  "h", "res(max_F)"))
     last_p = []
-#    param[4] = param_stem
-    i_stem = int(param_stem[int(param_stem.shape[0]/2)][1])
-    i_stem = int(param_stem[0][1])
-    print("Fix", i_stem)
     if order:
         reduce_straight_pot = True
     else:    
         reduce_straight_pot = False
-    for i in range(10000):
+ #   reduce_straight_pot = False
+    print("Prep. took", datetime.datetime.now()-start_time)
+    param[7] = param_rep_lr
+    for i in range(100000):
         print_out = False
         if (E-new_E)/E < E_thresh:
           #  print(i, (E-new_E)/E)
@@ -584,19 +560,6 @@ def sec_structure(args):
                     last_p = p
                 else:     
                     E = new_E
-#            elif (E-new_E)/E < E_thresh*1e-2 and i>0 and i_par < len(param_parall) and not order:
-#                print_out = True
-#                if not 6 in param:
-#                    print("Start")
-#                    param[6] = np.array([param_parall[i_par]])
-#                else:    
-#                    param[6] = np.append(param[6], [param_parall[i_par]], axis=0)
-#                E = seff.energy(pos, param)
-#                print("Added ordering pot", param_parall[i_par,1:5])
-#                i_par += 1
-#                if i_par == len(param_parall):
-#                    print("order=True")
-#                    order = True
             elif (E-new_E)/E < E_thresh*1e-2 and i>0 and i_ang < len(param_ang) and  order:
                 print_out = True
                 param[2] = np.append(param[2], param_ang[i_ang:i_ang+2], axis=0)
@@ -609,12 +572,13 @@ def sec_structure(args):
                     
             elif (E-new_E)/E < E_thresh*1e-3 and  i>0 and not order and reduce_straight_pot:
                 print_out = True
+                param[7] = param_rep_lr
                 p_tmp = param_angle_180
                 p_tmp[:,4] = secon.k_angle_straight_end
                 param[2] = p_tmp
                 param[2] = np.append(param[2], param_ang, axis=0)
-                param[2] = np.append(param[2], param_bulge, axis=0)
-                param[5] = param_bulge_rep
+             #   param[2] = np.append(param[2], param_bulge, axis=0)
+             #   param[5] = param_bulge_rep
                 E = seff.energy(pos, param)
                 print("Reduced straight pot")
                 reduce_straight_pot = False
@@ -626,17 +590,14 @@ def sec_structure(args):
                 E = new_E
         else:
             E = new_E
-        F = seff.force(pos, param, write_force)
+     #   F = seff.force(pos, param, write_force)
+        F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
         max_F = abs(F).max()
         if i % ds == 0 or print_out:
             r_i = unravel_index(F.argmax(), F.shape)
             print(    "%8d%10.3e%10.2e%10.2e%8s" % (i, E, max_F, h,  r_i))
             output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
             write_force = False
- #           if T > 0: 
- #               T -= ds*dt
- #               if T < 0: T = 0 
-#            j = i/ds
 
         else:
             write_force = False
@@ -657,16 +618,6 @@ def sec_structure(args):
                 output += "Ordering potential has not yet been added, ignoring step limit\n"
             else:    
                 break
-
-#            if T > 0:
-#                r = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos])
-#                if i > 0:
-#                    v = (new_pos - pos)*T
-#                else: 
-#                    v = np.array([[np.random.random()*2-1, np.random.random()*2-1] for j in pos]) * T
-#                new_pos = pos + F/max_F * h + v
-#            else:
-#                new_pos = pos + F/max_F * h
         new_pos = pos + F/max_F * h
         new_E = seff.energy(new_pos, param)
  
@@ -674,18 +625,18 @@ def sec_structure(args):
             h *= 0.2
             new_pos = pos + F/max_F * h
             new_E = seff.energy(new_pos, param)
-        if new_E < E and (E-new_E)/E < E_thresh*1e-2  and  h < 1e-4 and order and reduce_straight_pot: 
+        if new_E < E and (E-new_E)/E < E_thresh*1e-2  and  h < 1e-4 and not order and not reduce_straight_pot: 
             output += "Converged at %d steps.\n" % i
             print("Converged at %d steps.\n" % i)
             break
         pos = new_pos-np.full((len(pos), 2), (np.mean(pos, axis=0)-[dimensions*.5, dimensions*.5]))
         h *= 1.2
-        if h > 2:
-            h = 2
-    #    print(datetime.datetime.now()-t_s)    
+        if h > .7:
+            h = .7
             
     E = seff.energy(pos, param, False) 
-    F = seff.force(pos, param, write_force)
+  #  F = seff.force(pos, param, write_force)
+    F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
     r_i = unravel_index(F.argmax(), F.shape)
     print("%8d%10.2e%10.2e%10.2e%8s" % (i, E, max_F,  h, r_i))
     output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
@@ -693,8 +644,9 @@ def sec_structure(args):
     output += "%d steps of minmization\n" % (i)
     from scipy.linalg import expm3, norm
 
-    av_stem_vector = np.mean([pos[int(param_stem[len(param_stem)-1][1])], pos[int(param_stem[len(param_stem)-1][2])]], axis=0)- np.mean([pos[int(param_stem[0][1])], pos[int(param_stem[0][2])]], axis=0)
+    av_stem_vector = np.mean([pos[int(param_stem[0][1])], pos[int(param_stem[0][2])]], axis=0) - np.mean([pos[int(param_stem[len(param_stem)-1][1])], pos[int(param_stem[len(param_stem)-1][2])]], axis=0)
     theta = np.arctan2(av_stem_vector[0], av_stem_vector[1])
+
     def M(axis, theta):
         return expm3(np.cross(np.eye(3), axis/norm(axis)*theta))
     axis = [0,0,1]
