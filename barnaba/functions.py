@@ -1046,63 +1046,67 @@ def dot_bracket(pairings,sequence):
          Sequence as returned by annotate function
     Returns
     -------
-    list :
-        strings with the dot-bracket annotation
+    dot_bracket: list
+        strings with the dot-bracket annotation, one per frame
+    ss: string
+        string with sequence in dbn format
 
     """
+    def get_seq(res):
+        ss = ""
+        chain_break = []
+        for ii,r in enumerate(res):
+            el = r.split("_")[0]
+            if(el in definitions.residue_dict):
+                name = definitions.residue_dict[el][-1]
+            else:
+                name = "X"
+            ss += name
+            if(ii!=len(res)-1):
+                if(res[ii+1].split("_")[2] != res[ii].split("_")[2]):
+                    ss+= "&"
+                    chain_break.append(ii)
+        ss += "\n"
+        return ss,chain_break
 
-    ll = len(sequence)
+    ss,chain_break = get_seq(sequence)
+    # loop over frames
     dot_bracket = []
     for k,pp in enumerate(pairings):
-        openings = []
-        closings = []
         
+        # loop over annotation
+        string = ["."]*len(sequence)
         for e in range(len(pp[0])):
             if(pp[1][e]=="WCc"):
                 idx1 = pp[0][e][0]
                 idx2 = pp[0][e][1]
-                if(idx1 in openings):
-                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx1])
-                    warn += " Dot-bracket annotation set to xxx \n"
-                    sys.stderr.write(warn)
-                    dot_bracket.append("".join(["x"]*ll))                            
-                    continue
-                
-                if(idx2 in closings):
-                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx2])
-                    warn += " Dot-bracket annotation set to xxx \n"
-                    sys.stderr.write(warn)
-                    dot_bracket.append("".join(["x"]*ll))
-                    continue
-                
-                openings.append(idx1)
-                closings.append(idx2)
 
-        # check pseudoknots
-        dotbr = ['.']*ll
-        levels = [-1]*ll
-        for idx1 in range(len(openings)):
-            start1 = openings[idx1]
-            end1 = closings[idx1]
-            # up one level
-            levels[start1] += 1
-            levels[end1] += 1
-        
-            for idx2 in range(len(closings)):
-                end2 = closings[idx2]
-                if(levels[end2] == levels[start1]):
-                    if(end2 > start1 and end2 < end1):
-                        levels[start1] += 1
-                        levels[end1] += 1
-                        
-        for idx1 in range(len(openings)):
-            start1 = openings[idx1]
-            end1 = closings[idx1]
-            
-            dotbr[start1] = definitions.op[levels[start1]]
-            dotbr[end1] = definitions.cl[levels[end1]]
-        dot_bracket.append("".join(dotbr))
-    return dot_bracket
+                # check that bracket is not there already. This might happen in simulations
+                if(string[idx1]!="." or string[idx2]!="." ):
+                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx1],sequence[idx2])
+                    warn += " Dot-bracket annotation set to XXX \n"
+                    sys.stderr.write(warn)
+                    dot_bracket.append("XXX")                            
+                    continue
+                # decide brackets
+                level = 0                    
+                for br in definitions.cl:
+                    if(string[idx1:idx2].count(br) != 0):
+                        level += 1
+                    else:
+                        break
+                string[idx1] = definitions.op[level]
+                string[idx2] = definitions.cl[level]
+                
+        # add chain breaks
+        new_string = ""
+        for ii,s in enumerate(string):
+            new_string += s
+            if(ii in chain_break):  new_string += "&"
+        dot_bracket.append(new_string)
+    #print(dot_bracket)
+    #exit()
+    return dot_bracket, ss
 
 
 #############################################################

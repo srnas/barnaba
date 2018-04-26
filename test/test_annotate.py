@@ -16,7 +16,7 @@ fname1 = "%s/test/data/samples.xtc" % cwd
 def test_annotate_1():
     
     stackings, pairings, res = bb.annotate(fname1,topology=fname)
-    dotbr = bb.dot_bracket(pairings,res)
+    dotbr,ss = bb.dot_bracket(pairings,res)
 
     fh = open("%s/stackings_01.test.dat" % outdir,'w')    
     stri = "# STACKING \n"
@@ -63,7 +63,7 @@ def test_annotate_2():
     
     fname = "%s/test/data/1S72.pdb" % cwd
     stackings, pairings, res = bb.annotate(fname)
-    dotbr = bb.dot_bracket(pairings,res)
+    dotbr,ss = bb.dot_bracket(pairings,res)
     fh = open("%s/stackings_02.test.dat" % outdir,'w')
     stri = "# STACKING \n"
     for e in range(len(stackings[0][0])):
