@@ -473,16 +473,16 @@ def sec_structure(args):
     i_min = n-1
     i_max = 0
 
-#    term_pair = sorted_params[np.argmax(sorted_params[:,2]-sorted_params[:,1])]
-#    print("Term_pair", term_pair)        
-#    cotranscript = False
+    term_pair = sorted_params[np.argmax(sorted_params[:,2]-sorted_params[:,1])]
+    print("Term_pair", term_pair)        
+    cotranscript = False
     param = {}
-#    for p in sorted_params:
-#        if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
-#             ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
-#            cotranscript = True
-#            break
-    cotranscript = True        
+    for p in sorted_params:
+        if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
+             ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
+            cotranscript = True
+            break
+#    cotranscript = True        
     param[0] = param_seq
     param[1] = param_rep
     steps = int(args.nsteps)
@@ -525,8 +525,8 @@ def sec_structure(args):
     F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
     max_F = abs(F).max()
     r_i = unravel_index(F.argmax(), F.shape)
-    E_thresh = 5e-4
- #   E_thresh = 1e-4
+ #   E_thresh = 5e-4
+    E_thresh = 1e-4
     output += "# E thresh: %.2e\n" % E_thresh
     print("# E thresh: %.2e" % E_thresh)
     output += "%8s%10s%10s%10s%8s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
@@ -539,18 +539,22 @@ def sec_structure(args):
  #   reduce_straight_pot = False
     print("Prep. took", datetime.datetime.now()-start_time)
     param[7] = param_rep_lr
+    print(sorted_params, len(sorted_params))
     for i in range(100000):
         print_out = False
         if (E-new_E)/E < E_thresh:
           #  print(i, (E-new_E)/E)
-            if cotranscript and i_pair < len(sorted_params):    
+          #  if cotranscript and i_pair < len(sorted_params):    
+            if cotranscript and len(sorted_params) > 0:    
                # if  h<3e-1:
-                p = sorted_params[i_pair]
+                p, ii_pair = bb.get_par(sorted_params, pos)
+               # p = sorted_params[i_pair]
                 if not (len(last_p) > 0 and 
                         sum(last_p[1:3])==sum(p[1:3]) and abs(last_p[1]-p[1])>1
                         and (E-new_E)/E > E_thresh*1e-2):
                     print_out = True
                     param[0] = np.append(param[0], [p], axis=0)
+                    sorted_params = np.delete(sorted_params, ii_pair, 0)
                   #  if p[1] >0:
                   #      p_ang = np.array([[2, p[1]-1, p[1], p[2], secon.k_ang, .5*np.pi]])
                   #      p_ang = np.append(p_ang, [[2, p[1], p[2], p[2]+1, secon.k_ang, .5*np.pi]], axis=0)
@@ -558,12 +562,14 @@ def sec_structure(args):
                     E = seff.energy(pos, param)
                     i_pair += 1
                     output += "%d Added %s\n" % (i, p)
-                    print(i, " Added ", p)
+                    print(i, " Added ", p, len(sorted_params))
                     last_p = p
                 else:     
                     E = new_E
             elif (E-new_E)/E < E_thresh*1e-2 and i>0 and i_ang < len(param_ang) and  order:
+                param[6] = param_parall
                 print_out = True
+                __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr*5)
                 param[2] = np.append(param[2], param_ang[i_ang:i_ang+2], axis=0)
                 if i_ang == 0: param[2] = np.append(param[2], param_bulge, axis=0)
                 E = seff.energy(pos, param)
@@ -574,7 +580,6 @@ def sec_structure(args):
                     
             elif (E-new_E)/E < E_thresh*1e-3 and  i>0 and not order and reduce_straight_pot:
                 print_out = True
-                __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr*5)
                 param[7] = param_rep_lr
                 p_tmp = param_angle_180
                 p_tmp[:,4] = secon.k_angle_straight_end

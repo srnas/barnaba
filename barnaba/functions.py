@@ -1496,7 +1496,8 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                         pur -= 1
        #             print("90", pur, p2, p1)
                     param_ang = np.append(param_ang, [[2, pur, p2, p1, n_stem * secon.k_ang, secon.angle]], axis=0)
-                    
+                    param_parall = np.append(param_parall, [[6, p1, p2, pul, pur, secon.k_parallel, 0]], axis=0)
+                  #  print("parallel", p1, p2, pul, pur)
         for pi in param_wc:
             if pi[1:3] in stem or pi[1:3][::-1] in stem:
                 param_ds.append(pi)
@@ -1582,4 +1583,12 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
     param_rep_lr = np.append(param_rep_lr, np.column_stack((_type, i1, i2, _k, _d)), axis=0)
     print("done")
 
-    return param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180, param_parall    
+    return param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180, param_parall   
+
+def get_par(sorted_params, pos):
+    i1 = sorted_params[:,1].astype(int)
+    i2 = sorted_params[:,2].astype(int)
+    d = np.linalg.norm(pos[i1]-pos[i2], axis=1)
+
+    ii = np.argmin(d)
+    return sorted_params[ii], ii

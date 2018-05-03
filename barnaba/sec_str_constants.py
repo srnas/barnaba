@@ -51,5 +51,5 @@ k_rep2 = 5000
 k_rep_lr = 5e4 
 
 k_vertical = 0
-k_parallel = 0
+k_parallel = 50000000
 
