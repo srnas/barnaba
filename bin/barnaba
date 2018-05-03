@@ -104,8 +104,6 @@ def parse():
 #    parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
     parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket)", nargs="+",default=None,required=True)
     parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
-#    parser_11.add_argument("--first_id", dest="first_id", help="First residue ID in sequence (int)", default=1)
-#    parser_11.add_argument("--missing", dest="missing", help="Missing residue IDs in sequence", default=None, required=False)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
 #    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
     parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
@@ -505,7 +503,7 @@ def sec_structure(args):
        # start[i][0] = length * 1./np.pi * np.sin(i*angle*.5 + .5*angle) + dimensions * 0.5
        # start[i][1] = length * 1./np.pi * np.cos(i*angle*.5 + .5*angle) + dimensions * 0.5
     pos = start
-    h = .7
+    h = secon.h
     print_snapshots = min([steps, int(args.draw_interm)])
     print_energy = 20    
     print_energy = min([steps, print_energy])
@@ -553,6 +551,10 @@ def sec_structure(args):
                         and (E-new_E)/E > E_thresh*1e-2):
                     print_out = True
                     param[0] = np.append(param[0], [p], axis=0)
+                  #  if p[1] >0:
+                  #      p_ang = np.array([[2, p[1]-1, p[1], p[2], secon.k_ang, .5*np.pi]])
+                  #      p_ang = np.append(p_ang, [[2, p[1], p[2], p[2]+1, secon.k_ang, .5*np.pi]], axis=0)
+                  #      param[2] = np.append(param[2], p_ang, axis=0)    
                     E = seff.energy(pos, param)
                     i_pair += 1
                     output += "%d Added %s\n" % (i, p)
@@ -572,6 +574,7 @@ def sec_structure(args):
                     
             elif (E-new_E)/E < E_thresh*1e-3 and  i>0 and not order and reduce_straight_pot:
                 print_out = True
+                __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr*5)
                 param[7] = param_rep_lr
                 p_tmp = param_angle_180
                 p_tmp[:,4] = secon.k_angle_straight_end
@@ -631,8 +634,8 @@ def sec_structure(args):
             break
         pos = new_pos-np.full((len(pos), 2), (np.mean(pos, axis=0)-[dimensions*.5, dimensions*.5]))
         h *= 1.2
-        if h > .7:
-            h = .7
+        if h > secon.h:
+            h = secon.h
             
     E = seff.energy(pos, param, False) 
   #  F = seff.force(pos, param, write_force)
@@ -645,7 +648,7 @@ def sec_structure(args):
     from scipy.linalg import expm3, norm
 
     av_stem_vector = np.mean([pos[int(param_stem[0][1])], pos[int(param_stem[0][2])]], axis=0) - np.mean([pos[int(param_stem[len(param_stem)-1][1])], pos[int(param_stem[len(param_stem)-1][2])]], axis=0)
-    theta = np.arctan2(av_stem_vector[0], av_stem_vector[1])
+    theta = np.arctan2(-av_stem_vector[0], -av_stem_vector[1])
 
     def M(axis, theta):
         return expm3(np.cross(np.eye(3), axis/norm(axis)*theta))
@@ -654,6 +657,11 @@ def sec_structure(args):
     trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
     pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
     pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
+    if pos[0][0] > pos[len(sequence)-1][0]:
+        m0 = M(axis, np.pi)
+        trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
+        pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
+        pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
     output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
     if len(chains) > 1:
         fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')

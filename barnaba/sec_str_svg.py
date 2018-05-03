@@ -98,7 +98,8 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
             else:    
                 background = "#ffffff"
         if output_ids:
-            output_svg += draw_res(p, sequence[i][1], background)
+           # output_svg += draw_res(p, sequence[i][1], background)
+            output_svg += draw_res(p, i, background)
         else:    
             output_svg += draw_res(p, sequence[i][0], background)    
 

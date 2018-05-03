@@ -83,7 +83,6 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
     n = _shape[0]
     F = np.zeros(_shape)
     for ind, par in param.items():
-   #     ts = datetime.datetime.now()
         if ind == 0:
             i1, i2 = par[:,1].astype(int), par[:,2].astype(int)
             p1, p2 = pos[i1], pos[i2]
@@ -137,15 +136,17 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             F += np.sum(f, axis=1)
             F -= np.sum(f, axis=0)
         elif ind == 2:
+        #    print(par)
             i1, i2, i3 = par[:,1].astype(int), par[:,2].astype(int), par[:,3].astype(int)
             ii = np.array([i1, i2, i3])
             p1, p2, p3 = pos[i1], pos[i2], pos[i3]
             k, a0 = par[:,4], par[:,5]
             n_p12, n_p23 = norm(p1-p2, axis=1), norm(p3-p2, axis=1)
             arg = np.multiply(p2-p1, p3-p2).sum(1)/n_p12/n_p23
-            arg[np.where(arg >= 1.)] = 1.-1e-6 
-            arg[np.where(arg <= -1.)] = -1.+1e-6 
+            arg[np.where(arg >= 1.)] = 1.-1e-7 
+            arg[np.where(arg <= -1.)] = -1.+1e-7 
             angle = np.arccos(arg)
+        #    print(angle)
             _f = - k * (angle - a0) * (-1./np.sqrt(1.-(arg)**2))
             for comp in range(2):
                 f1 = _f * ( (p2[:,comp]-p3[:,comp])/n_p12/n_p23 + (p2[:,comp]-p1[:,comp])*arg/n_p12**2 )

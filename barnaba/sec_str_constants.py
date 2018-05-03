@@ -31,7 +31,7 @@ angle = np.pi * .5
 k_ang = 500000 
 
 #k_angle_straight = 600000 
-k_angle_straight = 900000 
+k_angle_straight = 1000000 
 #k_angle_straight_end = 700000 
 k_angle_straight_end = 20000 
 #k_angle_straight_end = 0000 
@@ -39,24 +39,17 @@ k_angle_bulge = 20000
 #k_angle_bulge_rep = 300000 
 k_angle_bulge_rep = 100000 
 #k_angle_bulge = 200000 
-k_parallel = 50000000
-
-k_vertical = 1000000 
 
 
+h = .7
 
 #d_rep2 = d_seq * .8
 d_rep2 = d_seq 
 #d_rep2 = d_seq * .5
 #k_rep2 = 5000  
 k_rep2 = 5000  
-k_rep_lr = 1e5  
+k_rep_lr = 5e4 
 
-k_rep1 = k_rep2*.5
-k_rep1 = 0
-#k_angle_180 = 0
-
-d_pull = 10*d_seq
-k_pull = 0 
-
+k_vertical = 0
+k_parallel = 0
 

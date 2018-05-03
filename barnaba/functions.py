@@ -1496,12 +1496,6 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                         pur -= 1
        #             print("90", pur, p2, p1)
                     param_ang = np.append(param_ang, [[2, pur, p2, p1, n_stem * secon.k_ang, secon.angle]], axis=0)
-       #         if p1 < limits[1][0] and p1 > limits[0][0]:
-       #             param_ang = np.append(param_ang, [[2, pdl, p1, pul, n_stem * secon.k_angle_straight, 0]], axis=0)
-       #             param_ang = np.append(param_ang, [[2, pdr, p2, pur, n_stem * secon.k_angle_straight, 0]], axis=0)
-                if p1 < limits[1][0]:
-                    param_parall = np.append(param_parall, [[6, p1, p2, pul, pur, secon.k_parallel, 0]], axis=0)
-        #            print("parallel", p1, p2, pul, pur)
                     
         for pi in param_wc:
             if pi[1:3] in stem or pi[1:3][::-1] in stem:
@@ -1570,7 +1564,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
 #           #             param_bulge = np.append(param_bulge, [[2, i, i+1, int(i2), secon.k_angle_bulge, 0]], axis=0)
 #           #             param_bulge_rep = np.append(param_bulge_rep, [[5, i, i+1, int(i2), secon.k_angle_bulge_rep, 0]], axis=0)
 #                if si ==0: param_angle_180 = np.append(param_angle_180, [[2, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
-    for i in range(0, n-1):
+    for i in range(1, n-1):
         param_angle_180 = np.append(param_angle_180, [[2, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
     
     param_rep = np.empty((0, 5))
