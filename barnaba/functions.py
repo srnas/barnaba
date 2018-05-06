@@ -1222,15 +1222,25 @@ def parse_dotbracket(file, weights):
     traj = False
     list_base_pairs = []
     sequence = []
+    mult_chain = False
     for line in f_dotbracket:
         if line.startswith("#") and line.split()[1] == "sequence":
             sequence = np.array([r.split("_") for r in line.split()[2].split("-")])
+            if len(np.unique(sequence[:,2])) > 1:
+                print("Found multiple chains, drawing first chain")
+          #      sequence = sequence[np.where(sequence[:,2]==np.unique(sequence[:,2])[0])]
+          #      print(sequence)
+          #      mult_chain = True
         if not line.startswith("#"):
             l = line.split()
             if "pdb" in l[0].lower():
                 dotbr = l[1]
                 if len(dotbr) != len(sequence):
-                    sys.exit("Dot-bracket length does not match sequence length")    
+                    print(mult_chain)
+                    if not mult_chain:
+                        sys.exit("Dot-bracket length does not match sequence length")
+                    else:
+                        dotbr = dotbr[:len(sequence)]
                 base_pairs = parse_dotbr(dotbr)
                 for bp in base_pairs:
                     ann_list[bp[0], bp[1], "WCc"] = 1.
@@ -1245,7 +1255,10 @@ def parse_dotbracket(file, weights):
                     traj = True
                     dotbr = l[1]
                     if len(dotbr) != len(sequence):
-                        sys.exit("Dot-bracket length does not match sequence length")    
+                        if not mult_chain:
+                            sys.exit("Dot-bracket length does not match sequence length")    
+                        else:
+                            dotbr = dotbr[:len(sequence)]
                     n_frames += 1
                     base_pairs = parse_dotbr(dotbr)
                     for bp in base_pairs:
@@ -1450,10 +1463,18 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
     param_ds = []
     param_ang = np.empty((0, 6))
     param_parall = np.empty((0, 7))
-    for k, stem in enumerate(pairs_stems):
+    if len(lonely_pairs) > 0:
+        all_stems = pairs_stems
+        for p in lonely_pairs:
+            all_stems.append(np.array([p]))
+    else:
+        all_stems = pairs_stems
+   # for k, stem in enumerate(pairs_stems):
+    for k, stem in enumerate(all_stems):
         stem_limits = np.array([[stem[:,0].min(), stem[:,1].max()], [stem[:,0].max(), stem[:,1].min()]]).astype(int)
         same_stem = stem.copy()
-        for k2, s in enumerate(pairs_stems):
+        for k2, s in enumerate(all_stems):
+      #  for k2, s in enumerate(pairs_stems):
             if k!=k2:
                 if sum(s[0]) == sum(stem[0]):
                     same_stem = np.append(same_stem, s, axis=0)

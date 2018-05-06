@@ -232,7 +232,7 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
                         (p2[:,comp]-p1[:,comp])*arg/n_p12**2 ) 
             #    f3 = _f * ( (-(p1[:,comp]-p2[:,comp])+(p3[:,comp]-p4[:,comp]))/n_p12/n_p34 + (p4[:,comp]-p3[:,comp])*arg/n_p34**2 -
             #            (p2[:,comp]-p1[:,comp])*arg/n_p12**2 ) 
-                f3 = 0
+                f3 = -f1
                 f4 = _f * ( (p2[:,comp]-p1[:,comp])/n_p12/n_p34 - (p4[:,comp]-p3[:,comp])*arg/n_p34**2 )
                 ff = [f1, f2, f3, f4]
                 for j in range(4):
