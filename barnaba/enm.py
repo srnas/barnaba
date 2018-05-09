@@ -58,6 +58,7 @@ class Enm:
 
         # define atoms
         native_pdb=cur_pdb.atom_slice(idxs)
+        
         coords=native_pdb.xyz[0]
         self.top=native_pdb.topology
         
@@ -72,6 +73,7 @@ class Enm:
         # find where distance is shorter than cutoff
         c_idx = (dmat<cutoff).nonzero()[0]
         m_idx = np.array(np.triu_indices(ll,1)).T[c_idx]
+
         # k = gamma/d^2
         k_elast=1./dmat[c_idx]**2
         
@@ -157,15 +159,23 @@ class Enm:
         """ Returns eigenvectors of the interaction matrix of the ENM"""
         return self.e_vec
 
-    def get_MSF(self):
+    def get_MSF(self,pdb_file=None):
         """ Return mean squared fluctuations of each bead"""
         e_vec=self.get_evec()
         e_val=self.get_eval()
         cacca=np.sum(e_vec.reshape(self.n_beads,3,e_vec.shape[1])**2,axis=1)
         msf=np.sum(cacca[:,self.n_null_modes:]*(1/e_val[self.n_null_modes:]),axis=1)
+
+        if(pdb_file!=None):
+            pdb=md.Trajectory(self.coords,self.top)
+            pdb.save_pdb(pdb_file,bfactors=msf)
         return msf
     
-    
+    def get_beads(self):
+        #rr = ["%s_%s_%d_%d" % (at.name,at.residue.resn,at.residue,at.chainid) for at in self.top.atoms]
+        rr = ["%s_%s_%d_%s" % (at.name,at.residue.name,at.residue.resSeq,at.residue.segment_id) for at in self.top.atoms]
+        return rr
+
     
     def c2_fluctuations(self):
         """ Computes the C2-C2 fluctuations of an RNA ENM.
