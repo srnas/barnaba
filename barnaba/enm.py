@@ -82,9 +82,9 @@ class Enm:
         if self.sparse:
             # construct matrix
             ele_up=np.zeros(len(c_idx)*9)
-            idx_up=np.zeros((2,len(c_idx)*9))
+            idx_up=np.zeros((2,len(c_idx)*9),dtype=np.int_)
             ele_diag=np.zeros(ll*9)
-            idx_diag=np.zeros((2,ll*9))
+            idx_diag=np.zeros((2,ll*9),dtype=np.int_)
             kkk=0
             for i in range(ll):
                 for mu in range(3):
@@ -105,9 +105,10 @@ class Enm:
                         # filling diagonal elements
                         ele_diag[9*i+3*mu+nu]+=temp
                         ele_diag[9*j+3*mu+nu]+=temp
-            idx_down=np.array((idx_up[1],idx_up[0]))
+            idx_down=np.array((idx_up[1],idx_up[0]),dtype=np.int_)
             idx_tot=np.concatenate([idx_up,idx_down,idx_diag],axis=1)
             ele_tot=np.concatenate([ele_up,ele_up,ele_diag])
+            
             mat=sp.csc_matrix((ele_tot,idx_tot))
             self.mat=mat # store the interaction matrix for future C2-C2 calculations
             # diagonalise
