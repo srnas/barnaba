@@ -306,6 +306,7 @@ def ds_motif(args):
 
 def annotate(args):
 
+
     stri_p = "# %s \n" % (" ".join(sys.argv[:]))
     stri_p += "#%-10s %-10s %4s \n" % ("RES1","RES2","ANNO")
     
@@ -313,10 +314,11 @@ def annotate(args):
     stri_s += "#%-10s %-10s %4s \n" % ("RES1","RES2","ANNO")
 
     stri_dot = "# %s \n" % (" ".join(sys.argv[:]))
-
+    
     if(args.top==None):
         for i in range(len(args.pdbs)):
             st, pair, res = bb.annotate(args.pdbs[i])
+            stri_p += "# SEQ " + (" ".join([f for f in res]) + "\n")
             stri_p += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
             stri_p += "".join([ "%-10s %-10s %4s \n" % (res[pair[0][0][e][0]],res[pair[0][0][e][1]],pair[0][1][e]) for e in range(len(pair[0][0]))])
             
@@ -324,18 +326,19 @@ def annotate(args):
             stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[0][0][e][0]],res[st[0][0][e][1]],st[0][1][e]) for e in range(len(st[0][0]))])
 
             if(args.dotbr):
-                dotbr = bb.dot_bracket(pair,res)
+                dotbr,ss = bb.dot_bracket(pair,res)
+                stri_dot += "# SEQ %s" % ss
                 stri_dot += "%-20s %s\n" %(args.pdbs[i].split("/")[-1],dotbr[0])
 
             
     else:
         st,pair,res = bb.annotate(args.trj,topology=args.top)
-        stri_s += "# sequence %s\n" % "-".join(res)    
-        stri_p += "# sequence %s\n" % "-".join(res)    
-        stri_dot += "# sequence %s\n" % "-".join(res)    
+        stri_p += "# SEQ " + (" ".join([f for f in res]) + "\n")
+
         if(args.dotbr):
-            dotbr = bb.dot_bracket(pair,res)
-            stri_dot += "".join(["%-10d %s\n" %(k,dotbr[k]) for k in range(len(pair))])
+            dotbr,ss = bb.dot_bracket(pair,res)
+            stri_dot += "# SEQ %s" % ss
+            stri_dot += " ".join(["%-10d %s\n" %(k,dotbr[k]) for k in range(len(pair))])
             
         for k in range(len(st)):
             stri_p += "# Frame %d \n" % k

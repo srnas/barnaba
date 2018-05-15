@@ -4,6 +4,8 @@
     :target: https://badge.fury.io/py/barnaba
 .. image:: https://repology.org/badge/version-for-repo/macports/python:barnaba.svg
     :target: https://repology.org/metapackage/python:barnaba
+.. image:: https://codecov.io/gh/srnas/barnaba/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/srnas/barnaba
 
 
 Introduction
