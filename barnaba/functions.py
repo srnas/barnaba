@@ -1435,8 +1435,10 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 param_stack.append([0, i, j, secon.k_stack*value, secon.d_stack])
             elif abs(i-j) > 2:
                 param_stack.append([0, i, j, secon.k_stack*value, secon.d_short])
-
-    pairs_stems, diagonal_pairs, lonely_pairs = stems(param_wc, param_stack, param_bp)
+    print(param_wc)
+    print(param_bp)
+    print(param_stack)
+    pairs_stems, diagonal_pairs, lonely_pairs = stems(param_wc, param_bp, param_stack)
     param_wc_ds = []
     
     # Longest stem vertical
@@ -1461,7 +1463,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 pi[4] = secon.d_long
 
     param_ds = []
-    param_ang = np.empty((0, 6))
+    param_ang = np.empty((0, 7))
     param_parall = np.empty((0, 7))
     if len(lonely_pairs) > 0:
         all_stems = pairs_stems
@@ -1471,7 +1473,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
         all_stems = pairs_stems
    # for k, stem in enumerate(pairs_stems):
     for k, stem in enumerate(all_stems):
-        stem_limits = np.array([[stem[:,0].min(), stem[:,1].max()], [stem[:,0].max(), stem[:,1].min()]]).astype(int)
+        stem_limits = np.array([stem[:,0].min(), stem[:,1].max(), stem[:,0].max(), stem[:,1].min()]).astype(int)
         same_stem = stem.copy()
         for k2, s in enumerate(all_stems):
       #  for k2, s in enumerate(pairs_stems):
@@ -1479,11 +1481,13 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
                 if sum(s[0]) == sum(stem[0]):
                     same_stem = np.append(same_stem, s, axis=0)
                 elif abs(sum(s[0]) - sum(stem[0])) == 1:    
-                    s_limits = np.array([[s[:,0].min(), s[:,1].max()], [s[:,0].max(), s[:,1].min()]]).astype(int)
-                    if (abs(stem_limits[0][0]-s_limits[1][0]) == 1 or abs(stem_limits[0][1]-s_limits[1][1]) == 1 or
-                        abs(s_limits[0][0]-stem_limits[1][0]) == 1 or abs(s_limits[0][1]-stem_limits[1][1]) == 1):
-                        same_stem = np.append(same_stem, s, axis=0)
-        limits = np.array([[same_stem[:,0].min(), same_stem[:,1].max()], [same_stem[:,0].max(), same_stem[:,1].min()]]).astype(int)
+                    s_limits = np.array([s[:,0].min(), s[:,1].max(), s[:,0].max(), s[:,1].min()]).astype(int)
+                     
+                    if len(np.unique(np.append(stem_limits, s_limits))) == len(np.unique(s_limits)) + len(np.unique(stem_limits)):
+                        if (abs(stem_limits[0]-s_limits[2]) == 1 or abs(stem_limits[1]-s_limits[3]) == 1 or
+                            abs(s_limits[0]-stem_limits[2]) == 1 or abs(s_limits[1]-stem_limits[3]) == 1):
+                            same_stem = np.append(same_stem, s, axis=0)
+        limits = np.array([same_stem[:,0].min(), same_stem[:,1].max(), same_stem[:,0].max(), same_stem[:,1].min()]).astype(int)
         n_stem = len(same_stem)
         param_ds = []
         t_stems = [tuple(s) for s in stem]
@@ -1495,28 +1499,29 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
             p1 = t_pair[0]       
             p2 = t_pair[1]       
             if abs(p1-p2) > 2:
-                if p1 > limits[0][0]:
-                    pdl = p1-1
-                    while not pdl in same_stem:
-                        pdl -= 1
-    #                print("90", pdl, p1, p2)
-                    param_ang = np.append(param_ang, [[2, pdl, p1, p2, n_stem * secon.k_ang, secon.angle]], axis=0)
-                    pdr = p2+1
-                    while not pdr in same_stem:
-                        pdr += 1
-     #               print("90", p1, p2, pdr)
-                    param_ang = np.append(param_ang, [[2, p1, p2, pdr, n_stem * secon.k_ang, secon.angle]], axis=0)
-                if p1 < limits[1][0]:
+      #          if p1 > limits[0]:
+      #              pdl = p1-1
+      #              while not pdl in same_stem:
+      #                  pdl -= 1
+      #            #  print("90 a", pdl, p1, p2)
+      #              param_ang = np.append(param_ang, [[2, pdl, p1, p2, n_stem * secon.k_ang, secon.angle]], axis=0)
+      #              pdr = p2+1
+      #              while not pdr in same_stem:
+      #                  pdr += 1
+      #            #  print("90 b", p1, p2, pdr)
+      #              param_ang = np.append(param_ang, [[2, p1, p2, pdr, n_stem * secon.k_ang, secon.angle]], axis=0)
+                if p1 < limits[2]:
                     pul = p1+1
                     while not pul in same_stem:
                         pul += 1
-      #              print("90", p2, p1, pul)
-                    param_ang = np.append(param_ang, [[2, p2, p1, pul, n_stem * secon.k_ang, secon.angle]], axis=0)
+                  #  print("90 c", p2, p1, pul)
+      #              param_ang = np.append(param_ang, [[2, p2, p1, pul, n_stem * secon.k_ang, secon.angle]], axis=0)
                     pur = p2-1
                     while not pur in same_stem:
                         pur -= 1
-       #             print("90", pur, p2, p1)
-                    param_ang = np.append(param_ang, [[2, pur, p2, p1, n_stem * secon.k_ang, secon.angle]], axis=0)
+                  #  print("90 d", pur, p2, p1)
+       #             param_ang = np.append(param_ang, [[2, pur, p2, p1, n_stem * secon.k_ang, secon.angle]], axis=0)
+                    param_ang = np.append(param_ang, [[2, p1, p2, pul, pur, n_stem * secon.k_ang, secon.angle]], axis=0)
                     param_parall = np.append(param_parall, [[6, p1, p2, pul, pur, secon.k_parallel, 0]], axis=0)
                   #  print("parallel", p1, p2, pul, pur)
         for pi in param_wc:
@@ -1587,7 +1592,7 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
 #           #             param_bulge_rep = np.append(param_bulge_rep, [[5, i, i+1, int(i2), secon.k_angle_bulge_rep, 0]], axis=0)
 #                if si ==0: param_angle_180 = np.append(param_angle_180, [[2, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
     for i in range(1, n-1):
-        param_angle_180 = np.append(param_angle_180, [[2, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
+        param_angle_180 = np.append(param_angle_180, [[8, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
     
     param_rep = np.empty((0, 5))
     param_rep_lr = np.empty((0, 5))
