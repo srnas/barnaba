@@ -332,6 +332,9 @@ def annotate(args):
     else:
         st,pair,res = bb.annotate(args.trj,topology=args.top)
         stri_p += "# SEQ " + (" ".join([f for f in res]) + "\n")
+        stri_s += "# sequence %s\n" % "-".join(res)
+        stri_p += "# sequence %s\n" % "-".join(res)
+        stri_dot += "# sequence %s\n" % "-".join(res)
 
         if(args.dotbr):
             dotbr,ss = bb.dot_bracket(pair,res)
