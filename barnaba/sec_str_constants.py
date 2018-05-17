@@ -29,12 +29,13 @@ d_long = np.sqrt(d_short**2+d_seq**2)
 #	k_stack = 0
 
 angle = np.pi * .5
-k_ang =  10000000
+k_ang =  1000
+k_ang_end =  500000
 
 #k_angle_straight = 600000 
-k_angle_straight = 1000000 
+k_angle_straight = 1500000 
 #k_angle_straight_end = 700000 
-k_angle_straight_end = 20000 
+k_angle_straight_end =  10000 
 
 k_angle_bulge = 20000 
 #k_angle_bulge_rep = 300000 
@@ -42,7 +43,7 @@ k_angle_bulge_rep = 100000
 #k_angle_bulge = 200000 
 
 
-h = .7
+h = 1.
 
 #d_rep2 = d_seq * .8
 d_rep2 = d_seq 

@@ -33,14 +33,18 @@ def energy(pos, param, write_energy=False):
             sets = np.array([[0, 1, 3], [1, 3, 2],[ 3, 2, 0],[2, 0, 1]])
             v1 = pp[sets[:,1]]-pp[sets[:,0]]
             v2 = pp[sets[:,2]]-pp[sets[:,1]]
-            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1])) % (2*np.pi)
+            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1]))
             angles[np.where(angles>np.pi)] -= 2*np.pi
-            if np.sum(angles) == 0:
-                n = len(np.where(angles<0))
-                if n == 1:
-                    angles[np.where(angles<0)] += 2*np.pi
-                else:
-                    angles[np.where(angles>0)] -= 2*np.pi
+            for i in range(len(par)):
+                nn = len(np.where(angles[:,i]<0)[0])
+                if nn == 1:
+                    angles[np.where(angles[:,i]<0),i] += 2*np.pi
+                elif nn>1:
+                    angles[np.where(angles[:,i]>0),i] -= 2*np.pi
+
+            angles = np.abs(angles)
+            
+            angles[np.where(angles>np.pi)] -= 2*np.pi
             E_i += 0.5 * np.sum(k * (angles - a0)**2)
         elif ind == 8:
             i1, i2, i3 = par[:,1].astype(int), par[:,2].astype(int), par[:,3].astype(int)
@@ -140,14 +144,14 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             sets = np.array([[0, 1, 3], [1, 3, 2],[ 3, 2, 0],[2, 0, 1]])
             v1 = pp[sets[:,1]]-pp[sets[:,0]]
             v2 = pp[sets[:,2]]-pp[sets[:,1]]
-            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1])) % (2*np.pi)
+            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1]))
             angles[np.where(angles>np.pi)] -= 2*np.pi
-            if np.sum(angles) == 0:
-                n = len(np.where(angles<0))
-                if n == 1:
-                    angles[np.where(angles<0)] += 2*np.pi
-                else:
-                    angles[np.where(angles>0)] -= 2*np.pi
+            for i in range(len(par)):
+                nn = len(np.where(angles[:,i]<0)[0])
+                if nn == 1:
+                    angles[np.where(angles[:,i]<0),i] += 2*np.pi
+                elif nn>1:
+                    angles[np.where(angles[:,i]>0),i] -= 2*np.pi
 
             angles = np.abs(angles)
             n1 = np.linalg.norm(v1, axis=2)
@@ -155,7 +159,7 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             arg = np.cos(angles)
             arg[np.where(arg >= 1.)] = 1.-1e-7 
             arg[np.where(arg <= -1.)] = -1.+1e-7 
-            _f = - k * (angles - a0) * (-1./np.sqrt(1.-(arg)**2))
+            _f = - k *  (angles - a0) * (-1./np.sqrt(1.-(arg)**2))
             _f[np.where(np.abs(angles-a0)<1e-2)] = 0
             for comp in range(2):
                 f1 = _f * ( (-v2[:,:,comp])/n1/n2 + (v1[:,:,comp])*arg/n1**2 )
@@ -164,13 +168,9 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
                 ff = np.array([f1, f2, f3])
                 for i in range(4):
                     for j in range(3):
+                   #     if 0 in ii[sets[i][j]]:
+                   #         print("comp", comp, "angle ", i, "pos ", j, ii[sets[i][j]], ff[j][i])
                         F[ii[sets[i][j]],comp] += ff[j][i]
-        #    for j in range(3):
-        #        if np.unique(ii[j]).size < ii[j].size:
-        #            for ik, _i in np.ndenumerate(ii[j]):
-        #                F[_i] += ff[j][ik]
-        #        else:
-        #                F[ii[j]] += ff[j]
         elif ind == 8:
             i1, i2, i3 = par[:,1].astype(int), par[:,2].astype(int), par[:,3].astype(int)
             ii = np.array([i1, i2, i3])
@@ -292,6 +292,7 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             F -= np.sum(f, axis=0)
         else:
             print("Don't have potential %d" % ind)
+ #       print("%s %s %s" % (ind, F[0,0], F[0,1]))    
 #        print(ind, datetime.datetime.now()-ts)
     return F
 
