@@ -368,7 +368,8 @@ def annotate(args):
 def sec_structure(args):
     import datetime
     start_time = datetime.datetime.now()
-    from numpy import unravel_index
+    import numpy as np
+  #  from numpy import unravel_index
     import barnaba.sec_str_svg as sesvg
     import barnaba.sec_str_ff as seff
     import barnaba.sec_str_constants as secon
@@ -389,6 +390,8 @@ def sec_structure(args):
                 weights.append(float(line.split()[-1]))
         print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
     n_weights = len(weights)
+    
+
 
     a_ann_list = {}
     a_pairs = []
@@ -407,16 +410,24 @@ def sec_structure(args):
 
     if 'db' in f_inp :
         if 'pa' in f_inp or 'st' in f_inp:
-            print("Using dotbracket for structure minimization, but showing all annotations.")
+            if not args.template:
+                print("Using dotbracket for structure minimization, but showing all annotations.")
+            else:
+                print("Using template structure with barnaba showing annotations.")
             mode = 2
         else:
-            print("Using dotbracket for structure minimization.")
+            if not args.template:
+                print("Using dotbracket for structure minimization.")
+            else:
+                print("Using template structure with barnaba dotbracket.")
             mode = 1
     elif 'pa' in f_inp or 'st' in f_inp:
-            print("Using annotation file(s) for structure minimization.")
+            if not args.template:
+                print("Using annotation file(s) for structure minimization.")
+            else:
+                print("Using template structure with barnaba showing annotations.")
             mode = 0
 
-    import numpy as np
     for k, f in f_inp.items():
         if k == 'db':
             db_sequence, db_ann_list, db_pairs, db_n_frames = bb.parse_dotbracket(threshold, f, weights)
@@ -456,6 +467,43 @@ def sec_structure(args):
         sequence = i_sequence
     if len(ann_list) == 0:
         sys.exit("No annotations found.")
+
+    if args.template:
+        import re
+        with open(args.template) as f:
+            content = f.readlines()
+            f.close()
+        re_position_varna = re.compile("<circle cx=\"([0-9\.]+)\" cy=\"([0-9\.]+)\" r=\"5.0\" stroke=\"none\" stroke-width=\"1.0\" fill=\"rgb\(.*\)\"/>")
+        re_position_rnastructure = re.compile(".*<circle style=\"stroke-width:1\" cx=\"([0-9\.]+)\" cy=\"([0-9\.]+)\" .*/>")
+        ri = 0
+        pos = np.zeros((len(sequence), 2))
+        for re_position in [re_position_varna, re_position_rnastructure]:
+            for line in content:
+                _pos = re_position.match(line)
+                if _pos:
+                    x = float(_pos.group(1))
+                    y = float(_pos.group(2))
+                    pos[ri] = [x, y]
+                    ri += 1        
+            if ri == 0:
+                continue
+            if ri != len(sequence):
+                print(ri, len(sequence))
+                sys.exit("Length of annotation sequence is different of number of residues in template.")
+            else:
+                break
+        scale = secon.d_seq/np.mean(np.linalg.norm(pos[1:]-pos[:-1], axis=1))
+        pos *= scale
+        dimensions = np.linalg.norm([pos[:,0].max()-pos[:,0].min(), pos[:,1].max()-pos[:,1].min()])
+        if mode == 2:
+            pairs = a_pairs
+            ann_list = a_ann_list
+        output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
+        fh1 = open(args.name + "_from_template.svg",'w')
+        fh1.write(output_svg)
+        fh1.close()
+        sys.exit()
+        
     n = len(sequence)
     __i1, __i2 = np.triu_indices(n, k=1)
     __k_rep = np.full((int(n*(n-1)/2), 2), secon.k_rep2)
