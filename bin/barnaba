@@ -381,14 +381,14 @@ def sec_structure(args):
     else:
         order = True
     threshold = float(args.thresh)
-    if args.f_weights:
-        with open(args.f_weights) as f:
-            content = f.readlines()
-            f.close()
-        for line in content:
-            if not line.startswith("#"):
-                weights.append(float(line.split()[-1]))
-        print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
+#    if args.f_weights:
+#        with open(args.f_weights) as f:
+#            content = f.readlines()
+#            f.close()
+#        for line in content:
+#            if not line.startswith("#"):
+#                weights.append(float(line.split()[-1]))
+#        print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
     n_weights = len(weights)
     
 
@@ -630,6 +630,10 @@ def sec_structure(args):
                 i_ang = 0      
                 E = seff.energy(pos, param)
                 h = secon.h
+                if len(sorted_params) == 0 and steps-i < 500:
+                    steps = i+500
+                    output += "Setting new step limit %d\n" % steps
+                    print("Setting new step limit %d" % steps)
             elif order:
                 print_out = True
                 if i_ang == 0:
@@ -689,6 +693,9 @@ def sec_structure(args):
             if order or reduce_straight_pot:
                 print("Ordering potential has not yet been added, ignoring step limit")
                 output += "Ordering potential has not yet been added, ignoring step limit\n"
+            elif (cotranscript and len(sorted_params) > 0):    
+                print("Not all interactions have been added, ignoring step limit")
+                output += "Not all interactions have been added, ignoring step limit\n"
             else:    
                 break
         F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
@@ -702,7 +709,7 @@ def sec_structure(args):
             new_E = seff.energy(new_pos, param)
         h *= 1.2
 
-        if h < 1e-4 and not order and not reduce_straight_pot: 
+        if h < 1e-4 and not order and not reduce_straight_pot and not (cotranscript and len(sorted_params) > 0): 
             output += "Converged at %d steps.\n" % i
             print("Converged at %d steps.\n" % i)
             break
