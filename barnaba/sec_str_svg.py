@@ -20,14 +20,11 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
     output_foreground = ""
     output_background = ""
     for i in range(n-1):
-        search = [i, i+1]
-        try:
-            pairs.index(search)
-        except:
+        search = (i, i+1)
+        if len(np.where((pairs == search).all(axis=1))[0]) == 0:
             xy1 = pos[i]
             xy2 = pos[i+1]
             output_svg += draw_dummy(xy1, xy2)
-    
     for i, pair in enumerate(pairs):
         n = sum([1 for key, value in ann_list.items() if pair[0] in key and pair[1] in key and value >= threshold])
         if n == 0:

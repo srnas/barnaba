@@ -1218,7 +1218,6 @@ def parse_dotbracket(threshold, file, weights):
         f_dotbracket = f.readlines()
         f.close()
     pdbs = []
-    ann_lists = []
     ann_list = {}
     res_bp = []
     n_frames = 0
@@ -1288,9 +1287,8 @@ def parse_dotbracket(threshold, file, weights):
                 ann_list[ann] /= n_frames
             else:
                 ann_list[ann] /= sum(weights)
-        ann_lists.append(ann_list)
     chains = [0]
-    return sequence, chains, ann_lists, list_base_pairs, n_frames    
+    return sequence, ann_list, list_base_pairs, n_frames    
 
 def parse_annotations(threshold, file, weights):
     import barnaba.sec_str_constants as secon
@@ -1352,19 +1350,15 @@ def parse_annotations(threshold, file, weights):
                 else:    
                     ann_list[i, j, ann_ij] += weights[n_frames-1]
         
-    ann_lists.append(ann_list)
     pairs = []
-    for c, ann_list in enumerate(ann_lists):
-        p = []
-        for ann, value in ann_list.items():
-            if len(weights) == 0:
-                ann_list[ann] /= n_frames
-            else:
-                ann_list[ann] /= sum(weights)
-            if ann_list[ann] >= threshold and [ann[0], ann[1]] not in p:
-                p.append([ann[0], ann[1]])
-        pairs.append(p)
-    return sequence, chains, ann_lists, pairs, n_frames
+    for ann, value in ann_list.items():
+        if len(weights) == 0:
+            ann_list[ann] /= n_frames
+        else:
+            ann_list[ann] /= sum(weights)
+        if ann_list[ann] >= threshold and [ann[0], ann[1]] not in pairs:
+            pairs.append([ann[0], ann[1]])
+    return sequence, ann_list, pairs, n_frames
     
 def stems(param_wc, param_bp, param_stack):
     pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
@@ -1414,7 +1408,7 @@ def stems(param_wc, param_bp, param_stack):
                     lonely_pairs = np.append(lonely_pairs, np.array(d), axis=0)
     return stems, diagonal_pairs, lonely_pairs
 
-def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
+def parameters(pairs, ann_list, n, threshold):
     import barnaba.sec_str_constants as secon
 
     # parameters:
@@ -1519,12 +1513,6 @@ def parameters(pairs, ann_list, n, threshold, tertiary_contacts=True):
             if pi[1:3] in stem or pi[1:3][::-1] in stem:
                 param_ds.append(pi)
         param_wc_ds.append(param_ds)
-    if not tertiary_contacts:
-        print("Without tertiary contacts")
-        for pair in lonely_pairs:
-            for pi in param_wc + param_bp + param_stack:
-                if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
-                    pi[3] = 0
 
     sorted_params = np.empty((0,5))
     n_excl = 0

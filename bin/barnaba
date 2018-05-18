@@ -107,7 +107,7 @@ def parse():
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
 #    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
     parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
-    parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
+#    parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
     parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
     parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
     parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
@@ -390,10 +390,8 @@ def sec_structure(args):
         print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
     n_weights = len(weights)
 
-    ann_lists = []
-    ann_list = {}
-    chains = []
-    pairs_list = []
+    a_ann_list = {}
+    a_pairs = []
     n_frames = 0
     f_inp = {}
     for f in args.f_anns:
@@ -407,30 +405,29 @@ def sec_structure(args):
             print("Cannot recognize annotation file, try pairing.")
             f_inp['pa'] = f
 
-    if 'db' in f_inp:
+    if 'db' in f_inp :
         if 'pa' in f_inp or 'st' in f_inp:
-            print("Found dotbracket file but also annotations, ignoring dotbracket")
-            del f_inp['db']
+            print("Using dotbracket for structure minimization, but showing all annotations.")
+            mode = 2
+        else:
+            print("Using dotbracket for structure minimization.")
+            mode = 1
+    elif 'pa' in f_inp or 'st' in f_inp:
+            print("Using annotation file(s) for structure minimization.")
+            mode = 0
 
+    import numpy as np
     for k, f in f_inp.items():
         if k == 'db':
-            sequence, chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(threshold, f, weights)
-            pairs_list.append(pairs)
+            db_sequence, db_ann_list, db_pairs, db_n_frames = bb.parse_dotbracket(threshold, f, weights)
+       #     pairs_list.append(db_pairs)
             dotbr = True
         else:    
-            sequence, i_chains, i_ann_lists, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, weights)
-            if len(ann_lists) == 0:
-                ann_lists = list(i_ann_lists)
-            else:
-                for c, ann_list in enumerate(ann_lists):
-                    ann_list.update(i_ann_lists[c])
-            if len(pairs_list) == 0:
-                pairs_list = i_pairs
-            else:
-                for c, p in enumerate(i_pairs):
-                    for pi in p:
-                        if pi not in pairs_list[c]:
-                            pairs_list[c].append(pi)
+            i_sequence, i_ann_list, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, weights)
+            if len(a_ann_list) == 0: a_ann_list = i_ann_list
+            else: a_ann_list.update(i_ann_list)
+            if len(a_pairs) == 0: a_pairs = i_pairs
+            else: a_pairs = np.unique(np.append(a_pairs, i_pairs, axis=0), axis=0)
             if n_frames == 0:
                 n_frames = i_n_frames
             else:
@@ -438,28 +435,34 @@ def sec_structure(args):
                     sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
                 if n_weights > 0 and n_weights != n_frames:
                     sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
-            if len(chains) == 0:
-                chains = i_chains
-            elif chains != i_chains:
-                sys.exit("Different chains in files.")
-    if len(ann_lists) == 0:
-        sys.exit("No annotations found.")
+    if mode == 2 and not (db_sequence==i_sequence).all():
+        sys.exit("Sequences in dotbracket and anntation file(s) differ.")
+    if mode == 2 and not (db_n_frames == i_n_frames):
+        sys.exit("Number of frames in dotbracket and anntation file(s) differ.")
+        
 
-    if len(chains) > 1:
-        output += "# Found >1 chains, but can draw only single strand.\n# Drawing first chain.\n"
-        print("# Found >1 chains, but can draw only single strand.\n# Drawing first chain.")
+#    if len(chains) > 1:
+#        output += "# Found >1 chains, but can draw only single strand.\n# Drawing first chain.\n"
+#        print("# Found >1 chains, but can draw only single strand.\n# Drawing first chain.")
 
     c = 0
-    ann_list = ann_lists[c]
-    pairs = pairs_list[c]
+    if mode in [1,2]:
+        ann_list = db_ann_list 
+        pairs = np.array(db_pairs)
+        sequence = db_sequence
+    else:
+        ann_list = a_ann_list 
+        pairs = a_pairs
+        sequence = i_sequence
+    if len(ann_list) == 0:
+        sys.exit("No annotations found.")
     n = len(sequence)
-    import numpy as np
     __i1, __i2 = np.triu_indices(n, k=1)
     __k_rep = np.full((int(n*(n-1)/2), 2), secon.k_rep2)
     __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr)
     __d_rep = np.full((int(n*(n-1)/2), 2), secon.d_rep2)
     print("Calc parameters ...")
-    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180 = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)
+    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180 = bb.parameters(pairs, ann_list, n, threshold)
     print("... done")
  #   print(param_seq)
  #   print(param_rep)
@@ -621,6 +624,9 @@ def sec_structure(args):
         else:
             write_force = False
         if ds_draw > 0 and i % ds_draw == 0:
+            if mode in [0, 2]:
+                ann_list = a_ann_list    
+                pairs = a_pairs
             output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
             if len(chains) > 1:
                 fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
@@ -680,11 +686,11 @@ def sec_structure(args):
         trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
         pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
         pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
+    if mode in [0, 2]:
+        ann_list = a_ann_list
+        pairs = a_pairs
     output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
-    if len(chains) > 1:
-        fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
-    else:
-        fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
+    fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
     fh1.write(output_svg)
     fh1.close()
 
