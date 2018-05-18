@@ -388,7 +388,6 @@ def sec_structure(args):
             if not line.startswith("#"):
                 weights.append(float(line.split()[-1]))
         print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
-    #    weights = np.array(weights)    
     n_weights = len(weights)
 
     ann_lists = []
@@ -415,7 +414,7 @@ def sec_structure(args):
 
     for k, f in f_inp.items():
         if k == 'db':
-            sequence, chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(f, weights)
+            sequence, chains, ann_lists, pairs, n_frames = bb.parse_dotbracket(threshold, f, weights)
             pairs_list.append(pairs)
             dotbr = True
         else:    
@@ -454,14 +453,13 @@ def sec_structure(args):
     ann_list = ann_lists[c]
     pairs = pairs_list[c]
     n = len(sequence)
-#    print("".join(sequence[:,0,-1]))
     import numpy as np
     __i1, __i2 = np.triu_indices(n, k=1)
     __k_rep = np.full((int(n*(n-1)/2), 2), secon.k_rep2)
     __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr)
     __d_rep = np.full((int(n*(n-1)/2), 2), secon.d_rep2)
     print("Calc parameters ...")
-    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180, param_parall = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)
+    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180 = bb.parameters(pairs, ann_list, n, threshold, args.tertiary_contacts)
     print("... done")
  #   print(param_seq)
  #   print(param_rep)
@@ -480,7 +478,6 @@ def sec_structure(args):
     i_max = 0
 
     term_pair = sorted_params[np.argmax(sorted_params[:,2]-sorted_params[:,1])]
-    print("Term_pair", term_pair)        
     cotranscript = False
     param = {}
     for p in sorted_params:
@@ -500,7 +497,7 @@ def sec_structure(args):
        # start on straight slightly perturbed line
        p, ii_pair = bb.get_par(sorted_params, start)
        for i in np.arange(p[1]+1, p[2]):
-            start[int(i), 1] -= 2 
+            start[int(i), 1] -= 5 
     else:    
         for i in range(n):
        # start as circle
@@ -524,7 +521,7 @@ def sec_structure(args):
         
     write_force = False
     i_pair = 0
-    i_ang = i_parall = 0
+    i_ang =  0
     i_par = 0
     param[7] = param_rep_lr
     param[8] = param_angle_180
@@ -533,97 +530,59 @@ def sec_structure(args):
     F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
     max_F = np.linalg.norm(F, axis=1).max()
     r_i = np.linalg.norm(F, axis=1).argmax()
- #   E_thresh = 5e-4
-    E_thresh = 1e-4
     E_thresh = 5e-5
     output += "# E thresh: %.2e\n" % E_thresh
     print("# E thresh: %.2e" % E_thresh)
     output += "%8s%10s%10s%10s%8s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
     print("%8s%10s%10s%10s%8s" % ("Step", "energy", "F_max",  "h", "res(max_F)"))
-    last_p = []
     if order:
         reduce_straight_pot = True
     else:    
         reduce_straight_pot = False
- #   reduce_straight_pot = False
-    print("Prep. took", datetime.datetime.now()-start_time)
+#    print("Prep. took", datetime.datetime.now()-start_time)
     sorted_params_copy = np.copy(sorted_params)
     added_ang_pars = []
     added_sort_params = np.empty((0, 5))
     for i in range(100000):
         print_out = False
-        if new_E < E and  (E-new_E)/E < E_thresh:
-          #  print(i, (E-new_E)/E)
-          #  if cotranscript and i_pair < len(sorted_params):    
+        if (new_E <= E and  (E-new_E)/E < E_thresh) or h<1e-7:
             if cotranscript and len(sorted_params) > 0:    
-               # if  h<3e-1:
-                last_p = p
                 p, ii_pair = bb.get_par(sorted_params, pos)
-               # p = sorted_params[i_pair]
-                if not (len(last_p) > 0 and 
-                        sum(last_p[1:3])==sum(p[1:3]) and abs(last_p[1]-p[1])>1
-                        and (E-new_E)/E > E_thresh*1e-2):
-                    print_out = True
-                    param[0] = np.append(param[0], [p], axis=0)
-                    sorted_params = np.delete(sorted_params, ii_pair, 0)
-                    if len(added_sort_params) == 0:
-                        added_sort_params = np.array([p])
-                    else:
-                        added_sort_params = np.append(added_sort_params, [p], axis=0)
-                    if len(added_ang_pars) < len(param_ang):
-                        keys1, d = np.where(param_ang[:,1:3]==p[1:3])
-                        keys2, d = np.where(param_ang[:,3:5]==p[1:3])
-                        if len(keys1) == 2 and keys1[0] not in added_ang_pars:
-                            i_ang = keys1[0]
-                            if param_ang[i_ang, 3:5] in added_sort_params[:, 1:3]:
-                           # print(keys1, keys1[0], param_ang[keys1[0]])
-                                if len(added_ang_pars) == 0:
-                                    param[2] = np.array([param_ang[i_ang]])
-                                else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
-                                print("Added ang:", param_ang[i_ang])
-                                added_ang_pars.append(i_ang)
-                        if len(keys2) == 2 and keys2[0] not in added_ang_pars:
-                            i_ang = keys2[0]
-                            if param_ang[i_ang, 1:3] in added_sort_params[:, 1:3]:
-                                if len(added_ang_pars) == 0:
-                                    param[2] = np.array([param_ang[i_ang]])
-                                else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
-                                added_ang_pars.append(i_ang)
-                                print("Added ang:", param_ang[i_ang])
-                    i_ang = 0      
-
-                            
-                    #    sys.exit()
-                  #  if p[1] >0:
-                  #      p_ang = np.array([[2, p[1]-1, p[1], p[2], secon.k_ang, .5*np.pi]])
-                  #      p_ang = np.append(p_ang, [[2, p[1], p[2], p[2]+1, secon.k_ang, .5*np.pi]], axis=0)
-                  #      param[2] = np.append(param[2], p_ang, axis=0)    
-                    i_pair += 1
-                    output += "%d Added %s\n" % (i, p)
-                    print(i, " Added ", p, len(sorted_params))
-                    E = seff.energy(pos, param)
-                    last_p = p
-                    h = secon.h
-                else:     
-                    E = new_E
-            elif new_E < E and (E-new_E)/E < E_thresh and i>0 and i_ang < len(param_ang) and  order:
                 print_out = True
-         #       if i_ang == 0: 
-         #           param[0] = param_seq
-         #           param[0] = np.append(param[0], sorted_params_copy, axis=0)
-             #   if last == "ang":
-             #       if not 6 in param:
-             #           param[6] = np.array([param_parall[0]])
-             #           i_parall += 1
-             #       else:
-             #           if i_parall  < len(param_parall):
-             #               param[6] = np.append(param[6], [param_parall[i_parall]], axis = 0)
-             #               i_parall += 1
-             #       print("Parallel", param_parall[i_parall-1])
-             #       last = "par"
-             #   else:
+                param[0] = np.append(param[0], [p], axis=0)
+                output += "%d Added %s\n" % (i, p)
+                print(i, " Added ", p, len(sorted_params))
+                sorted_params = np.delete(sorted_params, ii_pair, 0)
+                if len(added_sort_params) == 0:
+                    added_sort_params = np.array([p])
+                else:
+                    added_sort_params = np.append(added_sort_params, [p], axis=0)
+                if len(added_ang_pars) < len(param_ang):
+                    keys1, d = np.where(param_ang[:,1:3]==p[1:3])
+                    keys2, d = np.where(param_ang[:,3:5]==p[1:3])
+                    if len(keys1) == 2 and keys1[0] not in added_ang_pars:
+                        i_ang = keys1[0]
+                        if param_ang[i_ang, 3:5] in added_sort_params[:, 1:3]:
+                            if len(added_ang_pars) == 0:
+                                param[2] = np.array([param_ang[i_ang]])
+                            else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                            print("Added soft ang. pot.:", param_ang[i_ang,1:5])
+                            added_ang_pars.append(i_ang)
+                    if len(keys2) == 2 and keys2[0] not in added_ang_pars:
+                        i_ang = keys2[0]
+                        if param_ang[i_ang, 1:3] in added_sort_params[:, 1:3]:
+                            if len(added_ang_pars) == 0:
+                                param[2] = np.array([param_ang[i_ang]])
+                            else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                            added_ang_pars.append(i_ang)
+                            print("Added soft ang. pot.:", param_ang[i_ang,1:5])
+                i_ang = 0      
+                E = seff.energy(pos, param)
+                h = secon.h
+            elif order:
+                print_out = True
                 if i_ang == 0:
-                    param_ang[:,5] = secon.k_ang_end
+                    param_ang[:,5] *= secon.k_ang_end/secon.k_ang
                     if not cotranscript: param[2] = np.array([param_ang[i_ang]])
                     else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
                 else:    
@@ -635,16 +594,12 @@ def sec_structure(args):
                 if i_ang == len(param_ang): 
                     order = False
                     
-            elif new_E < E and (E-new_E)/E < E_thresh and  i>0 and not order and reduce_straight_pot:
+            elif not order and reduce_straight_pot:
                 __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr_end)
                 print_out = True
-            #    param[7] = param_rep_lr
                 p_tmp = param_angle_180
                 p_tmp[:,4] = secon.k_angle_straight_end
                 param[8] = p_tmp
-           #     param[2] = param_ang
-             #   param[2] = np.append(param[2], param_bulge, axis=0)
-             #   param[5] = param_bulge_rep
                 E = seff.energy(pos, param)
                 print("Reduced straight pot")
                 reduce_straight_pot = False
@@ -652,16 +607,12 @@ def sec_structure(args):
                     steps = i+500
                     print("Setting new step limit %d" % steps)
                 h = secon.h
-
             else:
                 E = new_E
         else:
             E = new_E
-     #   F = seff.force(pos, param, write_force)
-      #  print("max", np.linalg.norm(F, axis=1), np.linalg.norm(F, axis=1).max())
-      #  sys.exit()
+
         if i % ds == 0 or print_out:
-#            r_i = unravel_index(F.argmax(), F.shape)
             r_i = np.linalg.norm(F, axis=1).argmax()
             print(    "%8d%10.3e%10.2e%10.2e%8s" % (i, E, max_F, h,  r_i))
             output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
@@ -687,24 +638,16 @@ def sec_structure(args):
             else:    
                 break
         F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
-     #   max_F = abs(F).max()
         max_F = np.linalg.norm(F, axis=1).max()
         new_pos = pos + F/max_F * h
         new_E = seff.energy(new_pos, param)
  
-        while new_E >= E and ((order or reduce_straight_pot) or h > 1e-4):
-      #  if new_E >= E:
-         #   print("h", h)
+        while new_E >= E and h > 1e-8 and ((order or reduce_straight_pot) or h > 1e-4):
             h *= 0.2
             new_pos = pos + F/max_F * h
             new_E = seff.energy(new_pos, param)
-#        print("E", E, "new_E", new_E, "h", h)    
         h *= 1.2
-      #  new_pos = pos + F/max_F * h
-  #      print("%.2e %.2e h:%.2e F/max_F: %.2e, %.2e" % (new_pos[0,0]-pos[0,0], new_pos[0,1]-pos[0,1], h, F[0,0]/max_F, F[0,1]/max_F))
-      #  new_E = seff.energy(new_pos, param)
 
-     #   if new_E < E and (E-new_E)/E < E_thresh*1e-2  and  h < 1e-4 and not order and not reduce_straight_pot: 
         if h < 1e-4 and not order and not reduce_straight_pot: 
             output += "Converged at %d steps.\n" % i
             print("Converged at %d steps.\n" % i)
@@ -714,7 +657,6 @@ def sec_structure(args):
             h = secon.h
             
     E = seff.energy(pos, param, False) 
-  #  F = seff.force(pos, param, write_force)
     F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
     r_i = unravel_index(F.argmax(), F.shape)
     print("%8d%10.2e%10.2e%10.2e%8s" % (i, E, max_F,  h, r_i))
@@ -739,8 +681,6 @@ def sec_structure(args):
         pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
         pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
     output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
- #   for p in range(len(pos)):
- #       print(p, pos[p])
     if len(chains) > 1:
         fh1 = open(args.name + "_%d_%dsteps.svg" % (c, i),'w')
     else:

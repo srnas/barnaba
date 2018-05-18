@@ -6,21 +6,17 @@ list_wc_pairs = ["WCc", "GUc", "WWc"]
 list_stackings = [">>", "<<", "<>", "><"]
 list_ann = list_stackings + list_bp_ct
 
-fac = 1
-#k_bp = 150 * fac 
-k_bp = 150 * fac 
-k_wc = 300 * fac
+k_bp = 150 
+k_wc = 300
 # horizontal interaction in stem
 d_short = 32.5
 
 # n, n+2 stacking 
 d_stack = 20.
-#k_stack = 150 
-k_stack = 300 * fac
+k_stack = 300 
 
 # n, n+1
 d_seq = 20.
-k_seq = 2000  
 k_seq = 3000  
 
 # diagonal interactions in stem
@@ -32,27 +28,14 @@ angle = np.pi * .5
 k_ang =  1000
 k_ang_end =  500000
 
-#k_angle_straight = 600000 
-k_angle_straight = 1500000 
-#k_angle_straight_end = 700000 
-k_angle_straight_end =  10000 
-
-k_angle_bulge = 20000 
-#k_angle_bulge_rep = 300000 
-k_angle_bulge_rep = 100000 
-#k_angle_bulge = 200000 
-
+k_angle_straight =  1500000 
+k_angle_straight_end =   10000 
 
 h = 1.
 
-#d_rep2 = d_seq * .8
 d_rep2 = d_seq 
-#d_rep2 = d_seq * .5
-#k_rep2 = 5000  
 k_rep2 = 10000  
-k_rep_lr = 5e4 
-k_rep_lr_end = 1e4
+k_rep_lr =  5e4 
+k_rep_lr_end = 0.# 1e4
 
-k_vertical = 0
-k_parallel = 0000000
 

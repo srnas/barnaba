@@ -33,8 +33,9 @@ def energy(pos, param, write_energy=False):
             sets = np.array([[0, 1, 3], [1, 3, 2],[ 3, 2, 0],[2, 0, 1]])
             v1 = pp[sets[:,1]]-pp[sets[:,0]]
             v2 = pp[sets[:,2]]-pp[sets[:,1]]
-            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1]))
+            angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1])) % (2*np.pi) 
             angles[np.where(angles>np.pi)] -= 2*np.pi
+            angles[np.where(angles<=-np.pi)] += 2*np.pi
             for i in range(len(par)):
                 nn = len(np.where(angles[:,i]<0)[0])
                 if nn == 1:
@@ -43,7 +44,6 @@ def energy(pos, param, write_energy=False):
                     angles[np.where(angles[:,i]>0),i] -= 2*np.pi
 
             angles = np.abs(angles)
-            
             angles[np.where(angles>np.pi)] -= 2*np.pi
             E_i += 0.5 * np.sum(k * (angles - a0)**2)
         elif ind == 8:
@@ -146,6 +146,7 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             v2 = pp[sets[:,2]]-pp[sets[:,1]]
             angles = (np.arctan2(v1[:,:,0], v1[:,:,1])-np.arctan2(v2[:,:,0], v2[:,:,1]))
             angles[np.where(angles>np.pi)] -= 2*np.pi
+            angles[np.where(angles<=-np.pi)] += 2*np.pi
             for i in range(len(par)):
                 nn = len(np.where(angles[:,i]<0)[0])
                 if nn == 1:
@@ -158,7 +159,9 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             n2 = np.linalg.norm(v2, axis=2)
             arg = np.cos(angles)
             arg[np.where(arg >= 1.)] = 1.-1e-7 
-            arg[np.where(arg <= -1.)] = -1.+1e-7 
+            arg[np.where(arg <= -1.)] = -1.+1e-7
+#            print(ii, (angles - a0)/np.pi*180, np.sum((angles - a0), axis=0))
+
             _f = - k *  (angles - a0) * (-1./np.sqrt(1.-(arg)**2))
             _f[np.where(np.abs(angles-a0)<1e-2)] = 0
             for comp in range(2):
@@ -168,8 +171,6 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
                 ff = np.array([f1, f2, f3])
                 for i in range(4):
                     for j in range(3):
-                   #     if 0 in ii[sets[i][j]]:
-                   #         print("comp", comp, "angle ", i, "pos ", j, ii[sets[i][j]], ff[j][i])
                         F[ii[sets[i][j]],comp] += ff[j][i]
         elif ind == 8:
             i1, i2, i3 = par[:,1].astype(int), par[:,2].astype(int), par[:,3].astype(int)
@@ -187,7 +188,6 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             angle = (a2-a1) % (2*np.pi)
             angle[np.where(angle>np.pi)] -= 2*np.pi
             angle = np.abs(angle)
-          #  angle = np.arccos(arg)
             _f = - k * (angle - a0) * (-1./np.sqrt(1.-(arg)**2))
             for comp in range(2):
                 f1 = _f * ( (p2[:,comp]-p3[:,comp])/n_p12/n_p23 + (p2[:,comp]-p1[:,comp])*arg/n_p12**2 )
@@ -230,7 +230,6 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             i1, i2, i3 = par[:,1].astype(int), par[:,2].astype(int), par[:,3].astype(int)
             p1, p2, p3 = pos[i1], pos[i2], pos[i3]
             k, a0 = par[:,4], par[:,5]
-           # a02 = np.full((k.size), np.pi*.4)
             a02 = np.full((k.size), np.pi*.5)
             n_p12, n_p23 = norm(p1-p2, axis=1), norm(p3-p2, axis=1)
             arg = np.multiply(p2-p1, p3-p2).sum(1)/n_p12/n_p23
@@ -292,7 +291,6 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             F -= np.sum(f, axis=0)
         else:
             print("Don't have potential %d" % ind)
- #       print("%s %s %s" % (ind, F[0,0], F[0,1]))    
-#        print(ind, datetime.datetime.now()-ts)
+#        print("F 20 %d %.2e %.2e" % (ind, F[2][0], F[2][1] )    )
     return F
 

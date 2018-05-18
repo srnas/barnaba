@@ -29,7 +29,7 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
             output_svg += draw_dummy(xy1, xy2)
     
     for i, pair in enumerate(pairs):
-        n = sum([1 for key, value in ann_list.items() if pair[0] in key and pair[1] in key and value > threshold])
+        n = sum([1 for key, value in ann_list.items() if pair[0] in key and pair[1] in key and value >= threshold])
         if n == 0:
             continue
         if n > 1:
@@ -41,7 +41,7 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
             if not pair[0] in key or not pair[1] in key:
                 continue
             ann = key[2]
-            if value > threshold:
+            if value >= threshold:
                 color = hexcolor(value)
                 r1 = pair[0] 
                 r2 = pair[1]
