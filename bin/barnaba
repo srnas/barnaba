@@ -101,7 +101,6 @@ def parse():
     # SEC_STRUCTURE
     parser_11 = subparsers.add_parser('SEC_STRUCTURE', help='Draw secondary structure from annotation')
     parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
-#    parser_11.add_argument("-s", dest="sequence", help="One-letter nucleic acid sequence", required=True, default=None)
     parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket)", nargs="+",default=None,required=True)
     parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
@@ -109,8 +108,8 @@ def parse():
     parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
 #    parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
     parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
-    parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
-    parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
+#    parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
+  #  parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
     parser_11.add_argument("--threshold", dest="thresh", help="Threshold for interaction frequency (default 0.1)",default=0.1, required=False)
     parser_11.add_argument("--not_order", dest="not_order", help="Don't try to make double strands rectangular", action='store_true',default=False)
 
@@ -366,6 +365,7 @@ def annotate(args):
 ####################### SEC_STRUCTURE #####################
 
 def sec_structure(args):
+    args.chi_conf = 0
     import datetime
     start_time = datetime.datetime.now()
     import numpy as np
@@ -413,7 +413,7 @@ def sec_structure(args):
             if not args.template:
                 print("Using dotbracket for structure minimization, but showing all annotations.")
             else:
-                print("Using template structure with barnaba showing annotations.")
+                print("Using template structure with barnaba annotations.")
             mode = 2
         else:
             if not args.template:
@@ -425,7 +425,7 @@ def sec_structure(args):
             if not args.template:
                 print("Using annotation file(s) for structure minimization.")
             else:
-                print("Using template structure with barnaba showing annotations.")
+                print("Using template structure with barnaba annotations.")
             mode = 0
 
     for k, f in f_inp.items():
