@@ -101,7 +101,7 @@ def parse():
     # SEC_STRUCTURE
     parser_11 = subparsers.add_parser('SEC_STRUCTURE', help='Draw secondary structure from annotation')
     parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
-    parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket)", nargs="+",default=None,required=True)
+    parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket). Use (pairing and stacking) or dotbracket to minimize and show. Use all 3 files to minimize on dotbracket but show all annotations.", nargs="+",default=None,required=True)
     parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
     parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
 #    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
