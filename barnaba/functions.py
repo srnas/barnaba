@@ -1507,7 +1507,6 @@ def parameters(pairs, ann_list, n, threshold):
                     pul = same_stem[key+1][0]
                     pur = same_stem[key+1][1]
                     factor = 0.8**(abs(p1-pul)+abs(p2-pur)-2)
-                    print("ang", p1, p2, pul, pur, "factor", factor)
                     param_ang = np.append(param_ang, [[2, p1, p2, pul, pur, factor*n_stem * secon.k_ang, secon.angle]], axis=0)
         for pi in param_wc:
             if pi[1:3] in stem or pi[1:3][::-1] in stem:

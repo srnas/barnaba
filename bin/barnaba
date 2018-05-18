@@ -536,8 +536,8 @@ def sec_structure(args):
     E_thresh = 5e-5
     output += "# E thresh: %.2e\n" % E_thresh
     print("# E thresh: %.2e" % E_thresh)
-    output += "%8s%10s%10s%10s%8s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
-    print("%8s%10s%10s%10s%8s" % ("Step", "energy", "F_max",  "h", "res(max_F)"))
+    output += "%8s%10s%10s%10s%10s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
+    print("%8s%10s%10s%10s%10s" % ("Step", "energy", "F_max",  "h", "res(max_F)"))
     if order:
         reduce_straight_pot = True
     else:    
@@ -590,7 +590,8 @@ def sec_structure(args):
                     else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
                 else:    
                     param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
-                print("Added ordering pot", i_ang, param_ang[i_ang,1:5])
+                output += "%d Added ordering pot %s\n" % (i, param_ang[i_ang,1:5])    
+                print("Added ordering pot", param_ang[i_ang,1:5])
                 h = secon.h
                 i_ang += 1
                 E = seff.energy(pos, param)
@@ -604,10 +605,12 @@ def sec_structure(args):
                 p_tmp[:,4] = secon.k_angle_straight_end
                 param[8] = p_tmp
                 E = seff.energy(pos, param)
+                output += "%d Relax straightening potential\n" % i
                 print("Reduced straight pot")
                 reduce_straight_pot = False
                 if steps-i < 500:
                     steps = i+500
+                    output += "Setting new step limit %d\n" % steps
                     print("Setting new step limit %d" % steps)
                 h = secon.h
             else:
@@ -617,8 +620,8 @@ def sec_structure(args):
 
         if i % ds == 0 or print_out:
             r_i = np.linalg.norm(F, axis=1).argmax()
-            print(    "%8d%10.3e%10.2e%10.2e%8s" % (i, E, max_F, h,  r_i))
-            output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
+            print(    "%8d%10.3e%10.2e%10.2e%10d" % (i, E, max_F, h,  r_i))
+            output += "%8d%10.2e%10.2e%10.2e%10d\n" % (i, E, max_F, h, r_i) 
             write_force = False
 
         else:
@@ -628,10 +631,7 @@ def sec_structure(args):
                 ann_list = a_ann_list    
                 pairs = a_pairs
             output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
-            if len(chains) > 1:
-                fh1 = open(args.name + "_%d_%03d.svg" % (c, i),'w')
-            else:
-                fh1 = open(args.name + "_%03d.svg" % i,'w')
+            fh1 = open(args.name + "_%03d.svg" % i,'w')
             fh1.write(output_svg)
             fh1.close()
             
@@ -664,9 +664,9 @@ def sec_structure(args):
             
     E = seff.energy(pos, param, False) 
     F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
-    r_i = unravel_index(F.argmax(), F.shape)
-    print("%8d%10.2e%10.2e%10.2e%8s" % (i, E, max_F,  h, r_i))
-    output += "%8d%10.2e%10.2e%10.2e%8s\n" % (i, E, max_F, h, r_i) 
+    r_i = np.linalg.norm(F, axis=1).argmax()
+    print("%8d%10.2e%10.2e%10.2e%10d" % (i, E, max_F,  h, r_i))
+    output += "%8d%10.2e%10.2e%10.2e%10d\n" % (i, E, max_F, h, r_i) 
     print( i, " steps of minmization")    
     output += "%d steps of minmization\n" % (i)
     from scipy.linalg import expm3, norm
