@@ -12,7 +12,7 @@ Introduction
 ============
 
 BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. BaRNAba uses MDtraj to read/write topology and trajectory files, as such it supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more.  
-BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi, Giovanni Pinamonti and Wouter Boomsma.   
+BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi, Giovanni Pinamonti, Sabine Reisser and Wouter Boomsma.   
 
 This is what you can do with baRNAba:  
 
