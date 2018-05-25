@@ -236,6 +236,7 @@ def rmsd_traj(reference,traj,out=None):
         
         # if the nucleotide is the same, use all atoms
         if(res1.name == res2.name):
+        #if(res1.name == "crap"):
             
             name2 = [at.name for at in res2.atoms if  at.name in definitions.nt_atoms[resname2]]
             #name1 = [at.name for at in res1.atoms if  at.name in definitions.nb_atoms[res1.name]]
@@ -1184,5 +1185,381 @@ def snippet(pdb,sequence,outdir=None):
          
             ii += 1
         idx = cur_pdb.read()
-      
+
+
+############# SEC_STRUCTURE ########################################
+
+def parse_dotbr(dotbra):
+    res_bp = []
+    basepairs = []
+    for k, i in enumerate(dotbra):
+        if i in [")", "]", "}"]:
+            if i == ")":
+                search = "("
+            elif i == "]":
+                search = "["
+            else:
+                search = "{"
+
+            res_bp.append(k)
+            for k2 in range(k-1)[::-1]:
+                j = dotbra[k2]
+                if j == search and k2 not in res_bp:
+                    basepairs.append([k2, k])
+                    res_bp.append(k2)
+                    break
+    return basepairs            
     
+def parse_dotbracket(threshold, file, weights):
+    import barnaba.sec_str_constants as secon
+    import re 
+    print("Parsing file ", file)    
+    with open(file) as f:
+        f_dotbracket = f.readlines()
+        f.close()
+    pdbs = []
+    ann_list = {}
+    res_bp = []
+    n_frames = 0
+    n_pdbs = 0
+    traj = False
+    list_base_pairs = []
+    sequence = []
+    mult_chain = False
+    for line in f_dotbracket:
+        if line.startswith("#") and line.split()[1] == "sequence":
+            sequence = np.array([r.split("_") for r in line.split()[2].split("-")])
+            if len(np.unique(sequence[:,2])) > 1:
+                print("Found multiple chains, drawing first chain")
+          #      sequence = sequence[np.where(sequence[:,2]==np.unique(sequence[:,2])[0])]
+          #      print(sequence)
+          #      mult_chain = True
+        if not line.startswith("#"):
+            l = line.split()
+            if "pdb" in l[0].lower():
+                dotbr = l[1]
+                if len(dotbr) != len(sequence):
+                    print(mult_chain)
+                    if not mult_chain:
+                        sys.exit("Dot-bracket length does not match sequence length")
+                    else:
+                        dotbr = dotbr[:len(sequence)]
+                base_pairs = parse_dotbr(dotbr)
+                for bp in base_pairs:
+                    ann_list[bp[0], bp[1], "WCc"] = 1.
+                list_base_pairs = base_pairs    
+                ann_lists.append(dict(ann_list))
+                ann_list = {}
+            else:
+                try: int(l[0])
+                except ValueError:
+                    continue
+                else:
+                    traj = True
+                    dotbr = l[1]
+                    if len(dotbr) != len(sequence):
+                        if not mult_chain:
+                            sys.exit("Dot-bracket length does not match sequence length")    
+                        else:
+                            dotbr = dotbr[:len(sequence)]
+                    n_frames += 1
+                    base_pairs = parse_dotbr(dotbr)
+                    for bp in base_pairs:
+                        if bp not in list_base_pairs:
+                            list_base_pairs.append(bp)
+                        try:
+                            ann_list[bp[0], bp[1], "WCc"]
+                        except:
+                            if len(weights) == 0:
+                                ann_list[bp[0], bp[1], "WCc"] = 1.
+                            else:
+                                ann_list[bp[0], bp[1], "WCc"] = weights[n_frames-1]
+                        else: 
+                            if len(weights) == 0:
+                                ann_list[bp[0], bp[1], "WCc"] += 1.
+                            else:    
+                                ann_list[bp[0], bp[1], "WCc"] += weights[n_frames-1]
+    if len(list_base_pairs) == 0:
+        sys.exit("No basepairs found.")
+    if traj:
+        for ann, value in ann_list.items():
+            if len(weights) == 0:
+                ann_list[ann] /= n_frames
+            else:
+                ann_list[ann] /= sum(weights)
+    chains = [0]
+    return sequence, ann_list, list_base_pairs, n_frames    
+
+def parse_annotations(threshold, file, weights):
+    import barnaba.sec_str_constants as secon
+    import re 
+    print("Parsing file ", file)    
+    with open(file) as f:
+        annotation = f.readlines()
+        f.close()
+    
+    re_pdb = re.compile("^\s*#\s+PDB\s+.*$")
+    re_frame = re.compile("^\s*#\s+Frame.*$")
+    re_ann = re.compile("^\s*([AGCU])_([0-9]+)_([0-9]+)\s+([AGCU])_([0-9]+)_([0-9]+)\s+.*$")
+    chains = []
+    old_C = "X"
+    ann_lists = []
+    ann_list = {}
+    n_frames = 0
+    for line in annotation:
+        if line.startswith("#") and line.split()[1] == "sequence":
+            sequence = np.array([r.split("_") for r in line.split()[2].split("-")])
+        pdb = re_pdb.match(line)
+        if pdb:
+            n_frames += 1
+            continue
+        frame = re_frame.match(line)
+        if frame:
+            n_frames += 1
+            continue
+        ann = re_ann.match(line)
+        if ann:
+            cols = line.split()
+            i_N = cols[0].split("_")[0]
+            ri = int(cols[0].split("_")[1])
+            i_C = cols[0].split("_")[2]
+            j_N = cols[1].split("_")[0]
+            rj = int(cols[1].split("_")[1])
+            j_C = cols[1].split("_")[2]
+            ann_ij = cols[2]
+            if ann_ij == "XXX":
+                continue
+            i = np.where(np.array(sequence)[:,1].astype(int) == ri)[0][0]
+            j = np.where(np.array(sequence)[:,1].astype(int) == rj)[0][0]
+            if old_C != "X" and (i_C != j_C or i_C != old_C):
+                ann_lists.append(ann_list)
+                ann_list = {}
+            if i_C not in chains:
+                chains.append(i_C)
+            old_C = i_C
+            try:
+                ann_list[i, j, ann_ij]
+            except:
+                if len(weights) == 0:
+                    ann_list[i, j, ann_ij] = 1.
+                else:    
+                    ann_list[i, j, ann_ij] = weights[n_frames-1]
+            else: 
+                if len(weights) == 0:
+                    ann_list[i, j, ann_ij] += 1.
+                else:    
+                    ann_list[i, j, ann_ij] += weights[n_frames-1]
+        
+    pairs = []
+    for ann, value in ann_list.items():
+        if len(weights) == 0:
+            ann_list[ann] /= n_frames
+        else:
+            ann_list[ann] /= sum(weights)
+        if ann_list[ann] >= threshold and [ann[0], ann[1]] not in pairs:
+            pairs.append([ann[0], ann[1]])
+    return sequence, ann_list, pairs, n_frames
+    
+def stems(param_wc, param_bp, param_stack):
+    pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
+    pairs_all = np.unique(np.array(param_bp + param_stack + param_wc)[:,1:3], axis=0)
+    sums_all = np.unique( np.sum(pairs_all, axis=1))
+    ds_all = []
+   
+    for p in pairs_all:
+        added = False
+        for di, ds in enumerate(ds_all):
+            if abs(ds[-1,0]-p[0])==1. and abs(ds[-1,1]-p[1])==1.:
+                if len(ds) > 1:
+                    if ds[-1,0]-p[0] == ds[-2,0]-ds[-1,0] and ds[-1,1]-p[1] == ds[-2,1]-ds[-1,1]:
+                        added = True
+                        ds_all[di] = np.append(ds, [p], axis=0)
+                        break
+                else:
+                    ds_all[di] = np.append(ds, [p], axis=0)
+                    added = True
+                    break
+        if not added:
+            ds_all.append(np.array([p]))
+
+    wc_per_ds = [[p for p in s if tuple(p) in set(tuple(x) for x in pairs_wc)] for s in ds_all]
+    # sort double strands first by number of wc pairs, then number of all pairs
+    sortkeys = np.lexsort((np.array([len(st) for st in ds_all]), np.array([len(wc) for wc in wc_per_ds])))
+    ds_all = np.array(ds_all)[sortkeys][::-1]
+    stems = []
+    diagonal_pairs = []
+    lonely_pairs = np.array([])
+    for k, d in enumerate(ds_all):
+        limits = np.array([[d[:,0].min(), d[:,1].max()], [d[:,0].max(), d[:,1].min()]])
+        add = True
+        for d2 in ds_all[:k]:
+            l2 = np.array([[d2[:,0].min(), d2[:,1].max()], [d2[:,0].max(), d2[:,1].min()]])
+            if ((l2[0][0] <= limits[0][0] <= l2[1][0] and l2[1][1] <= limits[0][1] <= l2[0][1]) or
+                    (l2[0][0] <= limits[1][0] <= l2[1][0] and l2[1][1] <= limits[1][1] <= l2[0][1])):
+                add = False
+                diagonal_pairs += list(d)        
+        if add:
+            if len(d) > 1:
+                stems.append(d)
+            else:
+                if len(lonely_pairs) == 0:
+                    lonely_pairs = np.array(d)
+                else:    
+                    lonely_pairs = np.append(lonely_pairs, np.array(d), axis=0)
+    return stems, diagonal_pairs, lonely_pairs
+
+def parameters(pairs, ann_list, n, threshold):
+    import barnaba.sec_str_constants as secon
+
+    # parameters:
+    # potential type 0: harmonic potential
+    # potential type 1: semiharmonic potential to reject bases
+    # potential type 2: angular potential to keep ds regions in order
+    # potential type 3: semiharmonic potential to reject terminal bases in x direction
+  
+
+    param_seq = np.empty((0, 5))
+    for i in range(n-1):
+        param_seq = np.append(param_seq, [[0, i, i+1, secon.k_seq, secon.d_seq]], axis=0)
+    param_bp = []
+    param_wc = []
+    param_stack = []
+    for ann, value in ann_list.items():
+        i = ann[0]
+        j = ann[1]
+        ann_ij = ann[2]
+        if value < threshold or abs(i-j) < 2:
+            continue
+        if ann_ij in secon.list_bp_ct:
+            if ann_ij in secon.list_wc_pairs: 
+                param_wc.append([0, i, j, secon.k_wc*value, secon.d_short])
+            else:
+                param_bp.append([0, i, j, secon.k_bp*value, secon.d_short])
+        if ann_ij in secon.list_stackings:
+            if abs(i-j) == 2:    
+                param_stack.append([0, i, j, secon.k_seq*value, secon.d_stack])
+            else:
+                param_stack.append([0, i, j, secon.k_stack*value, secon.d_short])
+    pairs_stems, diagonal_pairs, lonely_pairs = stems(param_wc, param_bp, param_stack)
+    param_wc_ds = []
+ #   print("pairs_stems", pairs_stems)
+ #   print("diagonal_pairs", diagonal_pairs)
+ #   print("lonely_pairs", lonely_pairs)
+    # Longest stem vertical
+    param_stem = np.empty((0, 4))
+    if len(pairs_stems) > 0:
+        diff = np.absolute(pairs_stems[0][:,1]-pairs_stems[0][:,0])
+        keys = np.argsort(diff)
+        for k in keys:
+            pair = pairs_stems[0][k]
+            if abs(pair[0]-pair[1]) > 2:
+                param_stem = np.append(param_stem, [[4, int(pair[0:2].min()), int(pair[0:2].max()), 0]], axis=0)
+    else:
+        if len(lonely_pairs) > 0:
+            for pair in lonely_pairs:
+                if sum(pair) == sum(lonely_pairs[np.argsort(lonely_pairs[:,0])[0]]):
+                    param_stem = np.append(param_stem, [[4, int(pair[0:2].min()), int(pair[0:2].max()), 0]], axis=0)
+
+    for pair in diagonal_pairs:
+        for pi in param_wc + param_bp + param_stack:
+            if tuple(pi[1:3]) in [tuple(pair), tuple(pair[::-1])]:
+                pi[3] = 0
+                pi[4] = secon.d_long
+
+    param_ds = []
+    param_ang = np.empty((0, 7))
+    if len(lonely_pairs) > 0:
+        all_stems = pairs_stems
+        for p in lonely_pairs:
+            all_stems.append(np.array([p]))
+    else:
+        all_stems = pairs_stems
+    for k, stem in enumerate(all_stems):
+        stem_limits = np.array([stem[:,0].min(), stem[:,1].max(), stem[:,0].max(), stem[:,1].min()]).astype(int)
+        same_stem = stem.copy()
+        for k2, s in enumerate(all_stems):
+            if k!=k2:
+                if sum(s[0]) == sum(stem[0]):
+                    same_stem = np.append(same_stem, s, axis=0)
+                elif abs(sum(s[0]) - sum(stem[0])) == 1:    
+                    s_limits = np.array([s[:,0].min(), s[:,1].max(), s[:,0].max(), s[:,1].min()]).astype(int)
+                     
+                    if len(np.unique(np.append(stem_limits, s_limits))) == len(np.unique(s_limits)) + len(np.unique(stem_limits)):
+                        if (abs(stem_limits[0]-s_limits[2]) == 1 or abs(stem_limits[1]-s_limits[3]) == 1 or
+                            abs(s_limits[0]-stem_limits[2]) == 1 or abs(s_limits[1]-stem_limits[3]) == 1):
+                            same_stem = np.append(same_stem, s, axis=0)
+        same_stem = same_stem[np.argsort(same_stem[:,0] ),:]                    
+        limits = np.array([same_stem[:,0].min(), same_stem[:,1].max(), same_stem[:,0].max(), same_stem[:,1].min()]).astype(int)
+        n_stem = len(same_stem)
+        param_ds = []
+        t_stems = [tuple(s) for s in stem]
+
+        for t_pair in t_stems:
+            for pi in param_bp + param_stack + param_wc:
+                if tuple(pi[1:3]) == t_pair or tuple(pi[1:3][::-1]) == t_pair:
+                    pi[3] *= 1.2**(n_stem-1)
+            p1 = t_pair[0]       
+            p2 = t_pair[1]
+            key, dim  = np.where(same_stem==t_pair)
+            key = key[0]
+            if abs(p1-p2) > 2:
+                if key < len(same_stem)-1:
+                    pul = same_stem[key+1][0]
+                    pur = same_stem[key+1][1]
+                    factor = 0.8**(abs(p1-pul)+abs(p2-pur)-2)
+                    param_ang = np.append(param_ang, [[2, p1, p2, pul, pur, factor*n_stem * secon.k_ang, secon.angle]], axis=0)
+        for pi in param_wc:
+            if pi[1:3] in stem or pi[1:3][::-1] in stem:
+                param_ds.append(pi)
+        param_wc_ds.append(param_ds)
+
+    sorted_params = np.empty((0,5))
+    n_excl = 0
+    for i in range(n):
+        i_list = []
+        for p in param_wc+param_bp+param_stack:
+            if i == max(p[1:3]) and p[3] == 0:
+                n_excl += 1
+                continue
+    #        elif i == max(p[1:3]) and abs(p[1]-p[2])<2:
+    #            n_excl += 1
+            elif i == max(p[1:3]):
+                i_list.append(p)
+        if len(i_list) == 0:
+            continue
+        diff = np.array([abs(p[1]-p[2]) for p in i_list])
+        keys = np.argsort(diff)
+        for k in keys:
+            sorted_params = np.append(sorted_params, [i_list[k]], axis=0)
+    assert (len(sorted_params)+n_excl == len(param_wc+param_bp+param_stack))        
+
+    param_angle_180 = np.empty((0, 6))
+    param_bulge = np.empty((0, 6))
+    param_bulge_rep = np.empty((0, 6))
+    paired = True
+    pair_now = []
+    for i in range(1, n-1):
+        param_angle_180 = np.append(param_angle_180, [[8, i-1, i, i+1, secon.k_angle_straight, 0]], axis=0)        
+    
+    param_rep = np.empty((0, 5))
+    param_rep_lr = np.empty((0, 5))
+    i1, i2 = np.triu_indices(n, k=1)
+    n_ij = i1.shape[0]
+    _type = np.full((n_ij), 1)
+    _k = np.full((n_ij), secon.k_rep2)
+    _d = np.full((n_ij), secon.d_rep2)
+    param_rep = np.append(param_rep, np.column_stack((_type, i1, i2, _k, _d)), axis=0)
+    _type = np.full((n_ij), 7)
+    _k = np.full((n_ij), secon.k_rep_lr)
+    _d = np.full((n_ij), 0)
+    param_rep_lr = np.append(param_rep_lr, np.column_stack((_type, i1, i2, _k, _d)), axis=0)
+
+    return param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180   
+
+def get_par(sorted_params, pos):
+    i1 = sorted_params[:,1].astype(int)
+    i2 = sorted_params[:,2].astype(int)
+    d = np.linalg.norm(pos[i1]-pos[i2], axis=1)
+
+    ii = np.argmin(d)
+    return sorted_params[ii], ii

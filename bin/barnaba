@@ -97,6 +97,22 @@ def parse():
     parser_05.add_argument("--top", dest="top",help="Topology file",required=False)
     parser_05.add_argument("--dotbracket", dest="dotbr",help="write dot-bracket annotation",action='store_true',default=False)
 
+
+    # SEC_STRUCTURE
+    parser_11 = subparsers.add_parser('SEC_STRUCTURE', help='Draw secondary structure from annotation')
+    parser_11.add_argument("-o", dest="name", help="output_name",default=None,required=False)
+    parser_11.add_argument("--ann", dest="f_anns", help="Annotation file(s) ([pairing and/or stacking] or dotbracket). Use (pairing and stacking) or dotbracket to minimize and show. Use all 3 files to minimize on dotbracket but show all annotations.", nargs="+",default=None,required=True)
+    parser_11.add_argument("--draw_interm", dest="draw_interm", help="Draw intermediate structures (int)", default=0)
+    parser_11.add_argument("--template", dest="template", help="SVG template structure (VARNA, RNAstructure etc.) ", default=None, required=False)
+#    parser_11.add_argument("-T", dest="T_init", help="Initial temperature for annealing", default=0)
+    parser_11.add_argument("--nsteps", dest="nsteps", help="Number of steps for geometry optimization", default=1000)
+#    parser_11.add_argument("--no_tertiary_contacts", dest="tertiary_contacts", help="Do not use tertiary contacts in geometry optimization", action='store_false', default=True)
+    parser_11.add_argument("--output_ids", dest="output_ids", help="Print residue IDs instead of letters",action='store_true',default=False)
+#    parser_11.add_argument("--chi", dest="chi_conf", help="Chi conformation (int) translated from binary system (chi in syn =1, not syn =0) for all residues",default=0)
+  #  parser_11.add_argument("-w", dest="f_weights", help="Weights file (one weight per frame)",default=None, required=False)
+    parser_11.add_argument("--threshold", dest="thresh", help="Threshold for interaction frequency (default 0.1)",default=0.1, required=False)
+    parser_11.add_argument("--not_order", dest="not_order", help="Don't try to make double strands rectangular", action='store_true',default=False)
+
     
     # DUMP
     parser_06 = subparsers.add_parser('DUMP', help='DUMP structural parameters')
@@ -315,6 +331,9 @@ def annotate(args):
     else:
         st,pair,res = bb.annotate(args.trj,topology=args.top)
         stri_p += "# SEQ " + (" ".join([f for f in res]) + "\n")
+        stri_s += "# sequence %s\n" % "-".join(res)
+        stri_p += "# sequence %s\n" % "-".join(res)
+        stri_dot += "# sequence %s\n" % "-".join(res)
 
         if(args.dotbr):
             dotbr,ss = bb.dot_bracket(pair,res)
@@ -329,7 +348,6 @@ def annotate(args):
             stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[k][0][e][0]],res[st[k][0][e][1]],st[k][1][e]) for e in range(len(st[k][0]))])
             
             
-        
     fh1 = open(args.name + ".pairing.out",'w')
     fh1.write(stri_p)
     fh1.close()
@@ -343,11 +361,411 @@ def annotate(args):
         fh3.write(stri_dot)
         fh3.close()
 
+
+####################### SEC_STRUCTURE #####################
+
+def sec_structure(args):
+    args.chi_conf = 0
+    import datetime
+    start_time = datetime.datetime.now()
+    import numpy as np
+  #  from numpy import unravel_index
+    import barnaba.sec_str_svg as sesvg
+    import barnaba.sec_str_ff as seff
+    import barnaba.sec_str_constants as secon
+
+    output = "# %s \n" % (" ".join(sys.argv[:]))
+    weights = []
+    if args.not_order:
+        order = False
+    else:
+        order = True
+    threshold = float(args.thresh)
+#    if args.f_weights:
+#        with open(args.f_weights) as f:
+#            content = f.readlines()
+#            f.close()
+#        for line in content:
+#            if not line.startswith("#"):
+#                weights.append(float(line.split()[-1]))
+#        print("Found weights file %s with %d weights" % (args.f_weights, n_weights))
+    n_weights = len(weights)
+    
+
+
+    a_ann_list = {}
+    a_pairs = []
+    n_frames = 0
+    f_inp = {}
+    for f in args.f_anns:
+        if f.endswith("ANNOTATE.dotbracket.out"):
+            f_inp['db'] = f
+        elif f.endswith("ANNOTATE.pairing.out"):
+            f_inp['pa'] = f
+        elif f.endswith("ANNOTATE.stacking.out"):
+            f_inp['st'] = f
+        else:
+            print("Cannot recognize annotation file, try pairing.")
+            f_inp['pa'] = f
+
+    if 'db' in f_inp :
+        if 'pa' in f_inp or 'st' in f_inp:
+            if not args.template:
+                print("Using dotbracket for structure minimization, but showing all annotations.")
+            else:
+                print("Using template structure with barnaba annotations.")
+            mode = 2
+        else:
+            if not args.template:
+                print("Using dotbracket for structure minimization.")
+            else:
+                print("Using template structure with barnaba dotbracket.")
+            mode = 1
+    elif 'pa' in f_inp or 'st' in f_inp:
+            if not args.template:
+                print("Using annotation file(s) for structure minimization.")
+            else:
+                print("Using template structure with barnaba annotations.")
+            mode = 0
+
+    for k, f in f_inp.items():
+        if k == 'db':
+            db_sequence, db_ann_list, db_pairs, db_n_frames = bb.parse_dotbracket(threshold, f, weights)
+       #     pairs_list.append(db_pairs)
+            dotbr = True
+        else:    
+            i_sequence, i_ann_list, i_pairs, i_n_frames = bb.parse_annotations(threshold, f, weights)
+            if len(a_ann_list) == 0: a_ann_list = i_ann_list
+            else: a_ann_list.update(i_ann_list)
+            if len(a_pairs) == 0: a_pairs = i_pairs
+            else: a_pairs = np.unique(np.append(a_pairs, i_pairs, axis=0), axis=0)
+            if n_frames == 0:
+                n_frames = i_n_frames
+            else:
+                if n_frames != i_n_frames:
+                    sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
+                if n_weights > 0 and n_weights != n_frames:
+                    sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
+    if mode == 2 and not (db_sequence==i_sequence).all():
+        sys.exit("Sequences in dotbracket and anntation file(s) differ.")
+    if mode == 2 and not (db_n_frames == i_n_frames):
+        sys.exit("Number of frames in dotbracket and anntation file(s) differ.")
+        
+
+#    if len(chains) > 1:
+#        output += "# Found >1 chains, but can draw only single strand.\n# Drawing first chain.\n"
+#        print("# Found >1 chains, but can draw only single strand.\n# Drawing first chain.")
+
+    c = 0
+    if mode in [1,2]:
+        ann_list = db_ann_list 
+        pairs = np.array(db_pairs)
+        sequence = db_sequence
+    else:
+        ann_list = a_ann_list 
+        pairs = a_pairs
+        sequence = i_sequence
+    if len(ann_list) == 0:
+        sys.exit("No annotations found.")
+
+    if args.template:
+        import re
+        with open(args.template) as f:
+            content = f.readlines()
+            f.close()
+        re_position_varna = re.compile("<circle cx=\"([0-9\.]+)\" cy=\"([0-9\.]+)\" r=\"5.0\" stroke=\"none\" stroke-width=\"1.0\" fill=\"rgb\(.*\)\"/>")
+        re_position_rnastructure = re.compile(".*<circle style=\"stroke-width:1\" cx=\"([0-9\.]+)\" cy=\"([0-9\.]+)\" .*/>")
+        ri = 0
+        pos = np.zeros((len(sequence), 2))
+        for re_position in [re_position_varna, re_position_rnastructure]:
+            for line in content:
+                _pos = re_position.match(line)
+                if _pos:
+                    x = float(_pos.group(1))
+                    y = float(_pos.group(2))
+                    pos[ri] = [x, y]
+                    ri += 1        
+            if ri == 0:
+                continue
+            if ri != len(sequence):
+                print(ri, len(sequence))
+                sys.exit("Length of annotation sequence is different of number of residues in template.")
+            else:
+                break
+        scale = secon.d_seq/np.mean(np.linalg.norm(pos[1:]-pos[:-1], axis=1))
+        pos *= scale
+        dimensions = np.linalg.norm([pos[:,0].max()-pos[:,0].min(), pos[:,1].max()-pos[:,1].min()])
+        if mode == 2:
+            pairs = a_pairs
+            ann_list = a_ann_list
+        output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
+        fh1 = open(args.name + "_from_template.svg",'w')
+        fh1.write(output_svg)
+        fh1.close()
+        sys.exit()
+        
+    n = len(sequence)
+    __i1, __i2 = np.triu_indices(n, k=1)
+    __k_rep = np.full((int(n*(n-1)/2), 2), secon.k_rep2)
+    __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr)
+    __d_rep = np.full((int(n*(n-1)/2), 2), secon.d_rep2)
+    print("Calc parameters ...")
+    param_seq, param_rep, param_rep_lr, sorted_params, param_stem, param_ang, param_bulge, param_bulge_rep, param_angle_180 = bb.parameters(pairs, ann_list, n, threshold)
+    print("... done")
+ #   print(param_seq)
+ #   print(param_rep)
+ #   print(sorted_params)
+ #   print(param_stem)
+ #   print(param_ang)
+ #   print(param_angle_180)
+ #   sys.exit()
+    if len(sorted_params) == 0:
+        sys.exit("No annotations found. Exiting.")        
+    dimensions = secon.d_seq*(n-1)*.7
+    length = n*secon.d_seq
+    angle = 2*np.pi/n
+    start = np.column_stack((np.arange(0., n*secon.d_seq, secon.d_seq),  np.full((n), 0.5*dimensions)))
+    i_min = n-1
+    i_max = 0
+
+    term_pair = sorted_params[np.argmax(sorted_params[:,2]-sorted_params[:,1])]
+    cotranscript = False
+    param = {}
+    for p in sorted_params:
+        if ((min(p[1:3]) <  min(term_pair[1:3]) < max(p[1:3])) or
+             ((min(p[1:3]) <  max(term_pair[1:3]) < max(p[1:3])))):
+            cotranscript = True
+            break
+#    cotranscript = True        
+    param[0] = param_seq
+    param[1] = param_rep
+    steps = int(args.nsteps)
+    if not cotranscript:
+        param[0] = np.append(param[0], sorted_params, axis=0) 
+        print("Start on circle")
+    print("Make starting config")
+    if cotranscript:
+       # start on straight slightly perturbed line
+       p, ii_pair = bb.get_par(sorted_params, start)
+       for i in np.arange(p[1]+1, p[2]):
+            start[int(i), 1] -= 5 
+    else:    
+        for i in range(n):
+       # start as circle
+            start[i][0] = -length * 0.5/np.pi * np.sin(i*angle + .5*angle) + dimensions * 0.5
+            start[i][1] = length * 0.5/np.pi * np.cos(i*angle + .5*angle) + dimensions * 0.5
+       # start on half circle
+       # start[i][0] = length * 1./np.pi * np.sin(i*angle*.5 + .5*angle) + dimensions * 0.5
+       # start[i][1] = length * 1./np.pi * np.cos(i*angle*.5 + .5*angle) + dimensions * 0.5
+    pos = start
+    h = secon.h
+    print_snapshots = min([steps, int(args.draw_interm)])
+    print_energy = 20    
+    print_energy = min([steps, print_energy])
+    ds = int(float(steps)/print_energy)
+    if print_snapshots > 0:
+        ds_draw = int(float(steps)/print_snapshots)
+    else:
+        ds_draw = 0    
+#       dt = float(args.T_init)/int(steps)*3/2
+#       T = float(args.T_init)
+        
+    write_force = False
+    i_pair = 0
+    i_ang =  0
+    i_par = 0
+    param[7] = param_rep_lr
+    param[8] = param_angle_180
+    E = seff.energy(pos, param)
+    new_E = E
+    F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
+    max_F = np.linalg.norm(F, axis=1).max()
+    r_i = np.linalg.norm(F, axis=1).argmax()
+    E_thresh = 5e-5
+    output += "# E thresh: %.2e\n" % E_thresh
+    print("# E thresh: %.2e" % E_thresh)
+    output += "%8s%10s%10s%10s%10s\n" % ("Step", "energy", "F_max",  "h", "res(max_F)") 
+    print("%8s%10s%10s%10s%10s" % ("Step", "energy", "F_max",  "h", "res(max_F)"))
+    if order:
+        reduce_straight_pot = True
+    else:    
+        reduce_straight_pot = False
+#    print("Prep. took", datetime.datetime.now()-start_time)
+    sorted_params_copy = np.copy(sorted_params)
+    added_ang_pars = []
+    added_sort_params = np.empty((0, 5))
+    for i in range(100000):
+        print_out = False
+        if (new_E <= E and  (E-new_E)/E < E_thresh) or h<1e-7:
+            if cotranscript and len(sorted_params) > 0:    
+                p, ii_pair = bb.get_par(sorted_params, pos)
+                print_out = True
+                param[0] = np.append(param[0], [p], axis=0)
+                output += "%d Added %s\n" % (i, p)
+                print(i, " Added ", p, len(sorted_params))
+                sorted_params = np.delete(sorted_params, ii_pair, 0)
+                if len(added_sort_params) == 0:
+                    added_sort_params = np.array([p])
+                else:
+                    added_sort_params = np.append(added_sort_params, [p], axis=0)
+                if len(added_ang_pars) < len(param_ang):
+                    keys1, d = np.where(param_ang[:,1:3]==p[1:3])
+                    keys2, d = np.where(param_ang[:,3:5]==p[1:3])
+                    if len(keys1) == 2 and keys1[0] not in added_ang_pars:
+                        i_ang = keys1[0]
+                        if param_ang[i_ang, 3:5] in added_sort_params[:, 1:3]:
+                            if len(added_ang_pars) == 0:
+                                param[2] = np.array([param_ang[i_ang]])
+                            else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                            print("Added soft ang. pot.:", param_ang[i_ang,1:5])
+                            added_ang_pars.append(i_ang)
+                    if len(keys2) == 2 and keys2[0] not in added_ang_pars:
+                        i_ang = keys2[0]
+                        if param_ang[i_ang, 1:3] in added_sort_params[:, 1:3]:
+                            if len(added_ang_pars) == 0:
+                                param[2] = np.array([param_ang[i_ang]])
+                            else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                            added_ang_pars.append(i_ang)
+                            print("Added soft ang. pot.:", param_ang[i_ang,1:5])
+                i_ang = 0      
+                E = seff.energy(pos, param)
+                h = secon.h
+                if len(sorted_params) == 0 and steps-i < 500:
+                    steps = i+500
+                    output += "Setting new step limit %d\n" % steps
+                    print("Setting new step limit %d" % steps)
+            elif order:
+                print_out = True
+                if i_ang == 0:
+                    param_ang[:,5] *= secon.k_ang_end/secon.k_ang
+                    if not cotranscript: param[2] = np.array([param_ang[i_ang]])
+                    else: param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                else:    
+                    param[2] = np.append(param[2], [param_ang[i_ang]], axis=0)
+                output += "%d Added ordering pot %s\n" % (i, param_ang[i_ang,1:5])    
+                print("Added ordering pot", param_ang[i_ang,1:5])
+                h = secon.h
+                i_ang += 1
+                E = seff.energy(pos, param)
+                if i_ang == len(param_ang): 
+                    order = False
+                    
+            elif not order and reduce_straight_pot:
+                __k_rep_lr = np.full((int(n*(n-1)/2), 2), secon.k_rep_lr_end)
+                print_out = True
+                p_tmp = param_angle_180
+                p_tmp[:,4] = secon.k_angle_straight_end
+                param[8] = p_tmp
+                E = seff.energy(pos, param)
+                output += "%d Relax straightening potential\n" % i
+                print("Reduced straight pot")
+                reduce_straight_pot = False
+                if steps-i < 500:
+                    steps = i+500
+                    output += "Setting new step limit %d\n" % steps
+                    print("Setting new step limit %d" % steps)
+                h = secon.h
+            else:
+                E = new_E
+        else:
+            E = new_E
+
+        if i % ds == 0 or print_out:
+            r_i = np.linalg.norm(F, axis=1).argmax()
+            print(    "%8d%10.3e%10.2e%10.2e%10d" % (i, E, max_F, h,  r_i))
+            output += "%8d%10.2e%10.2e%10.2e%10d\n" % (i, E, max_F, h, r_i) 
+            write_force = False
+
+        else:
+            write_force = False
+        if ds_draw > 0 and i % ds_draw == 0:
+            if mode in [0, 2]:
+                ann_list = a_ann_list    
+                pairs = a_pairs
+            output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
+            fh1 = open(args.name + "_%03d.svg" % i,'w')
+            fh1.write(output_svg)
+            fh1.close()
+            
+        if i == steps:
+            output += "Reached maximum number of %d steps\n" % i
+            print("Reached maximum number of %d steps\n" % i)
+            if order or reduce_straight_pot:
+                print("Ordering potential has not yet been added, ignoring step limit")
+                output += "Ordering potential has not yet been added, ignoring step limit\n"
+            elif (cotranscript and len(sorted_params) > 0):    
+                print("Not all interactions have been added, ignoring step limit")
+                output += "Not all interactions have been added, ignoring step limit\n"
+            else:    
+                break
+        F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
+        max_F = np.linalg.norm(F, axis=1).max()
+        new_pos = pos + F/max_F * h
+        new_E = seff.energy(new_pos, param)
+ 
+        while new_E >= E and h > 1e-8 and ((order or reduce_straight_pot) or h > 1e-4):
+            h *= 0.2
+            new_pos = pos + F/max_F * h
+            new_E = seff.energy(new_pos, param)
+        h *= 1.2
+
+        if h < 1e-4 and not order and not reduce_straight_pot and not (cotranscript and len(sorted_params) > 0): 
+            output += "Converged at %d steps.\n" % i
+            print("Converged at %d steps.\n" % i)
+            break
+        pos = new_pos-np.full((len(pos), 2), (np.mean(new_pos, axis=0)-[dimensions*.5, dimensions*.5]))
+        if h > secon.h:
+            h = secon.h
+            
+    E = seff.energy(pos, param, False) 
+    F = seff.force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force)
+    r_i = np.linalg.norm(F, axis=1).argmax()
+    print("%8d%10.2e%10.2e%10.2e%10d" % (i, E, max_F,  h, r_i))
+    output += "%8d%10.2e%10.2e%10.2e%10d\n" % (i, E, max_F, h, r_i) 
+    print( i, " steps of minmization")    
+    output += "%d steps of minmization\n" % (i)
+    from scipy.linalg import expm3, norm
+
+    av_stem_vector = np.mean([pos[int(param_stem[0][1])], pos[int(param_stem[0][2])]], axis=0) - np.mean([pos[int(param_stem[len(param_stem)-1][1])], pos[int(param_stem[len(param_stem)-1][2])]], axis=0)
+    theta = np.arctan2(-av_stem_vector[0], -av_stem_vector[1])
+
+    def M(axis, theta):
+        return expm3(np.cross(np.eye(3), axis/norm(axis)*theta))
+    axis = [0,0,1]
+    m0 = M(axis, theta)
+    trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
+    pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
+    pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
+    if pos[0][0] > pos[len(sequence)-1][0]:
+        m0 = M(axis, np.pi)
+        trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
+        pos = np.hstack((pos,np.zeros((pos.shape[0],1))))
+        pos  = np.array(((np.asmatrix(m0) * np.asmatrix(pos-trans_pos).T).T+trans_pos)[:,0:2])
+    if mode in [0, 2]:
+        ann_list = a_ann_list
+        pairs = a_pairs
+    output_svg = sesvg.draw_structure(threshold, pos, pairs, ann_list, int(args.chi_conf), sequence, dimensions, args.output_ids)
+    fh1 = open(args.name + "_%dsteps.svg" % (i),'w')
+    fh1.write(output_svg)
+    fh1.close()
+
+
+    fh2 = open(args.name + ".out",'w')
+    fh2.write(output)
+    end_time = datetime.datetime.now()
+    fh2.write("# Took %s\n" % (end_time - start_time))
+    fh2.close()
+
+    
+                     
+
+
+
 ##################### DUMP #######################
 
 def dump(args):
 
-    assert args.dumpR or args.dumpG, "# ERROR. choose --dumpR and/or --dumpR"
+    assert args.dumpR or args.dumpG, "# ERROR. choose --dumpR and/or --dumpG"
     
 
     if(args.dumpR):
@@ -567,12 +985,13 @@ def main():
         outfile = filename(args)
 
     # check
-    if(args.pdbs==None):
-        assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file (--trj)"
-        assert args.top != None, "# Please provide a topology file"
-    else:
-        if(args.subparser_name != "ENM" and args.subparser_name!="SNIPPET"):
-            assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory+topology files, not both"
+    if(args.subparser_name!="SEC_STRUCTURE"):
+        if(args.pdbs==None):
+            assert args.trj != None, "# Specify either pdbs (--pdb) or a trajectory file (--trj)"
+            assert args.top != None, "# Please provide a topology file"
+        else:
+            if(args.subparser_name != "ENM" and args.subparser_name!="SNIPPET"):
+                assert args.trj == None, "# Specify either pdbs (--pdb) or a trajectory+topology files, not both"
             
     
     # call appropriate function
@@ -582,6 +1001,7 @@ def main():
                'SS_MOTIF' : ss_motif,\
                'DS_MOTIF' : ds_motif,\
                'ANNOTATE' : annotate,\
+               'SEC_STRUCTURE' : sec_structure,\
                'DUMP' : dump,\
                'TORSION':torsion,\
                'JCOUPLING':couplings,\
