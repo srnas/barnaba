@@ -1236,57 +1236,36 @@ def parse_dotbracket(threshold, file, weights):
           #      mult_chain = True
         if not line.startswith("#"):
             l = line.split()
-            if "pdb" in l[0].lower():
-                dotbr = l[1]
-                if len(dotbr) != len(sequence):
-                    print(mult_chain)
-                    if not mult_chain:
-                        sys.exit("Dot-bracket length does not match sequence length")
-                    else:
-                        dotbr = dotbr[:len(sequence)]
-                base_pairs = parse_dotbr(dotbr)
-                for bp in base_pairs:
-                    ann_list[bp[0], bp[1], "WCc"] = 1.
-                list_base_pairs = base_pairs    
-                ann_lists.append(dict(ann_list))
-                ann_list = {}
-            else:
-                try: int(l[0])
-                except ValueError:
-                    continue
+            dotbr = l[1]
+            if len(dotbr) != len(sequence):
+                if not mult_chain:
+                    sys.exit("Dot-bracket length does not match sequence length")    
                 else:
-                    traj = True
-                    dotbr = l[1]
-                    if len(dotbr) != len(sequence):
-                        if not mult_chain:
-                            sys.exit("Dot-bracket length does not match sequence length")    
-                        else:
-                            dotbr = dotbr[:len(sequence)]
-                    n_frames += 1
-                    base_pairs = parse_dotbr(dotbr)
-                    for bp in base_pairs:
-                        if bp not in list_base_pairs:
-                            list_base_pairs.append(bp)
-                        try:
-                            ann_list[bp[0], bp[1], "WCc"]
-                        except:
-                            if len(weights) == 0:
-                                ann_list[bp[0], bp[1], "WCc"] = 1.
-                            else:
-                                ann_list[bp[0], bp[1], "WCc"] = weights[n_frames-1]
-                        else: 
-                            if len(weights) == 0:
-                                ann_list[bp[0], bp[1], "WCc"] += 1.
-                            else:    
+                    dotbr = dotbr[:len(sequence)]
+            n_frames += 1
+            base_pairs = parse_dotbr(dotbr)
+            for bp in base_pairs:
+                if bp not in list_base_pairs:
+                    list_base_pairs.append(bp)
+                try:
+                    ann_list[bp[0], bp[1], "WCc"]
+                except:
+                    if len(weights) == 0:
+                        ann_list[bp[0], bp[1], "WCc"] = 1.
+                    else:
+                        ann_list[bp[0], bp[1], "WCc"] = weights[n_frames-1]
+                else: 
+                    if len(weights) == 0:
+                        ann_list[bp[0], bp[1], "WCc"] += 1.
+                    else:    
                                 ann_list[bp[0], bp[1], "WCc"] += weights[n_frames-1]
     if len(list_base_pairs) == 0:
         sys.exit("No basepairs found.")
-    if traj:
-        for ann, value in ann_list.items():
-            if len(weights) == 0:
-                ann_list[ann] /= n_frames
-            else:
-                ann_list[ann] /= sum(weights)
+    for ann, value in ann_list.items():
+        if len(weights) == 0:
+            ann_list[ann] /= n_frames
+        else:
+            ann_list[ann] /= sum(weights)
     chains = [0]
     return sequence, ann_list, list_base_pairs, n_frames    
 

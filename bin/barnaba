@@ -316,15 +316,18 @@ def annotate(args):
         for i in range(len(args.pdbs)):
             st, pair, res = bb.annotate(args.pdbs[i])
             stri_p += "# SEQ " + (" ".join([f for f in res]) + "\n")
+            stri_p += "# sequence %s\n" % "-".join(res)
             stri_p += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
             stri_p += "".join([ "%-10s %-10s %4s \n" % (res[pair[0][0][e][0]],res[pair[0][0][e][1]],pair[0][1][e]) for e in range(len(pair[0][0]))])
             
+            stri_s += "# sequence %s\n" % "-".join(res)
             stri_s += "# PDB %s \n" % args.pdbs[i].split("/")[-1]
             stri_s += "".join([ "%-10s %-10s %4s \n" % (res[st[0][0][e][0]],res[st[0][0][e][1]],st[0][1][e]) for e in range(len(st[0][0]))])
 
             if(args.dotbr):
                 dotbr,ss = bb.dot_bracket(pair,res)
                 stri_dot += "# SEQ %s" % ss
+                stri_dot += "# sequence %s\n" % "-".join(res)
                 stri_dot += "%-20s %s\n" %(args.pdbs[i].split("/")[-1],dotbr[0])
 
             
@@ -724,13 +727,13 @@ def sec_structure(args):
     output += "%8d%10.2e%10.2e%10.2e%10d\n" % (i, E, max_F, h, r_i) 
     print( i, " steps of minmization")    
     output += "%d steps of minmization\n" % (i)
-    from scipy.linalg import expm3, norm
+    from scipy.linalg import expm, norm
 
     av_stem_vector = np.mean([pos[int(param_stem[0][1])], pos[int(param_stem[0][2])]], axis=0) - np.mean([pos[int(param_stem[len(param_stem)-1][1])], pos[int(param_stem[len(param_stem)-1][2])]], axis=0)
     theta = np.arctan2(-av_stem_vector[0], -av_stem_vector[1])
 
     def M(axis, theta):
-        return expm3(np.cross(np.eye(3), axis/norm(axis)*theta))
+        return expm(np.cross(np.eye(3), axis/norm(axis)*theta))
     axis = [0,0,1]
     m0 = M(axis, theta)
     trans_pos = np.full((len(pos),3), [dimensions*.5, dimensions*.5, 0])
