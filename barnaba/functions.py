@@ -235,8 +235,8 @@ def rmsd_traj(reference,traj,out=None):
         resname2 = nn_traj.rna_seq_id[ii]
         
         # if the nucleotide is the same, use all atoms
-       # if(res1.name == res2.name):
-        if(res1.name == "crap"):
+        if(res1.name == res2.name):
+        #if(res1.name == "crap"):
             
             name2 = [at.name for at in res2.atoms if  at.name in definitions.nt_atoms[resname2]]
             #name1 = [at.name for at in res1.atoms if  at.name in definitions.nb_atoms[res1.name]]
