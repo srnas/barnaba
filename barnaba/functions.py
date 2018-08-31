@@ -18,6 +18,7 @@ from builtins import range
 import sys
 import mdtraj as md
 from scipy.spatial import distance
+
 import itertools
 import numpy as np
 import os
@@ -1361,8 +1362,11 @@ def parse_annotations(threshold, file, weights):
     return sequence, ann_list, pairs, n_frames
     
 def stems(param_wc, param_bp, param_stack):
-    pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
-    pairs_all = np.unique(np.array(param_bp + param_stack + param_wc)[:,1:3], axis=0)
+    
+    #pairs_wc =  np.unique(np.array(param_wc)[:,1:3], axis=0)
+    #pairs_all = np.unique(np.array(param_bp + param_stack + param_wc)[:,1:3], axis=0)
+    pairs_wc = definitions.unique_rows(np.array(param_wc)[:,1:3])
+    pairs_all = definitions.unique_rows(np.array(param_bp + param_stack + param_wc)[:,1:3])
     sums_all = np.unique( np.sum(pairs_all, axis=1))
     ds_all = []
    
