@@ -33,7 +33,7 @@ def test_cluster():
     print("# Cumulative explained variance of component: 1=%5.1f 2:=%5.1f 3=%5.1f" % (v[0]*100,v[1]*100,v[2]*100))
     print("# DBSCAN clustering...")
     # do DBSCAN clustering. eps and min_samples need to be adjusted.
-    new_labels, center_idx = cc.dbscan(gvec,range(gvec.shape[0]),eps=0.6,min_samples=10)
+    new_labels, center_idx = cc.dbscan(gvec,range(gvec.shape[0]),eps=0.6/np.sqrt(8.),min_samples=10)
     print("DONE!")
 
     # create color palette. gray, small points for unassigned clusters.
