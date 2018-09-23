@@ -60,7 +60,7 @@ def test_sugar_3():
     
     resi = ["RG_69_0","RU_37_0"]
     na = ["Phase","tm"]
-    angles,rr = bb.pucker_angles(fname,residues=resi)
+    angles,rr = bb.pucker_angles(fname,residues=resi,altona=True)
 
     stri = "".join([" %10s " % pp for pp in na])
     stri += "\n"

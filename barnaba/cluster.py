@@ -43,14 +43,14 @@ def dbscan(gvecs,labels,eps,min_samples,sample_weight=None):
 
     
     slen = np.sqrt(gvecs.shape[1]/4.)
-    #eps *=np.sqrt(slen)
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(gvecs,sample_weight=sample_weight)
-
+    #print(slen)
+    eps *=np.sqrt(slen)
+    db = DBSCAN(eps=eps, min_samples=min_samples,algorithm='brute').fit(gvecs,sample_weight=sample_weight)
+    #db = DBSCAN(eps=eps, min_samples=min_samples).fit(gvecs)
     cluster_labels = db.labels_
     
     n_clusters_ = len(set(cluster_labels))
-    
-    print('# eps:%5.3f min_samples:%d  nclusters: %d' % (eps,min_samples, n_clusters_))
+    print('# eps:%5.3f min_samples:%d  nclusters: %d' % (eps,min_samples, n_clusters_-1))
     print("#  silhouette score: %0.4f"
           % metrics.silhouette_score(gvecs, cluster_labels)),
     non_l = np.where(cluster_labels!=-1)

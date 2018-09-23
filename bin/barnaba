@@ -45,6 +45,7 @@ def parse():
     parser_01a.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_01a.add_argument("--top", dest="top",help="Topology file",required=False)    
     parser_01a.add_argument("--ref", dest="reference",help="Reference PDB file",required=True)
+    parser_01a.add_argument("--heavy-atom", dest="heavy_atom",help="Attempt to use all heavy atoms for superposition",action='store_true',default=False)
     parser_01a.add_argument("--dump", dest="dump",help="Write aligned PDB/TRJ",action='store_true',default=False)
 
     
@@ -72,7 +73,7 @@ def parse():
     parser_03.add_argument("--sequence", dest="seq",help="Sequence Accepts ACGU/NRY/ format. Default = any",required=False,default=None)
     parser_03.add_argument("--dump", dest="dump",help="Write pdb files",action='store_true',default=False)
 
-    # SEARCH DOUBLE STRANDED MOTIFS - OK
+    # SEARCH DOUBLE STRANDED MOTIFS
     parser_04 = subparsers.add_parser('DS_MOTIF', help='Search double stranded RNA motifs ')
     parser_04.add_argument("-o", dest="name",help="output_name",default=None,required=False)
     parser_04.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
@@ -133,13 +134,14 @@ def parse():
     parser_08.add_argument("--trj", dest="trj",help="Trajectory",required=False,default=None)
     parser_08.add_argument("--top", dest="top",help="Topology file",required=False)
 
-    parser_08.add_argument("--backbone", dest="backbone",help="calculate backbone (a,b,g,d,e,z) and chi torsion angle",action='store_true',default=False)
-    parser_08.add_argument("--sugar", dest="sugar",help="calculate sugar torsion angles (v0...v5)",action='store_true',default=False)
-    parser_08.add_argument("--pucker", dest="pucker",help="calculate sugar pucker angles (amplitude, phase)",action='store_true',default=False)
+    parser_08.add_argument("--backbone", dest="backbone",help="Calculate backbone (a,b,g,d,e,z) and chi torsion angle",action='store_true',default=False)
+    parser_08.add_argument("--sugar", dest="sugar",help="Calculate sugar torsion angles (v0...v5)",action='store_true',default=False)
+    parser_08.add_argument("--pucker", dest="pucker",help="Calculate sugar pucker pseudorotation parameters (amplitude, phase)",action='store_true',default=False)
+    parser_08.add_argument("--altona", dest="altona",help="Calculate sugar pucker angles using Altona-Sundaralingam treatment",action='store_true',default=False)
     parser_08.add_argument("--res", dest="res",help="Calculate torsion angle for specific residues",required=False,nargs="+",default=None)
     
 
-    # CALCULATE TORSION ANGLES - J COUPLINGS OK
+    # CALCULATE TORSION ANGLES - J COUPLINGS
     parser_09 = subparsers.add_parser('JCOUPLING', help='Calculate J couplings.')
     parser_09.add_argument("-o", dest="name",help="output_name",default=None,required=False)
     parser_09.add_argument("--pdb", dest="pdbs",help="PDB file(s)",nargs="+",default=None,required=False)
@@ -210,15 +212,15 @@ def rmsd(args):
 
     if(args.top==None):
         if(args.dump==True):
-            dd = [bb.rmsd(args.reference,pdb,out="%s_%06d.pdb" % (args.name,i)) for i,pdb in enumerate(args.pdbs)]
+            dd = [bb.rmsd(args.reference,pdb,out="%s_%06d.pdb" % (args.name,i),heavy_atom=args.heavy_atom) for i,pdb in enumerate(args.pdbs)]
         else:
-            dd = [bb.rmsd(args.reference,pdb) for i,pdb in enumerate(args.pdbs)]
+            dd = [bb.rmsd(args.reference,pdb,heavy_atom=args.heavy_atom) for i,pdb in enumerate(args.pdbs)]
     else:
         if(args.dump==True):
             out = "%s.%s" % (args.name, (args.trj).split(".")[-1])
-            dd = bb.rmsd(args.reference,args.trj,topology=args.top,out=out)
+            dd = bb.rmsd(args.reference,args.trj,topology=args.top,out=out,heavy_atom=args.heavy_atom)
         else:
-            dd = bb.rmsd(args.reference,args.trj,topology=args.top)
+            dd = bb.rmsd(args.reference,args.trj,topology=args.top,heavy_atom=args.heavy_atom)
 
     fh = open(args.name + ".out",'w')
     fh.write("# %s \n" % (" ".join(sys.argv[:])))
@@ -871,11 +873,11 @@ def torsion(args):
         if(args.top==None):
             for i in range(len(args.pdbs)):
                 stri_b += "# PDB %s \n" % args.pdbs[i].split("/")[-1]                
-                angles_b,rr = bb.pucker_angles(args.pdbs[i],residues=args.res)
+                angles_b,rr = bb.pucker_angles(args.pdbs[i],residues=args.res,altona=args.altona)
                 stri_b += "".join(["%-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[0,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])
         else:
             
-            angles_b,rr = bb.pucker_angles(args.trj,topology=args.top,residues=args.res)
+            angles_b,rr = bb.pucker_angles(args.trj,topology=args.top,residues=args.res,altona=args.altona)
             for i in range(angles_b.shape[0]):
                 stri_b += "# Frame %d \n" % i
                 stri_b += "".join(["%-12s %s \n" % (rr[e], "".join([" %11.3e" % angles_b[i,e,k] for k in range(angles_b.shape[2])])) for e in range(angles_b.shape[1])])

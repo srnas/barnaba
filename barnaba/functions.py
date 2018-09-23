@@ -177,7 +177,7 @@ def dump_gvec_traj(traj,cutoff=2.4):
 #################################################
 
 
-def rmsd(reference,target,topology=None,out=None):
+def rmsd(reference,target,topology=None,out=None,heavy_atom=False):
     
     """
     Calculate rmsd after optimal alignment between reference and target structures. Superposition and RMSD calculations are performed using all heavy atoms. 
@@ -193,6 +193,9 @@ def rmsd(reference,target,topology=None,out=None):
          Topology filename. Must be specified if target is a trajectory.
     out :  string, optional
          If a string is specified, superimposed PDB structures are written to disk with the specified prefix.
+    heavy_atom :   bool, optional
+         If True, all heavy atoms are used for superposition. Default is False
+
     Returns
     -------
     array :
@@ -209,10 +212,10 @@ def rmsd(reference,target,topology=None,out=None):
         traj = md.load(target,top=topology)
     warn += "# Loaded target %s \n" % target
 
-    return rmsd_traj(ref,traj,out=out)
+    return rmsd_traj(ref,traj,out=out,heavy_atom=heavy_atom)
 
 
-def rmsd_traj(reference,traj,out=None):
+def rmsd_traj(reference,traj,out=None,heavy_atom=False):
     
     top_traj = traj.topology
     # initialize nucleic class
@@ -221,8 +224,13 @@ def rmsd_traj(reference,traj,out=None):
     top_ref = reference.topology
     # initialize nucleic class
     nn_ref = nucleic.Nucleic(top_ref)
-    assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))
 
+    assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))    
+    # check that sequence is identical when using heavy atoms
+    if(nn_traj.rna_seq_id!=nn_ref.rna_seq_id and heavy_atom==True):
+        sys.stderr.write("# Sequences are not identical, cannot superimpose using all heavy atoms. ")
+        sys.exit(1)
+        
     # loop over residues and find common heavy atoms
     idx_ref = []
     idx_target = []
@@ -235,17 +243,13 @@ def rmsd_traj(reference,traj,out=None):
         resname1 = nn_ref.rna_seq_id[ii]
         resname2 = nn_traj.rna_seq_id[ii]
         
-        # if the nucleotide is the same, use all atoms
-        if(res1.name == res2.name):
-        #if(res1.name == "crap"):
+        # if heavy_atom is true, use all atoms
+        if(heavy_atom):
             
             name2 = [at.name for at in res2.atoms if  at.name in definitions.nt_atoms[resname2]]
-            #name1 = [at.name for at in res1.atoms if  at.name in definitions.nb_atoms[res1.name]]
-            #print name2,name1
             for at in res1.atoms:
                 if at.name in definitions.nt_atoms[resname1]:
                     if(at.name in name2):
-                        #print at.name
                         idx_ref.append(at.index)
                         idx_target.append(((res2.atom(at.name)).index))
         # else, use bb only
@@ -256,7 +260,6 @@ def rmsd_traj(reference,traj,out=None):
                     if(at.name in name2):
                         idx_ref.append(at.index)
                         idx_target.append(((res2.atom(at.name)).index))
-            
     print("# found ",len(idx_ref), "atoms in common")
     
     if(len(idx_ref)<3):
@@ -265,8 +268,8 @@ def rmsd_traj(reference,traj,out=None):
         sys.exit(1)
         
     traj.superpose(reference,atom_indices=idx_target, ref_atom_indices=idx_ref)
-    if(out!=None):
-        traj.save(out)
+    if(out!=None): traj.save(out)
+    
     rmsd = np.sqrt(3*np.mean((traj.xyz[:, idx_target, :] - reference.xyz[0,idx_ref, :])**2, axis=(1,2)))
     return rmsd
 
@@ -408,7 +411,7 @@ def sugar_angles_traj(traj,residues=None,angles=None):
 
 #############################################################
 
-def pucker_angles(filename,topology=None,residues=None):
+def pucker_angles(filename,topology=None,residues=None,altona=False):
     
     """
     Calculate sugar pucker pseudorotation  torsion angles: phase and amplitude
@@ -437,9 +440,12 @@ def pucker_angles(filename,topology=None,residues=None):
         traj = md.load(filename,top=topology)
     warn = "# Loading %s \n" % filename
     sys.stderr.write(warn)
-    return pucker_angles_traj(traj,residues=residues)
-
-def pucker_angles_traj(traj,residues=None):
+    if(altona):
+        return pucker_altona_traj(traj,residues=residues)
+    else:
+        return pucker_rao_traj(traj,residues=residues)
+        
+def pucker_altona_traj(traj,residues=None):
 
     torsions,rr = sugar_angles_traj(traj,residues=residues)
     x1 = torsions[:,:,4] +  torsions[:,:,1] -  torsions[:,:,3] -   torsions[:,:,0]
@@ -447,6 +453,22 @@ def pucker_angles_traj(traj,residues=None):
     phase = np.arctan2(x1,x2)
     phase[np.where(phase<0.0)] += 2.0*np.pi
     tm = torsions[:,:,2]/np.cos(phase)
+    angles = np.dstack((phase,tm))
+    return angles, rr
+
+def pucker_rao_traj(traj,residues=None):
+
+    torsions,rr = sugar_angles_traj(traj,residues=residues)
+
+    period = 4.*np.pi/5
+    A = (2./5.)*(torsions[:,:,0]+np.cos(period)*torsions[:,:,1] + np.cos(2.*period)*torsions[:,:,2] + \
+                np.cos(3.*period)*torsions[:,:,3] + np.cos(4.*period)*torsions[:,:,4])
+    B = -(2./5.)*(np.sin(period)*torsions[:,:,1] + np.sin(2.*period)*torsions[:,:,2] + \
+                np.sin(3.*period)*torsions[:,:,3] + np.sin(4.*period)*torsions[:,:,4])
+    
+    phase = np.arctan2(B,A) - 0.5*period
+    phase[np.where(phase<0.0)] += 2.0*np.pi
+    tm = np.sqrt(A*A + B*B)
     angles = np.dstack((phase,tm))
     return angles, rr
 
@@ -658,14 +680,19 @@ def ss_motif_traj(ref,traj,threshold=0.8,cutoff=2.4,sequence=None,bulges=0,out=N
                 # align whatever is in common in the backbone
                 idx_target = []
                 idx_ref = []
-                for res1,res2 in zip(nn_ref.ok_residues,traj_slice.topology.residues):
+                #for res1,res2 in zip(nn_ref.ok_residues,traj_slice.topology.residues):
+                for ii in range(len(nn_ref.ok_residues)):
+                    res1 = nn_ref.ok_residues[ii]
+                    res2 = list(traj_slice.topology.residues)[ii]
+                    
                     name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
                     for at in res1.atoms:
                         if at.name in definitions.bb_atoms:
                             if(at.name in name2):
                                 idx_ref.append(at.index)
                                 idx_target.append(((res2.atom(at.name)).index))
-                                #idx_target.append(res2[name2.index(at.name)].index)
+                                #print(at,res2.atom(at.name))
+
                 traj_slice.superpose(ref,atom_indices=idx_target, ref_atom_indices=idx_ref)
                 traj_slice.save(pdb_out)
 
@@ -830,7 +857,10 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
                 # align whatever is in common in the backbone
                 idx_target = []
                 idx_ref = []
-                for res1,res2 in zip(nn_ref.ok_residues,traj_slice.topology.residues):
+                for ii in range(len(nn_ref.ok_residues)):
+                    res1 = nn_ref.ok_residues[ii]
+                    res2 = list(traj_slice.topology.residues)[ii]
+                    
                     name2 = [at.name for at in res2.atoms if  at.name in definitions.bb_atoms]
                     for at in res1.atoms:
                         if at.name in definitions.bb_atoms:

@@ -13,7 +13,7 @@ def test_rmsd_1():
     fname = "%s/test/data/sample1.pdb" % cwd
     fname1 = "%s/test/data/sample2.pdb" % cwd
 
-    dist = bb.rmsd(fname,fname1,out='%s/aligned_1.pdb' % outdir)
+    dist = bb.rmsd(fname,fname1,out='%s/aligned_1.pdb' % outdir,heavy_atom=True)
     stri = "".join([ "%14e \n" % (dd) for dd in dist])
     
     fh = open("%s/rmsd_01.test.dat" % outdir,'w')
@@ -43,7 +43,7 @@ def test_rmsd_3():
     fname1 = "%s/test/data/samples.xtc" % cwd
 
     
-    dist = bb.rmsd(fname,fname1,topology=fname,out='%s/aligned_3.xtc' % outdir)
+    dist = bb.rmsd(fname,fname1,topology=fname,out='%s/aligned_3.xtc' % outdir,heavy_atom=True)
     stri = "".join([ "%14e \n" % (dd) for dd in dist])
 
     fh = open("%s/rmsd_03.test.dat" % outdir,'w')
