@@ -11,10 +11,10 @@
 Introduction
 ============
 
-BaRNAba is a tool for analyzing RNA three-dimensional structures and simulations. BaRNAba uses MDtraj to read/write topology and trajectory files, as such it supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more.  
-BaRNAba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi, Giovanni Pinamonti, Sabine Reisser and Wouter Boomsma.   
+Barnaba is a tool for analyzing RNA three-dimensional structures and simulations. Barnaba uses MDtraj to read/write topology and trajectory files, as such it supports several formats including pdb, xtc, trr, dcd, binpos, netcdf, mdcrd, prmtop, and more.  
+Barnaba has been developed by Sandro Bottaro with the crucial help of Giovanni Bussi, Giovanni Pinamonti, Sabine Rei{\ss}er and Wouter Boomsma.   
 
-This is what you can do with baRNAba:  
+This is what you can do with Barnaba:  
 
 1. Calculate eRMSD [1]
 2. Calculate RMSD after optimal alignment  
@@ -28,31 +28,27 @@ This is what you can do with baRNAba:
 
 For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat) gmail dot com
 
-If you use baRNAba in your work,  please cite the following paper::
+If you use Barnaba in your work,  please cite the following paper::
 
-      @article{bottaro2014role,   
-               title={The role of nucleobase interactions in RNA structure and dynamics},  
-               author={Bottaro, Sandro and Di Palma, Francesco and Bussi, Giovanni},  
-               journal={Nucleic acids research},  
-               volume={42},  
-               number={21},  
-               pages={13306--13314},  
-               year={2014},  
-               publisher={Oxford University Press}  
+      @article{bottaro2018barnaba,   
+               title={Barnaba: Software for Analysis of Nucleic Acids Structures and Trajectories},  
+               author={Bottaro, Sandro and Bussi, Giovanni and Pinamonti, Giovanni and Rei{\ss}er, Sabine and Boomsma, Wouter and Lindorff-Larsen, Kresten},  
+               journal={Biorxiv},  
+               year={2018}
      }
 
 
 
 Requirements
 -------------
-baRNAba requires:
+Barnaba requires:
    - Python 2.7.x or > 3.3
    - Numpy
    - Scipy
    - Mdtraj 1.9
    - future
      
-baRNAba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories. 
+Barnaba requires mdtraj (http://mdtraj.org/) for manipulating structures and trajectories. 
 To perform cluster analysis, scikit-learn is required too.
 
 Required packages can be installed using `pip`, e.g.:
@@ -89,7 +85,7 @@ Some users might experience issues installing MDtraj using pip. If this is the c
     
 Usage
 ------------
-BaRNAba can be either used as a Python library or as a commandline tool.
+Barnaba can be either used as a Python library or as a commandline tool.
 A number of Notebook examples can be found in the examples_ directory.
 
 Alternatively, the command-line interface can be found in the bin directory. Here's a minimal how-to
@@ -125,28 +121,32 @@ Alternatively, the command-line interface can be found in the bin directory. Her
    
    barnaba ANNOTATE --pdb ../test/data/SARCIN.pdb  
 
-6. Calculate backbone/sugar/pseudorotation angles
+6. Produce dynamic secondary-structure figures. It requires as input the files .pairing	and .stacking produced with the	ANNOTATE command.
+
+   barnaba SEC_STRUCTURE --ann outfile.ANNOTATE.stacking.out outfile.ANNOTATE.pairing.out
+
+7. Calculate backbone/sugar/pseudorotation angles
     
    barnaba TORSION --pdb ../test/data/GNRA.pdb --backbone --sugar --pucker 
  
 
-7. Calculate J-couplings 
+8. Calculate J-couplings 
 
    barnaba JCOUPLING --pdb ../test/data/sample1.pdb 
 
-8. Calculate elastic network models for RNA and predict SHAPE reactivity. NB: only works with PDB.
+9. Calculate elastic network models for RNA and predict SHAPE reactivity. NB: only works with PDB.
    
    barnaba ENM --pdb ../test/data/GNRA.pdb --shape
 
-9. Calculate relative positions between bases R_ij  ang G vectors for pairs within ellipsoidal cutoff  
+10. Calculate relative positions between bases R_ij  ang G vectors for pairs within ellipsoidal cutoff  
 
    barnaba DUMP --pdb ../test/data/GNRA.pdb --dumpG --dumpR  
 
-10. Extract fragments from structures with a given sequence. NB: only works with PDB.  
+11. Extract fragments from structures with a given sequence. NB: only works with PDB.  
 
     barnaba SNIPPET --pdb ../test/data/1S72.pdb  --seq NNGNRANN
  
-11. Calculate ESCORE  
+12. Calculate ESCORE  
     
    barnaba ESCORE --ff ../test/data/1S72.pdb --pdb ../test/data/sample1.pdb
 
