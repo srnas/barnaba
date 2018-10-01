@@ -20,11 +20,12 @@ This is what you can do with Barnaba:
 2. Calculate RMSD after optimal alignment  
 3. Search for single/double stranded RNA motifs in the PDB database or in simulations [1]  
 4. Annotate PDB structures and trajectories with the Leontis-Westhof classification
-5. Cluster nucleic acids structures using the eRMSD as a metric distance
-6. Calculate elastic network models for nucleic acids and nucleic acids/protein complexes [2]
-7. Calculate backbone and pucker torsion angles in a PDB structure or trajectory
-8. Back-calculate 3J scalar couplings from PDB structure or trajectory
-9. Score three-dimensional structures using eSCORE [1]
+5. Produce dynamic secondary structure figures in SVG format
+6. Cluster nucleic acids structures using the eRMSD as a metric distance
+7. Calculate elastic network models for nucleic acids and nucleic acids/protein complexes [2]
+8. Calculate backbone and pucker torsion angles in a PDB structure or trajectory
+9. Back-calculate 3J scalar couplings from PDB structure or trajectory
+10. Score three-dimensional structures using eSCORE [1]
 
 For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat) gmail dot com
 
@@ -32,7 +33,8 @@ If you use Barnaba in your work,  please cite the following paper::
 
       @article{bottaro2018barnaba,   
                title={Barnaba: Software for Analysis of Nucleic Acids Structures and Trajectories},  
-               author={Bottaro, Sandro and Bussi, Giovanni and Pinamonti, Giovanni and Rei{\ss}er, Sabine and Boomsma, Wouter and Lindorff-Larsen, Kresten},  
+               author={Bottaro, Sandro and Bussi, Giovanni and Pinamonti, Giovanni
+	       and Rei{\ss}er, Sabine and Boomsma, Wouter and Lindorff-Larsen, Kresten},  
                journal={Biorxiv},  
                year={2018}
      }
@@ -87,6 +89,7 @@ Usage
 ------------
 Barnaba can be either used as a Python library or as a commandline tool.
 A number of Notebook examples can be found in the examples_ directory.
+The notebooks for conducting the analyses and producing the figures in the manuscript can be found in the folder manuscript_figures_ .
 
 Alternatively, the command-line interface can be found in the bin directory. Here's a minimal how-to
 
@@ -163,3 +166,4 @@ References
    Nucleic acids research 43.15 (2015): 7260-7269.
 
 .. _examples: https://github.com/srnas/barnaba/tree/master/examples
+.. _manuscript_figures: https://github.com/srnas/barnaba/tree/master/manuscript_figures
