@@ -841,11 +841,12 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
             resname_idxs = [nn_traj.rna_seq[l] for l  in idxs_combo[k]]
             
             results.append([i,dd_combo[0,k]/np.sqrt(l1 + l2),resname_idxs])
-
             #print results[-1]
             # Write aligned PDB 
             if(out != None):
-                pdb_out = "%s_%05d_%s_%d.pdb" % (out,count,resname_idxs[k][0],i)
+                print(resname_idxs)
+
+                pdb_out = "%s_%05d_%s_%d.pdb" % (out,count,resname_idxs[0],i)
                 # slice trajectory
                 tmp_atoms = []
                 tmp_res =[]
