@@ -747,7 +747,7 @@ def ds_motif(query,target,l1,l2,threshold=0.9,cutoff=2.4,topology=None,sequence=
     warn += "# Loaded target %s \n" % target
     sys.stderr.write(warn)
 
-    return ds_motif_traj(ref,traj,l1,l2,threshold=threshold,sequence=sequence,bulges=bulges,out=out)
+    return ds_motif_traj(ref,traj,l1,l2,cutoff=cutoff,threshold=threshold,sequence=sequence,bulges=bulges,out=out)
 
 def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0,out=None):
     
