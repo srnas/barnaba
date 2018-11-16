@@ -26,7 +26,7 @@ from . import definitions
 from . import nucleic
 from . import calc_mats as ff
     
-def ermsd(reference,target,cutoff=2.4,topology=None):
+def ermsd(reference,target,cutoff=2.4,topology=None,residues_ref=None,residues_target=None):
     
     """
     Calculate ermsd between reference and target structures  
@@ -60,9 +60,9 @@ def ermsd(reference,target,cutoff=2.4,topology=None):
     warn += "# Loaded target %s \n" % target
     sys.stderr.write(warn)
 
-    return ermsd_traj(ref,traj,cutoff=cutoff)
+    return ermsd_traj(ref,traj,cutoff=cutoff,residues_ref=residues_ref,residues_target=residues_target)
 
-def ermsd_traj(reference,traj,cutoff=2.4):
+def ermsd_traj(reference,traj,cutoff=2.4,residues_ref=None,residues_target=None):
     
     top_traj = traj.topology
     # initialize nucleic class
@@ -72,16 +72,25 @@ def ermsd_traj(reference,traj,cutoff=2.4):
     # initialize nucleic class
     nn_ref = nucleic.Nucleic(top_ref)
 
-    assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))
     
-    coords_ref = reference.xyz[0,nn_ref.indeces_lcs]
+    ref_indeces = nn_ref.indeces_lcs
+    if(residues_ref!=None): ref_indeces = ref_indeces[:,residues_ref]
+        
+    coords_ref = reference.xyz[0,ref_indeces]
     ref_mat = ff.calc_gmat(coords_ref,cutoff).reshape(-1)
+
     #rna_seq = ["%s_%s_%s" % (res.name,res.resSeq,res.chain.index) for res in nn.ok_residues]
     gmats = []
+    traj_indeces = nn_traj.indeces_lcs
+    if(residues_target!=None): traj_indeces = traj_indeces[:,residues_target]
+    #print(residues_target)
+    assert ref_indeces.shape[1]==traj_indeces.shape[1], "reference %s, target %s" % (ref_indeces.shape,traj_indeces.shape)
+    
     for i in range(traj.n_frames):
-        coords_lcs = traj.xyz[i,nn_traj.indeces_lcs]
+        coords_lcs = traj.xyz[i,traj_indeces]
         gmats.append(ff.calc_gmat(coords_lcs,cutoff).reshape(-1))
-    dd = distance.cdist([ref_mat],gmats)/np.sqrt(len(nn_traj.ok_residues))
+    dd = distance.cdist([ref_mat],gmats)/np.sqrt(traj_indeces.shape[1])
+
     return dd[0]
 
 ############## ERMSD ###############
@@ -844,7 +853,6 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
             #print results[-1]
             # Write aligned PDB 
             if(out != None):
-                print(resname_idxs)
 
                 pdb_out = "%s_%05d_%s_%d.pdb" % (out,count,resname_idxs[0],i)
                 # slice trajectory
