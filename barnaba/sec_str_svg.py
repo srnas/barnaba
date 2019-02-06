@@ -33,7 +33,7 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
             k = 0
             d = (n-1)*1.6
         elif n > 2:
-            print "MORE than 2 annotations for pair %s!!" % pair
+            print("MORE than 2 annotations for pair %s!!" % pair)
         for key, value in ann_list.items():
             if not pair[0] in key or not pair[1] in key:
                 continue
@@ -292,5 +292,5 @@ def draw_basepair(xy1, xy2, _fulltype, color):
     transform="rotate(%.4f %.4f %.4f)"/>''' % (x_c-2, y_c+2.25, x_c-2, y_c-2.25, x_c+2, y_c, color, fill, rot, x_c, y_c)
     
     else:
-        print "type %s unknown" % _type
+        print("type %s unknown" % _type)
     return output

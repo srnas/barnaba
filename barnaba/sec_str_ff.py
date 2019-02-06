@@ -5,7 +5,7 @@ import re, sys, math
 import numpy as np
 from numpy.linalg import *
 from numpy.random import *
-from sec_str_constants import *
+from .sec_str_constants import *
 import  datetime  
 
 
