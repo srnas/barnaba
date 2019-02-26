@@ -31,16 +31,18 @@ For bugs, questions or comments contact Sandro at sandro dot bottaro (guesswhat)
 
 If you use Barnaba in your work,  please cite the following paper::
 
-      @article{bottaro2018barnaba,   
-               title={Barnaba: Software for Analysis of Nucleic Acids Structures and Trajectories},  
-               author={Bottaro, Sandro and Bussi, Giovanni and Pinamonti, Giovanni
-	       and Rei{\ss}er, Sabine and Boomsma, Wouter and Lindorff-Larsen, Kresten},  
-               journal={Biorxiv},  
-               year={2018}
-     }
+	@article{bottaro2019barnaba,
+  		title={Barnaba: software for analysis of nucleic acid structures and trajectories},
+  		author={Bottaro, Sandro and Bussi, Giovanni and Pinamonti, Giovanni and Rei{\ss}er, Sabine and Boomsma, Wouter and Lindorff-Larsen, Kresten},
+  		journal={RNA},
+  		volume={25},
+  		number={2},
+  		pages={219--231},
+		year={2019},
+  		publisher={Cold Spring Harbor Lab}
+	}
 
-
-
+The manuscript is also available on biorXiv [here](https://www.biorxiv.org/content/10.1101/345678v3).
 Requirements
 -------------
 Barnaba requires:
