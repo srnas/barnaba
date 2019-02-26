@@ -42,7 +42,12 @@ If you use Barnaba in your work,  please cite the following paper::
   		publisher={Cold Spring Harbor Lab}
 	}
 
-The manuscript is also available on biorXiv [here](https://www.biorxiv.org/content/10.1101/345678v3).
+The manuscript is also available on biorXiv here: 
+https://www.biorxiv.org/content/10.1101/345678v3
+
+
+
+
 Requirements
 -------------
 Barnaba requires:
