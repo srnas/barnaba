@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import barnaba.commandline as cl
+
 import barnaba.enm as enm
 import os
 from comp_mine import comp
@@ -13,6 +15,14 @@ os.system("mkdir -p %s" % (outdir))
 fname = "%s/test/data/sample1.pdb" % cwd
 
 fname_prot= "%s/test/data/2n82.pdb" % cwd
+
+def test_enm_0():
+    """Tests command line interface"""
+    cl.main(['ENM','--pdb',fname,'-o',"%s/enm_00.test" % outdir,'--ntop','4','--shape'])
+
+    comp("%s/enm_00.test.ENM.eigvecs.out" % refdir)
+    comp("%s/enm_00.test.ENM.eigvals.out" % refdir)
+    comp("%s/enm_00.test.ENM.shape.out" % refdir)
 
 def test_enm_1():
     '''Tests C2-C2 calculation'''
@@ -169,3 +179,4 @@ def test_enm_6():
     traj_mode.save_pdb("%s/enm_14.test.pdb" % outdir)
     
     comp("%s/enm_14.test.pdb" % refdir)
+
