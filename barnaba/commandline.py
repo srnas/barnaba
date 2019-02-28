@@ -19,6 +19,11 @@ import argparse
 import barnaba as bb
 import itertools as its
 
+if (sys.version_info > (3, 0)):
+   _HAS_PYTHON3=True
+else:
+   _HAS_PYTHON3=False
+
 def parse(arguments):
 
     parser = argparse.ArgumentParser(description='This is baRNAba')
@@ -978,6 +983,14 @@ def main(arguments=None):
 
     Returns error code. 0 means no error.
     """
+
+# This is to allow passing a single string
+    if _HAS_PYTHON3:
+        if(isinstance(arguments,str)):
+            arguments=arguments.split()
+    else:
+        if(isinstance(arguments,basestring)):
+            arguments=arguments.split()
 
     def filename(args):
         # create output filename
