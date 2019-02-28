@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #   This is baRNAba, a tool for analysis of nucleic acid 3d structure
 #   Copyright (C) 2014 Sandro Bottaro (sbottaro@sissa.it)
 
@@ -1028,8 +1026,3 @@ def main(arguments=None):
 
     options[args.subparser_name](args)
     
-####################### MAIN ########################    
-
-
-if __name__ == "__main__":
-    main()
