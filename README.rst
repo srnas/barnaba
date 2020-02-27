@@ -71,6 +71,10 @@ You can obtain the latest tagged version of barnaba using pip:
 
     pip install barnaba
 
+If you prefer to manage your dependencies with conda you can use:
+
+    conda -c conda-forge install barnaba
+
 On MacOS, you can install the same tagged version using the python distributed with MacPorts:
 
     sudo port install py36-barnaba
@@ -87,10 +91,6 @@ then move to the barnaba directory and run the command
 
 Notice that barnaba is installed using `setuptools_scm` that is not compatible with git archives. Thus,
 you would not be able to install barnaba from a git tarball.
-
-Some users might experience issues installing MDtraj using pip. If this is the case, we recommend installing MDtraj using conda:
-
-    conda install --channel omnia mdtraj
     
 Usage
 ------------
