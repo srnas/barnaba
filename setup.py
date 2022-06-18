@@ -28,7 +28,7 @@ setup(name='barnaba',
       setup_requires = ['setuptools_scm','setuptools_scm_git_archive'],
       packages=find_packages(),
       python_requires='>=2.6',
-      install_requires=['numpy','scipy','mdtraj','future'],
+      install_requires=['numpy','scipy','mdtraj','future','sklearn'],
       test_suite='nose.collector',
       scripts=['bin/barnaba'],
       zip_safe=False)
