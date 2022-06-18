@@ -294,7 +294,7 @@ def ds_motif(args):
             stri += "".join([" %-20s %10.4e %s \n" % (args.pdbs[i].split("/")[-1],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
     else:
         stri += "#%-10s %-10s %10s %s \n" % ("index","frame","eRMSD","Sequence")
-        dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,l1=args.l1,l2=args.l2,\
+        dd = bb.ss_motif(args.query,args.trj,topology=args.top,out=out,\
                          bulges=args.bulges,threshold=args.threshold,sequence=args.seq,cutoff=args.cutoff)
         #stri += "".join([" %-20d %10.4e %s \n" % (j,dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
         stri += "".join([" %-10d %-10d %10.4e %s \n" % (j,dd[j][0],dd[j][1],"-".join(dd[j][2])) for j in range(len(dd))])
@@ -449,9 +449,9 @@ def sec_structure(args):
                 n_frames = i_n_frames
             else:
                 if n_frames != i_n_frames:
-                    sys.exit("Annotations files %s have different numbers of frames" % options["ann"])
+                    sys.exit("Annotations files %s have different numbers of frames" % args.f_anns)
                 if n_weights > 0 and n_weights != n_frames:
-                    sys.exit("Annotations files %s have different numbers of frames than number of weights" % options["ann"])
+                    sys.exit("Annotations files %s have different numbers of frames than number of weights" % args.f_anns)
     if mode == 2 and not (db_sequence==i_sequence).all():
         sys.exit("Sequences in dotbracket and anntation file(s) differ.")
     if mode == 2 and not (db_n_frames == i_n_frames):
@@ -985,12 +985,8 @@ def main(arguments=None):
     """
 
 # This is to allow passing a single string
-    if _HAS_PYTHON3:
-        if(isinstance(arguments,str)):
-            arguments=arguments.split()
-    else:
-        if(isinstance(arguments,basestring)):
-            arguments=arguments.split()
+    if(isinstance(arguments,str)):
+        arguments=arguments.split()
 
     def filename(args):
         # create output filename
@@ -1011,7 +1007,7 @@ def main(arguments=None):
 
     # create filename
     if(args.subparser_name!="SNIPPET"):
-        outfile = filename(args)
+        filename(args)
 
     # check
     if(args.subparser_name!="SEC_STRUCTURE"):

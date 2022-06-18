@@ -76,7 +76,7 @@ def draw_structure(threshold, pos, pairs, ann_list, chi_conf, sequence, dimensio
                         t_ann = ann
                     if t_ann == "WCc":
                         print("Found WC annotation for pair ", r1, r2, sequence[r1], sequence[r2])
-                    if binary and ann in list_wc_pairs:
+                    if binary and ann in secon.list_wc_pairs:
                         color = "#ff0000"
                     if t_ann in ["-c", "=c"] or t_ann[2] == "t":
                         output_foreground += draw_basepair([x1, y1], [x2, y2], t_ann, color)

@@ -81,7 +81,7 @@ class Nucleic:
         self.indeces_lcs = np.asarray(indeces_lcs).T
 
         if(len(self.ok_residues)<1):
-            warn = "# Only %d  found in structure. Exiting \n" % len(ok_residues) 
+            warn = "# Only %d  found in structure. Exiting \n" % len(self.ok_residues) 
             sys.stderr.write(warn)
             sys.exit(1)
         #else:

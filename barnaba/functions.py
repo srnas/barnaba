@@ -544,7 +544,7 @@ def jcouplings_traj(traj,residues=None,couplings=None,raw=False):
                 idx_angles1.append(i)
             else:
                 msg = "# Fatal error. requested coupling \"%s\" not available.\n" % couplings[i]
-                msg += "# Choose from: %s \n" % couplings_idx
+                msg += "# Choose from: %s \n" % definitions.couplings_idx
                 sys.stderr.write(msg)
                 sys.exit(1)
    
@@ -1123,8 +1123,14 @@ def dot_bracket(pairings,sequence):
                 idx2 = pp[0][e][1]
 
                 # check that bracket is not there already. This might happen in simulations
-                if(string[idx1]!="." or string[idx2]!="." ):
-                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx1],sequence[idx2])
+                if(string[idx1]!="."):
+                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx1])
+                    warn += " Dot-bracket annotation set to XXX \n"
+                    sys.stderr.write(warn)
+                    dot_bracket.append("XXX")                            
+                    continue
+                if(string[idx2]!="." ):
+                    warn = "# Frame %d, residue %s has a double WC base-pairs. " % (k,sequence[idx2])
                     warn += " Dot-bracket annotation set to XXX \n"
                     sys.stderr.write(warn)
                     dot_bracket.append("XXX")                            
@@ -1258,6 +1264,7 @@ def parse_dotbracket(threshold, file, weights):
         f_dotbracket = f.readlines()
         f.close()
     pdbs = []
+    ann_lists = []
     ann_list = {}
     res_bp = []
     n_frames = 0

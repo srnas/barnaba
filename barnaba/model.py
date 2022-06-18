@@ -119,7 +119,7 @@ class Model:
             ll = len(self.sequence)
             ii = range(ll)            
         
-        dotp,m_idx = self.get_3dmat(cutoff,ii)
+        dotp,m_idx = self.get_mat_score(cutoff,ii)
         dotp_scale = dotp*np.array(definitions.scale)[np.newaxis,:]
 
         # set to zero when norm is larger than cutoff
