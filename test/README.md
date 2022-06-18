@@ -1,11 +1,11 @@
-You can run all the tests using nose
+You can run all the tests using pytest
 
-> pip install nose
+> pip install pytest
 
 and then run all of them from the root directory with the command
 
-> nosetests
+> pytest
 
 a single test can be also performed e.g.
 
-> nosetests test/test_sugar.py
+> pytest test/test_sugar.py
