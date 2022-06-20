@@ -113,6 +113,8 @@ def force(pos, param, __i1, __i2, __k_rep, __d_rep, __k_rep_lr, write_force):
             n12 = np.column_stack((n_p12, n_p12))
             diff = n12 - d
             f = np.zeros((n, n, 2))
+            # this is false positive. pylint thinks that "k" is a list, but it's a np.array
+            # pylint: disable=E1130
             f[i1, i2] = -  k * diff * p12 * np.power(n12, -1)
             F += np.sum(f, axis=1)
             F -= np.sum(f, axis=0)
