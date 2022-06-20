@@ -28,3 +28,10 @@ jobs:
         pip install pytest pytest-cov
         pytest -v --cov=barnaba
         bash <(curl -s https://codecov.io/bash)
+    - name: Pylint
+      run: |
+        # this is imported in barnaba/sec_str_svg.py
+        # should be fixed (either imported conditionally or added as a dependency)
+        pip install matplotlib
+        pip install --upgrade  pylint
+        pylint -E barnaba
