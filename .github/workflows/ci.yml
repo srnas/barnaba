@@ -26,7 +26,8 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        pytest -v --cov=barnaba
+        # run local version (PWD) so as to properly compute coverage
+        PYTHONPATH="$PWD" pytest -v --cov=barnaba
         bash <(curl -s https://codecov.io/bash)
     - name: Pylint
       run: |
