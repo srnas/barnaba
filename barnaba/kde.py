@@ -343,38 +343,38 @@ class gaussian_kde(object):
         return value
 
 
-    def integrate_box(self, low_bounds, high_bounds, maxpts=None):
-        """Computes the integral of a pdf over a rectangular interval.
-
-        Parameters
-        ----------
-        low_bounds : array_like
-            A 1-D array containing the lower bounds of integration.
-        high_bounds : array_like
-            A 1-D array containing the upper bounds of integration.
-        maxpts : int, optional
-            The maximum number of points to use for integration.
-
-        Returns
-        -------
-        value : scalar
-            The result of the integral.
-
-        """
-        if maxpts is not None:
-            extra_kwds = {'maxpts': maxpts}
-        else:
-            extra_kwds = {}
-
-        value, inform = mvn.mvnun(low_bounds, high_bounds, self.dataset,
-                                  self.covariance, **extra_kwds)
-        if inform:
-            msg = ('An integral in mvn.mvnun requires more points than %s' %
-                   (self.d * 1000))
-            warnings.warn(msg)
-
-        return value
-
+##    def integrate_box(self, low_bounds, high_bounds, maxpts=None):
+##        """Computes the integral of a pdf over a rectangular interval.
+## 
+##        Parameters
+##        ----------
+##        low_bounds : array_like
+##            A 1-D array containing the lower bounds of integration.
+##        high_bounds : array_like
+##            A 1-D array containing the upper bounds of integration.
+##        maxpts : int, optional
+##            The maximum number of points to use for integration.
+## 
+##        Returns
+##        -------
+##        value : scalar
+##            The result of the integral.
+## 
+##        """
+##        if maxpts is not None:
+##            extra_kwds = {'maxpts': maxpts}
+##        else:
+##            extra_kwds = {}
+## 
+##        value, inform = mvn.mvnun(low_bounds, high_bounds, self.dataset,
+##                                  self.covariance, **extra_kwds)
+##        if inform:
+##            msg = ('An integral in mvn.mvnun requires more points than %s' %
+##                   (self.d * 1000))
+##            warnings.warn(msg)
+## 
+##        return value
+## 
     def integrate_kde(self, other):
         """
         Computes the integral of the product of this  kernel density estimate
