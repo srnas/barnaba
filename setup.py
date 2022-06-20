@@ -1,11 +1,22 @@
-from setuptools import setup,find_packages
+from setuptools import setup
+import re
 
 def readme():
     with open('README.rst') as f:
         return f.read()
-    
+
+def version():
+    v="NA"
+    with open("barnaba/_version.py") as f:
+        for line in f:
+            if re.match("^__version__ *= *",line):
+                v=re.sub('^__version__ *= *"',"",line.strip())
+                v=re.sub('".*',"",v)
+    return v
+
 setup(name='barnaba',
       description='analyze nucleic acid 3D structures and MD trajectories',
+      version=version(),
       long_description=readme(),
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -21,10 +32,8 @@ setup(name='barnaba',
       url='https://github.com/srnas/barnaba',
       author='Sandro Bottaro',
       author_email='sandro.bottaro@gmail.com',
-      use_scm_version = True,
-      setup_requires = ['setuptools_scm','setuptools_scm_git_archive'],
-      packages=find_packages(),
-      python_requires='>=2.6',
+      packages=["barnaba"],
+      python_requires='>=3.6',
       install_requires=['numpy','scipy','mdtraj','future','sklearn'],
       scripts=['bin/barnaba'],
       zip_safe=False)
