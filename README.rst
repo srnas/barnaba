@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/srnas/barnaba.svg
-    :target: https://travis-ci.org/srnas/barnaba
+.. image:: https://github.com/srnas/barnaba/workflows/CI/badge.svg
+    :target: https://github.com/srnas/barnaba/actions?query=workflow%3ACI
 .. image:: https://badge.fury.io/py/barnaba.svg
     :target: https://badge.fury.io/py/barnaba
 .. image:: https://repology.org/badge/version-for-repo/macports/python:barnaba.svg
@@ -51,7 +51,7 @@ https://www.biorxiv.org/content/10.1101/345678v3
 Requirements
 -------------
 Barnaba requires:
-   - Python 2.7.x or > 3.3
+   - Python >= 3.6
    - Numpy
    - Scipy
    - Mdtraj 1.9
@@ -89,9 +89,6 @@ then move to the barnaba directory and run the command
 
     pip install -e .
 
-Notice that barnaba is installed using `setuptools_scm` that is not compatible with git archives. Thus,
-you would not be able to install barnaba from a git tarball.
-    
 Usage
 ------------
 Barnaba can be either used as a Python library or as a commandline tool.
