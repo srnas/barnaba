@@ -23,7 +23,7 @@ def confirm():
 
 __version__=version()
 
-print("Current version:","x"+__version__+"x")
+print("Current version:",__version__)
 new_version=re.sub("[0-9]*$","",__version__) + str(int(re.sub("^.*\.","",__version__))+1)
 
 response=input("New version (default " + new_version + "):")
@@ -47,8 +47,8 @@ with open("barnaba/_version.py","w") as f:
 cmd=[
     'git add barnaba/_version.py',
     'git commit -m "Version ' + new_version + '"',
-    'git tag v' + new_version,
-    'git push origin master v' + new_version
+    'git tag ' + new_version,
+    'git push origin master ' + new_version
 ]
 
 print("Will now execute the following commands:")
