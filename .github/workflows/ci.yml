@@ -21,7 +21,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - if: "contains(matrix.python-version, '-dev')"
-      run: pip install git+https://github.com/scipy/scipy.git
+      run: |
+        apt update -y
+        apt get install -y OpenBLAS
+        pip install git+https://github.com/scipy/scipy.git
     - name: Install
       run: |
         pip install .
