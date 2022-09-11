@@ -23,7 +23,7 @@ jobs:
     - if: "contains(matrix.python-version, '-dev')"
       run: |
         sudo apt update -y
-        sudo apt get install -y OpenBLAS
+        sudo apt-get install -y libopenblas-dev
         pip install git+https://github.com/scipy/scipy.git
     - name: Install
       run: |
