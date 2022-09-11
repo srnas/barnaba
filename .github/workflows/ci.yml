@@ -20,6 +20,8 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+    - if: "contains(matrix.python-version, '-dev')"
+      run: pip install git+https://github.com/scipy/scipy.git
     - name: Install
       run: |
         pip install .
