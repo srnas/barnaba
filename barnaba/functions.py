@@ -888,8 +888,8 @@ def ds_motif_traj(ref,traj,l1,l2,threshold=0.9,cutoff=2.4,sequence=None,bulges=0
 
 
 
-def annotate(filename,topology=None):
-    
+def annotate(filename,topology=None, stacking_rho_cutoff=2.5, stacking_angle_cutoff=40, pairing_angle_cutoff=60):
+
     """
     Find base-pair and base-stacking 
 
@@ -899,6 +899,12 @@ def annotate(filename,topology=None):
          Filename of structure, any format accepted by MDtraj can be used.
     topology : string, optional
          Topology filename. Must be specified if target is a trajectory.
+    stacking_rho_cutoff : float
+         Cutoff for base stacking. Rho distance. Default is 2.5 (unit in angstroms).
+    stacking_angle_cutoff : float
+         Cutoff for base stacking. Absolute angle between the vectors normal to the planes of the two bases. Default is 40 (unit in degrees).
+    stacking_angle_cutoff : float
+         Cutoff for base pairing. Absolute angle between the vectors normal to the planes of the two bases. Default is 60 (unit in degrees).
     Returns
     -------
     stackings : list
@@ -917,10 +923,10 @@ def annotate(filename,topology=None):
     warn = "# Loading %s \n" % filename
     sys.stderr.write(warn)
     
-    return annotate_traj(traj)
+    return annotate_traj(traj, stacking_rho_cutoff, stacking_angle_cutoff, pairing_angle_cutoff)
 
 
-def annotate_traj(traj):
+def annotate_traj(traj, stacking_rho_cutoff=2.5, stacking_angle_cutoff=40, pairing_angle_cutoff=60):
 
     # this is the binning for annotation
     bins = [0,1.84,3.84,2.*np.pi]
@@ -958,16 +964,19 @@ def annotate_traj(traj):
         # find stacked bases 
 
         # z_ij  AND z_ji > 2 AA
-        stackz_12 = np.where(z_12>0.04)
-        stackz_21 = np.where(z_21>0.04)
+        stackz_12 = np.where(z_12>0.04)  # nm^2
+        stackz_21 = np.where(z_21>0.04)  # nm^2
         
         # rho_ij OR rho_ji < 2.5 AA
-        rhoz_12 =  np.where(rho_12<0.0625)
-        rhoz_21 =  np.where(rho_21<0.0625)
+        #rhoz_12 =  np.where(rho_12<0.0625)
+        #rhoz_21 =  np.where(rho_21<0.0625)
+        rhoz_12 =  np.where(rho_12<stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
+        rhoz_21 =  np.where(rho_21<stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
         union_rho = np.union1d(rhoz_12[0],rhoz_21[0])
 
         # angle between normal planes < 40 deg
-        anglez = np.where(np.abs(angles) >0.766)
+        #anglez = np.where(np.abs(angles) >0.766)
+        anglez = np.where(np.abs(angles) > np.cos(np.radians(stacking_angle_cutoff)))   # cosine of angle beween the normal vectors constructed on base i and base j
 
         # intersect all criteria
         inter_zeta = np.intersect1d(stackz_12,stackz_21)
@@ -1016,7 +1025,8 @@ def annotate_traj(traj):
         for j in range(len(paired_pairs)):
 
             # if angle is larger than 60 deg, skip
-            if(np.abs(angles[paired[j]]) < 0.5 ): continue
+            #if(np.abs(angles[paired[j]]) < 0.5 ): continue
+            if(np.abs(angles[paired[j]]) < np.cos(np.radians(pairing_angle_cutoff))): continue
 
             index1 = paired_pairs[j][0]
             index2 = paired_pairs[j][1]
