@@ -902,9 +902,9 @@ def annotate(filename,topology=None, stacking_rho_cutoff=2.5, stacking_angle_cut
     stacking_rho_cutoff : float
          Cutoff for base stacking. Rho distance. Default is 2.5 (unit in angstroms).
     stacking_angle_cutoff : float
-         Cutoff for base stacking. Absolute angle between the vectors normal to the planes of the two bases. Default is 40 (unit in degrees).
+         Cutoff for base stacking. Angle between the vectors normal to the planes of the two bases. Default is 40 (unit in degrees).
     stacking_angle_cutoff : float
-         Cutoff for base pairing. Absolute angle between the vectors normal to the planes of the two bases. Default is 60 (unit in degrees).
+         Cutoff for base pairing. Angle between the vectors normal to the planes of the two bases. Default is 60 (unit in degrees).
     Returns
     -------
     stackings : list
