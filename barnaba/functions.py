@@ -927,7 +927,7 @@ def annotate(filename,topology=None, stacking_rho_cutoff=2.5, stacking_angle_cut
 
 
 def annotate_traj(traj, stacking_rho_cutoff=2.5, stacking_angle_cutoff=40, pairing_angle_cutoff=60):
-
+ 
     # this is the binning for annotation
     bins = [0,1.84,3.84,2.*np.pi]
     bins_label = ["W","H","S"]
@@ -970,8 +970,8 @@ def annotate_traj(traj, stacking_rho_cutoff=2.5, stacking_angle_cutoff=40, pairi
         # rho_ij OR rho_ji < 2.5 AA
         #rhoz_12 =  np.where(rho_12<0.0625)
         #rhoz_21 =  np.where(rho_21<0.0625)
-        rhoz_12 =  np.where(rho_12<stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
-        rhoz_21 =  np.where(rho_21<stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
+        rhoz_12 =  np.where(rho_12<stacking_rho_cutoff * stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
+        rhoz_21 =  np.where(rho_21<stacking_rho_cutoff * stacking_rho_cutoff * 0.1 * 0.1)  # nm^2
         union_rho = np.union1d(rhoz_12[0],rhoz_21[0])
 
         # angle between normal planes < 40 deg
