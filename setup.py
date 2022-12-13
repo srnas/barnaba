@@ -34,7 +34,7 @@ setup(name='barnaba',
       author_email='sandro.bottaro@gmail.com',
       packages=["barnaba"],
       python_requires='>=3.6',
-      install_requires=['numpy','scipy','mdtraj','future','sklearn'],
+      install_requires=['numpy','scipy','mdtraj','future','scikit-learn'],
       scripts=['bin/barnaba'],
       zip_safe=False)
 
