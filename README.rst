@@ -2,6 +2,8 @@
     :target: https://github.com/srnas/barnaba/actions?query=workflow%3ACI
 .. image:: https://badge.fury.io/py/barnaba.svg
     :target: https://badge.fury.io/py/barnaba
+.. image:: https://img.shields.io/conda/v/conda-forge/barnaba
+    :target: https://anaconda.org/conda-forge/barnaba
 .. image:: https://repology.org/badge/version-for-repo/macports/python:barnaba.svg
     :target: https://repology.org/metapackage/python:barnaba
 .. image:: https://codecov.io/gh/srnas/barnaba/branch/master/graph/badge.svg
