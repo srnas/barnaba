@@ -237,8 +237,7 @@ def rmsd_traj(reference,traj,out=None,heavy_atom=False):
     assert(len(nn_traj.ok_residues)==len(nn_ref.ok_residues))    
     # check that sequence is identical when using heavy atoms
     if(nn_traj.rna_seq_id!=nn_ref.rna_seq_id and heavy_atom==True):
-        sys.stderr.write("# Sequences are not identical, cannot superimpose using all heavy atoms. ")
-        sys.exit(1)
+        raise ValueError("Sequences are not identical, cannot superimpose using all heavy atoms.")
         
     # loop over residues and find common heavy atoms
     idx_ref = []
@@ -272,9 +271,7 @@ def rmsd_traj(reference,traj,out=None,heavy_atom=False):
     print("# found ",len(idx_ref), "atoms in common")
     
     if(len(idx_ref)<3):
-        warn =  "# Only  %d atoms in common. abort.\n" % len(idx_ref)
-        sys.stderr.write(warn)
-        sys.exit(1)
+        raise ValueError("Only %d atoms in common." % len(idx_ref))
         
     traj.superpose(reference,atom_indices=idx_target, ref_atom_indices=idx_ref)
     if(out!=None): traj.save(out)
@@ -334,11 +331,8 @@ def backbone_angles_traj(traj,residues=None,angles=None):
             if(angles[i] in definitions.bb_angles):
                 idx_angles.append(definitions.bb_angles.index(angles[i]))
             else:
-                msg = "# Fatal error. requested angle \"%s\" not available.\n" % angles[i]
-                msg += "# Choose from: %s \n" % definitions.bb_angles
-                sys.stderr.write(msg)
-                sys.exit(1)
-   
+                raise ValueError("Requested angle '%s' not available. Choose from: %s." % 
+                                 (angles[i], definitions.bb_angles))
 
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
@@ -403,10 +397,9 @@ def sugar_angles_traj(traj,residues=None,angles=None):
             if(angles[i] in definitions.sugar_angles):
                 idx_angles.append(definitions.sugar_angles.index(angles[i]))
             else:
-                msg = "# Fatal error. requested angle \"%s\" not available.\n" % angles[i]
-                msg += "# Choose from: %s \n" % (definitions.sugar_angles)
-                sys.stderr.write(msg)
-                sys.exit(1)
+                raise ValueError("Requested angle '%s' not available. Choose from: %s." % 
+                                 (angles[i], definitions.sugar_angles))
+
 
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
@@ -543,10 +536,10 @@ def jcouplings_traj(traj,residues=None,couplings=None,raw=False):
                 idx_angles.append(definitions.couplings_idx[couplings[i]])
                 idx_angles1.append(i)
             else:
-                msg = "# Fatal error. requested coupling \"%s\" not available.\n" % couplings[i]
-                msg += "# Choose from: %s \n" % definitions.couplings_idx
-                sys.stderr.write(msg)
-                sys.exit(1)
+                raise ValueError("Requested coupling '%s' not available. Choose from: %s." % 
+                                 (couplings[i], definitions.couplings_idx))
+
+                
    
     idxs = (all_idx[:,idx_angles,:]).reshape(-1,4)
     missing = np.where(np.sum(idxs,axis=1)==0)
@@ -1298,7 +1291,7 @@ def parse_dotbracket(threshold, file, weights):
                 if len(dotbr) != len(sequence):
                     print(mult_chain)
                     if not mult_chain:
-                        sys.exit("Dot-bracket length does not match sequence length")
+                        raise ValueError("Dot-bracket length does not match sequence length.")
                     else:
                         dotbr = dotbr[:len(sequence)]
                 base_pairs = parse_dotbr(dotbr)
@@ -1316,7 +1309,7 @@ def parse_dotbracket(threshold, file, weights):
                     dotbr = l[1]
                     if len(dotbr) != len(sequence):
                         if not mult_chain:
-                            sys.exit("Dot-bracket length does not match sequence length")    
+                            raise ValueError("Dot-bracket length does not match sequence length.")
                         else:
                             dotbr = dotbr[:len(sequence)]
                     n_frames += 1
@@ -1337,7 +1330,7 @@ def parse_dotbracket(threshold, file, weights):
                             else:    
                                 ann_list[bp[0], bp[1], "WCc"] += weights[n_frames-1]
     if len(list_base_pairs) == 0:
-        sys.exit("No basepairs found.")
+        raise ValueError("No basepairs found.")
     if traj:
         for ann, value in ann_list.items():
             if len(weights) == 0:
