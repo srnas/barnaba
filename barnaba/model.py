@@ -29,8 +29,7 @@ class Model:
 
         ll = len(data)
         if(ll==0):
-            sys.stderr.write("# Fatal error. No valid residues in pdb file \n")
-            sys.exit(1)
+            raise ValueError("No valid residues in pdb file.")
 
         # array with all coordinates
         self.coords = np.array([data[i][5:8] for i in range(ll)])

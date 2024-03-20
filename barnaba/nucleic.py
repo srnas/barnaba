@@ -81,9 +81,7 @@ class Nucleic:
         self.indeces_lcs = np.asarray(indeces_lcs).T
 
         if(len(self.ok_residues)<1):
-            warn = "# Only %d  found in structure. Exiting \n" % len(self.ok_residues) 
-            sys.stderr.write(warn)
-            sys.exit(1)
+            raise ValueError("Only %d found in structure." % len(self.ok_residues))
         #else:
         #    warn = "# %d nucleotides found in structure \n" % len(ok_residues) 
         #    sys.stderr.write(warn)
@@ -101,10 +99,8 @@ class Nucleic:
                 if(residues[k] in self.rna_seq):
                     idx_residues.append((self.rna_seq).index(residues[k]))
                 else:
-                    msg = "# Fatal error. Residue \"%s\" not found \n" % residues[k]
-                    msg += "# The list of residues is: %s \n" % self.rna_seq
-                    sys.stderr.write(msg)
-                    sys.exit(1)
+                    raise ValueError("Residue '%s' not found. The list of residues is: %s" %
+                                     (residues[k], self.rna_seq))
         else:
             idx_residues = np.arange(ll)
 
@@ -184,10 +180,9 @@ class Nucleic:
                 if(residues[k] in self.rna_seq):
                     idx_residues.append((self.rna_seq).index(residues[k]))
                 else:
-                    msg = "# Fatal error. Residue \"%s\" not found \n" % residues[k]
-                    msg += "# The list of residues is: %s \n" % self.rna_seq
-                    sys.stderr.write(msg)
-                    sys.exit(1)
+                    raise ValueError("Residue '%s' not found. The list of residues is: %s" %
+                                     (residues[k], self.rna_seq))
+
         else:
             idx_residues = np.arange(ll)
 
@@ -230,10 +225,8 @@ class Nucleic:
                 if(residues[k] in self.rna_seq):
                     idx_residues.append((self.rna_seq).index(residues[k]))
                 else:
-                    msg = "# Fatal error. Residue \"%s\" not found \n" % residues[k]
-                    msg += "# The list of residues is: %s \n" % self.rna_seq
-                    sys.stderr.write(msg)
-                    sys.exit(1)
+                    raise ValueError("Residue '%s' not found. The list of residues is: %s" %
+                                     (residues[k], self.rna_seq))
         else:
             idx_residues = np.arange(ll)
 

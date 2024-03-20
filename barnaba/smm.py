@@ -24,8 +24,7 @@ class SMM:
             print("# Sequence lenght =",slen)
             self.slen = slen
         else:
-            print("# Error - check your gmat file")
-            sys.exit(1)
+            raise ValueError("Check your gmat file")
 
         # calculate distance matrix
         dmat_sq = cdist(gvecs,gvecs,'sqeuclidean')
