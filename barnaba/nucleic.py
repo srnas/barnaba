@@ -115,12 +115,13 @@ class Nucleic:
 
             res = self.ok_residues[i]
             rr.append(self.rna_seq[i])
+            # Filtering must not make nonadjacent topology residues neighbors.
             # alpha
             try:
                 res_minus = self.ok_residues[i-1]
                 #print res,res_minus, res_minus.chain.index,res.chain.index
                 idxs_tmp  = [res_minus.atom("O3'").index,res.atom("P").index,res.atom("O5'").index,res.atom("C5'").index]
-                if(i!=0 and (res_minus.chain.index == res.chain.index)):
+                if(i!=0 and res_minus.chain.index == res.chain.index and res_minus.index + 1 == res.index):
                     #print "mm", idxs_tmp
                     idxs[j,0] = idxs_tmp
                 else:
@@ -144,7 +145,7 @@ class Nucleic:
             try:
                 res_plus = self.ok_residues[i+1]
                 idxs_tmp  = [res.atom("C4'").index,res.atom("C3'").index,res.atom("O3'").index,res_plus.atom("P").index]
-                if(res_plus.chain.index == res.chain.index):
+                if(res_plus.chain.index == res.chain.index and res_plus.index == res.index + 1):
                    idxs[j,4] = idxs_tmp
                 else:
                     pass
@@ -155,7 +156,7 @@ class Nucleic:
             try:
                 res_plus = self.ok_residues[i+1]
                 idxs_tmp  = [res.atom("C3'").index,res.atom("O3'").index,res_plus.atom("P").index,res_plus.atom("O5'").index]
-                if(res_plus.chain.index == res.chain.index):
+                if(res_plus.chain.index == res.chain.index and res_plus.index == res.index + 1):
                    idxs[j,5] = idxs_tmp
                 else:
                     pass
@@ -278,7 +279,7 @@ class Nucleic:
             try:
                 res_plus = self.ok_residues[i+1]
                 idxs_tmp  = [res.atom("C4'").index,res.atom("C3'").index,res.atom("O3'").index,res_plus.atom("P").index]
-                if(res_plus.chain.index == res.chain.index):
+                if(res_plus.chain.index == res.chain.index and res_plus.index == res.index + 1):
                    idxs[j,5] = idxs_tmp
                 else:
                     pass
@@ -295,5 +296,4 @@ class Nucleic:
                 except: pass
                     
         return idxs, rr
-
 
